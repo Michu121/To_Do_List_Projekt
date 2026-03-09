@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/assets/widgets.dart';
-class SettingsPage extends StatefulWidget{
-  const SettingsPage({super.key});
+class FriendsPage extends StatefulWidget{
+  const FriendsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<FriendsPage> createState() => _FriendsPageState();
 }
-class _SettingsPageState extends State<SettingsPage>{
+class _FriendsPageState extends State<FriendsPage>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: const MyAppBar(title: "Settings"),
+      appBar: const MyAppBar(title: "Friends"),
       bottomNavigationBar: MyBottomAppBar(),
     );
   }
