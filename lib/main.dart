@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/homepage.dart';
+import 'themeData.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,14 +13,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: FadePageTransitionsBuilder(),
-            TargetPlatform.iOS: FadePageTransitionsBuilder(),
-          },
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const HomePage(),
     );
   }

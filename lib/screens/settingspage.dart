@@ -10,7 +10,7 @@ class _SettingsPageState extends State<SettingsPage>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 
       appBar: const MyAppBar(),
       bottomNavigationBar: MyBottomAppBar(activePage: AppPage.settings),
