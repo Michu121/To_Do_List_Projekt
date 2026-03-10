@@ -1,116 +1,101 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/assets/functions.dart';
-import 'package:todo_list/screens/homepage.dart';
-import 'package:todo_list/screens/friendspage.dart';
-import 'package:todo_list/screens/profilepage.dart';
-import 'package:todo_list/screens/settingspage.dart';
-import 'package:todo_list/screens/groupspage.dart';
+import 'package:todo_list/screens/barrel.dart';
+
 //==================================================
-//               Wyrwa w Bottom App Bar
+//                    Logo
 //==================================================
-class SmoothNotch extends NotchedShape {
-  @override
-  Path getOuterPath(Rect host, Rect? guest) {
-    if (guest == null) return Path()..addRect(host);
-    double top = host.top*0.6;
-    final notchRadius = guest.width / 1.8;
-    final notchCenter = guest.center.dx;
-
-    const smooth = 0;
-
-    final path = Path();
-    path.moveTo(host.left, top);
-
-    /// lewa strona przed wycięciem
-    path.lineTo(notchCenter - notchRadius - smooth, top);
-
-    /// lewa krzywa
-    path.quadraticBezierTo(
-      notchCenter - notchRadius,
-      top,
-      notchCenter - notchRadius,
-      top + smooth,
-    );
-
-    /// półkole pod FAB
-    path.arcToPoint(
-      Offset(notchCenter + notchRadius, top + smooth),
-      radius: Radius.circular(notchRadius),
-      clockwise: false,
-    );
-
-    /// prawa krzywa
-    path.quadraticBezierTo(
-      notchCenter + notchRadius,
-      top,
-      notchCenter + notchRadius + smooth,
-      top,
-    );
-
-    /// reszta paska
-    path.lineTo(host.right, top);
-    path.lineTo(host.right, host.bottom);
-    path.lineTo(host.left, host.bottom);
-    path.close();
-
-    return path;
-  }
-}
 class LogoWidget extends StatelessWidget {
   const LogoWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 60, // promień koła
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: EdgeInsets.all(2),
-        child: CircleAvatar(
-          radius: 58, // promień koła
-          backgroundImage: AssetImage("lib/assets/images/logo.png"),
-        ),
-      ),
+    return const CircleAvatar(
+      radius: 26,
+      backgroundImage: AssetImage("lib/assets/images/logo.png"),
     );
   }
 }
+
 //==================================================
-//               Clasa AppBar
+//                    AppBar
 //==================================================
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title; // parametr tytułu
-
-  const MyAppBar({super.key, required this.title});
-
+  const MyAppBar({super.key});
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading: Padding(
-          padding: EdgeInsets.only(left: 10), child: const LogoWidget()
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 35,
-        ),
-      ),
       backgroundColor: Colors.blueAccent,
-      shadowColor: Colors.grey,
       elevation: 8,
     );
   }
-
-  // PreferredSizeWidget wymaga implementacji preferredSize
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 10); // wysokość AppBar
+  Size get preferredSize => const Size.fromHeight(10);
 }
+
 //==================================================
-//               Clasa BottomAppBar
+//                   Wyrwa pod FAB
+//==================================================
+
+class SmoothNotch extends NotchedShape {
+  @override
+  Path getOuterPath(Rect host, Rect? guest) {
+    if (guest == null) return Path()..addRect(host);
+    double top = host.top * 0.6;
+    final notchRadius = guest.width / 1.8;
+    final notchCenter = guest.center.dx;
+
+    final path = Path();
+    path.moveTo(host.left, top);
+    path.lineTo(notchCenter - notchRadius, top);
+    path.arcToPoint(
+      Offset(notchCenter + notchRadius, top),
+      radius: Radius.circular(notchRadius),
+      clockwise: false,
+    );
+    path.lineTo(host.right, top);
+    path.lineTo(host.right, host.bottom);
+    path.lineTo(host.left, host.bottom);
+    path.close();
+    return path;
+  }
+}
+
+
+//==================================================
+// Enum AppPage z ikonami i labelami
+//==================================================
+enum AppPage {
+  home(icon: Icons.home, label: "Home", pageWidget: HomePage()),
+  profile(icon: Icons.account_circle, label: "Profile", pageWidget: ProfilePage()),
+  groups(icon: Icons.group, label: "Groups", pageWidget: GroupsPage()),
+  friends(icon: Icons.person_add, label: "Friends", pageWidget: FriendsPage()),
+  settings(icon: Icons.settings, label: "Settings", pageWidget: SettingsPage()),
+  calendar(icon: Icons.calendar_month, label: "Calendar", pageWidget: CalendarPage());
+
+  final IconData icon;
+  final String label;
+  final Widget pageWidget;
+
+  const AppPage({
+    required this.icon,
+    required this.label,
+    required this.pageWidget,
+  });
+}
+
+//==================================================
+// MyBottomAppBar
 //==================================================
 class MyBottomAppBar extends StatefulWidget {
-  const MyBottomAppBar({super.key});
+  final bool isFloating;
+  final AppPage activePage;
+
+  const MyBottomAppBar({
+    super.key,
+    this.isFloating = false,
+    this.activePage = AppPage.home,
+  });
 
   @override
   State<MyBottomAppBar> createState() => _MyBottomAppBarState();
@@ -118,112 +103,135 @@ class MyBottomAppBar extends StatefulWidget {
 
 class _MyBottomAppBarState extends State<MyBottomAppBar> {
   final GlobalKey _moreKey = GlobalKey();
-  bool _rotated = false; // kontrola obrotu ikony
+  final bool inPopMenu = false;
+  bool _rotated = false;
+
+  Color _iconColor(AppPage page, {Color? selectedColor, Color? unselectedColor}) {
+    return widget.activePage == page ? selectedColor??Colors.blue.shade600 : unselectedColor??Colors.white24;
+  }
+  Color _moreColor() {
+    for (var page in [AppPage.settings,AppPage.friends, AppPage.groups]){
+        if (widget.activePage == page)
+        {
+          return Colors.white;
+        }
+    }
+    return _rotated ? Colors.white : Colors.white70;
+  }
+  Future<AppPage?> showMoreMenu(Offset offset) async {
+    final RenderBox renderBox = _moreKey.currentContext!.findRenderObject() as RenderBox;
+    final Size size = renderBox.size;
+    final screenSize = MediaQuery.of(context).size;
+
+    return await showMenu<AppPage>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        screenSize.height - screenSize.height*0.28,
+        screenSize.width - offset.dx - size.width,
+        0,
+      ),
+      menuPadding: EdgeInsets.zero,
+      color: Colors.blueAccent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      items: [
+        for (var page in [AppPage.settings,AppPage.friends, AppPage.groups]) _buildPopupMenuItem(page),
+      ],
+    );
+  }
+  PopupMenuItem<AppPage> _buildPopupMenuItem(AppPage page) {
+    return PopupMenuItem(
+      value: page,
+      child: Container(
+        padding: EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: _iconColor(page,selectedColor: Colors.blue.shade800),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+          children: [
+            Icon(page.icon, color: Colors.white),
+            Text(page.label, style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      )
+    );
+  }
+  Widget _buildNavButton(AppPage page) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        decoration: BoxDecoration(
+          color: _iconColor(page),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        width: widget.isFloating? 55 : 49.8,
+        height: 50,
+        alignment: Alignment.center,
+        child: GestureDetector(
+          onTap: () => goToPage(context, page.pageWidget),
+          child: Icon(page.icon, color: Colors.white, size: 30),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-
     return SafeArea(
       child: BottomAppBar(
         color: Colors.blueAccent,
-        shape: SmoothNotch(),
-        notchMargin: 6,
+        shape: widget.isFloating ? SmoothNotch() : null,
+        notchMargin: widget.isFloating ? 6 : 0,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 1),
+          padding: const EdgeInsets.symmetric(horizontal: 2.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Lewa część: Home + Profil
+              // Lewa część: home + profile
               Row(
                 children: [
-                  SizedBox(
-                    width: 75,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30)),
-                        padding: EdgeInsets.zero,
-                        elevation: 4,
-                      ),
-                      onPressed: () => goToPage(context, const HomePage()),
-                      child: const Icon(Icons.home, size: 35),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.account_circle, size: 35),
-                    onPressed: () => goToPage(context, const ProfilePage()),
-                  ),
+                  for (var page in [AppPage.home, AppPage.profile])
+                    _buildNavButton(page),
                 ],
               ),
-              // Prawa część: Grupy + More
+              // Prawa część: groups + more/friends+settings
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.group, size: 35),
-                    onPressed: () => goToPage(context, const GroupsPage()),
-                  ),
-                  GestureDetector(
-                    key: _moreKey,
-                    onTap: () async {
-                      setState(() => _rotated = true); // obrót włączony
+                  _buildNavButton(AppPage.calendar),
+                  if (widget.isFloating)
+                    GestureDetector(
+                      key: _moreKey,
+                      onTap: () async {
+                        setState(() => _rotated = true);
 
-                      final RenderBox renderBox = _moreKey.currentContext!
-                          .findRenderObject() as RenderBox;
-                      final Offset offset = renderBox.localToGlobal(Offset.zero);
+                        final renderBox = _moreKey.currentContext!
+                            .findRenderObject() as RenderBox;
+                        final offset = renderBox.localToGlobal(Offset.zero);
 
-                      // Pokazanie menu rozwijanego w górę
-                      final value = await showMenu(
-                        context: context,
-                        position: RelativeRect.fromLTRB(
-                          offset.dx,
-                          offset.dy - 150, // menu lekko nad BottomAppBar
-                          screenSize.width - offset.dx - renderBox.size.width,
-                          0,
-                        ),
-                        color: Colors.blueAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        items: [
-                          PopupMenuItem(
-                            value: 'settings',
-                            child: Row(
-                              children: const [
-                                Icon(Icons.settings),
-                                SizedBox(width: 8),
-                                Text('Settings'),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'friends',
-                            child: Row(
-                              children: const [
-                                Icon(Icons.person_add),
-                                SizedBox(width: 8),
-                                Text('Friends'),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
+                        final value = await showMoreMenu(offset);
 
-                      setState(() => _rotated = false); // obrót wraca
-
-                      if (value == 'settings') goToPage(context, const SettingsPage());
-                      if (value == 'friends') goToPage(context, const FriendsPage());
-                    },
-                    child: AnimatedRotation(
-                      turns: _rotated ? -0.25 : 0, // 0.25 = 90 stopni
-                      duration: const Duration(milliseconds: 300),
-                      child: const Icon(Icons.more_horiz, size: 35),
-                    ),
-                  ),
+                        setState(() => _rotated = false);
+                        for (var page in AppPage.values){
+                          if (value == page)
+                          {
+                            goToPage(context, page.pageWidget);
+                          }
+                        }
+                      },
+                      child: AnimatedRotation(
+                        turns: _rotated ? -0.25 : 0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(Icons.more_horiz, size: 35, color: _moreColor()),
+                        )
+                      ),
+                    )
+                  else
+                    for (var page in [AppPage.groups,AppPage.friends, AppPage.settings])
+                      _buildNavButton(page),
                 ],
               ),
             ],

@@ -12,8 +12,8 @@ class _ProfilePageState extends State<ProfilePage>{
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: const MyAppBar(title: "ProfilePage"),
-      bottomNavigationBar: MyBottomAppBar(),
+      appBar: const MyAppBar(),
+      bottomNavigationBar: MyBottomAppBar(activePage: AppPage.profile),
     );
   }
 }

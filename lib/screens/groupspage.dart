@@ -12,7 +12,7 @@ class _GroupsPageState extends State<GroupsPage>{
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: const MyAppBar(title: "Groups"),
+      appBar: const MyAppBar(),
       floatingActionButton: Transform.translate(
           offset: Offset(0,-2),
           child: SizedBox(
@@ -32,7 +32,7 @@ class _GroupsPageState extends State<GroupsPage>{
           )
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: MyBottomAppBar(),
+      bottomNavigationBar: MyBottomAppBar(isFloating: true,activePage: AppPage.groups),
     );
   }
 }

@@ -12,8 +12,8 @@ class _SettingsPageState extends State<SettingsPage>{
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: const MyAppBar(title: "Settings"),
-      bottomNavigationBar: MyBottomAppBar(),
+      appBar: const MyAppBar(),
+      bottomNavigationBar: MyBottomAppBar(activePage: AppPage.settings),
     );
   }
 }

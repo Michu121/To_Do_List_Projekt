@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/homepage.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -7,25 +8,38 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          elevation: 3,
-          centerTitle: true,
-
-
-        )
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadePageTransitionsBuilder(),
+            TargetPlatform.iOS: FadePageTransitionsBuilder(),
+          },
+        ),
       ),
       home: const HomePage(),
+    );
+  }
+}
+
+/// Custom fade-only page transition
+class FadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const FadePageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+      PageRoute<T> route,
+      BuildContext context,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child,
+      ) {
+    return FadeTransition(
+      opacity: animation,
+      child: child,
     );
   }
 }

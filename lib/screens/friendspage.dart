@@ -12,8 +12,8 @@ class _FriendsPageState extends State<FriendsPage>{
     return Scaffold(
       backgroundColor: Colors.white,
 
-      appBar: const MyAppBar(title: "Friends"),
-      bottomNavigationBar: MyBottomAppBar(),
+      appBar: const MyAppBar(),
+      bottomNavigationBar: MyBottomAppBar(activePage: AppPage.friends),
     );
   }
 }
