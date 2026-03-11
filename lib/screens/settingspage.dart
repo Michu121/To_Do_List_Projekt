@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list/app_settings.dart';
 import 'package:todo_list/assets/widgets.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -9,92 +10,125 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final AppSettings settings = AppSettings.instance;
 
-  String _selectedTheme = 'Light';
-  String _selectedLanguage = 'English';
-  bool _menuButtonOnRight = true;
-
-  bool _notificationsEnabled = false;
-  bool _taskReminders = false;
-  bool _invites = false;
-  bool _groupInvites = false;
-
-  bool _privateAccount = true;
-  bool _twoFactorAuth = false;
-  bool _biometricLock = false;
-
-  final List<Color> _accentColors = [
-    Colors.indigo,
-    Colors.green,
-    Colors.pink,
-    Colors.orange,
-    Colors.yellow.shade700,
-    Colors.cyan,
-    Colors.red,
+  final List<Color> accentColors = const [
+    Color(0xFF5C6BC0), // Indigo
+    Color(0xFF4CAF50), // Green
+    Color(0xFFE91E63), // Pink
+    Color(0xFFFF9800), // Orange
+    Color(0xFFFFEB3B), // Yellow
+    Color(0xFF00BCD4), // Cyan
+    Color(0xFFF44336), // Red
   ];
 
-  int _selectedAccentIndex = 0;
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: settings,
+      builder: (context, _) {
+        final theme = Theme.of(context);
 
-  bool get _isDarkMode => _selectedTheme == 'Dark';
-  Color get _accentColor => _accentColors[_selectedAccentIndex];
-  Color get _pageBackground =>
-      _isDarkMode ? const Color(0xFF121212) : const Color(0xFFF5F6FA);
-  Color get _cardColor =>
-      _isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-  Color get _textColor => _isDarkMode ? Colors.white : Colors.black87;
-  Color get _subtitleColor =>
-      _isDarkMode ? Colors.white70 : Colors.black54;
-  Color get _dividerColor =>
-      _isDarkMode ? Colors.white12 : Colors.black12;
-
-  void _openMenu() {
-    if (_menuButtonOnRight) {
-      _scaffoldKey.currentState?.openEndDrawer();
-    } else {
-      _scaffoldKey.currentState?.openDrawer();
-    }
-  }
-
-  void _showThemeSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+        return Scaffold(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          appBar: const MyAppBar(title: 'Settings'),
+          bottomNavigationBar: MyBottomAppBar(),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
               children: [
-                ListTile(
-                  title: Text(
-                    'Light',
-                    style: TextStyle(color: _textColor),
+                const _SectionTitle('Appearance'),
+                _SettingsCard(
+                  child: Column(
+                    children: [
+                      _buildThemePicker(context),
+                      const Divider(height: 1),
+                      _buildAccentColorPicker(context),
+                      const Divider(height: 1),
+                      _buildMenuPlacementPicker(context),
+                    ],
                   ),
-                  trailing: _selectedTheme == 'Light'
-                      ? Icon(Icons.check, color: _accentColor)
-                      : null,
-                  onTap: () {
-                    setState(() => _selectedTheme = 'Light');
-                    Navigator.pop(context);
-                  },
                 ),
-                ListTile(
-                  title: Text(
-                    'Dark',
-                    style: TextStyle(color: _textColor),
+                const SizedBox(height: 20),
+
+                const _SectionTitle('Language'),
+                _SettingsCard(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    title: const Text('App language'),
+                    subtitle: Text(settings.language),
+                    trailing: const Icon(Icons.check_circle_outline),
                   ),
-                  trailing: _selectedTheme == 'Dark'
-                      ? Icon(Icons.check, color: _accentColor)
-                      : null,
-                  onTap: () {
-                    setState(() => _selectedTheme = 'Dark');
-                    Navigator.pop(context);
-                  },
+                ),
+                const SizedBox(height: 20),
+
+                const _SectionTitle('Notifications'),
+                _SettingsCard(
+                  child: Column(
+                    children: [
+                      SwitchListTile.adaptive(
+                        value: settings.notificationsEnabled,
+                        onChanged: settings.setNotificationsEnabled,
+                        title: const Text('Enable notifications'),
+                        subtitle: const Text('Turn all notifications on or off'),
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile.adaptive(
+                        value: settings.taskReminders,
+                        onChanged: settings.notificationsEnabled
+                            ? settings.setTaskReminders
+                            : null,
+                        title: const Text('Task reminders'),
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile.adaptive(
+                        value: settings.friendInvitations,
+                        onChanged: settings.notificationsEnabled
+                            ? settings.setFriendInvitations
+                            : null,
+                        title: const Text('Friend invitations'),
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile.adaptive(
+                        value: settings.groupInvitations,
+                        onChanged: settings.notificationsEnabled
+                            ? settings.setGroupInvitations
+                            : null,
+                        title: const Text('Group invitations'),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                const _SectionTitle('Account settings'),
+                _SettingsCard(
+                  child: Column(
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        title: const Text('Change password'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _showChangePasswordDialog(context),
+                      ),
+                      const Divider(height: 1),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        title: const Text('Privacy & security'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _showPrivacyAndSecuritySheet(context),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -104,32 +138,118 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showLanguageSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: ListTile(
-            title: Text(
-              'English',
-              style: TextStyle(color: _textColor),
-            ),
-            trailing: Icon(Icons.check, color: _accentColor),
-            onTap: () {
-              setState(() => _selectedLanguage = 'English');
-              Navigator.pop(context);
-            },
+  Widget _buildThemePicker(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Theme',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            children: [
+              ChoiceChip(
+                label: const Text('Light'),
+                selected: settings.themeMode == ThemeMode.light,
+                onSelected: (_) => settings.setThemeMode(ThemeMode.light),
+              ),
+              ChoiceChip(
+                label: const Text('Dark'),
+                selected: settings.themeMode == ThemeMode.dark,
+                onSelected: (_) => settings.setThemeMode(ThemeMode.dark),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  void _showChangePasswordDialog() {
+  Widget _buildAccentColorPicker(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Accent color',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: accentColors.map((color) {
+              final isSelected = settings.accentColor.value == color.value;
+
+              return GestureDetector(
+                onTap: () => settings.setAccentColor(color),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Colors.transparent,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMenuPlacementPicker(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Menu button placement',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            children: [
+              ChoiceChip(
+                label: const Text('Left'),
+                selected: !settings.menuButtonOnRight,
+                onSelected: (_) => settings.setMenuButtonPlacement(false),
+              ),
+              ChoiceChip(
+                label: const Text('Right'),
+                selected: settings.menuButtonOnRight,
+                onSelected: (_) => settings.setMenuButtonPlacement(true),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
@@ -138,77 +258,67 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: _cardColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Change password',
-            style: TextStyle(
-              color: _textColor,
-              fontWeight: FontWeight.bold,
+          title: const Text('Change password'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Current password',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New password',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm new password',
+                  ),
+                ),
+              ],
             ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildPasswordField(
-                controller: currentPasswordController,
-                label: 'Current password',
-              ),
-              const SizedBox(height: 12),
-              _buildPasswordField(
-                controller: newPasswordController,
-                label: 'New password',
-              ),
-              const SizedBox(height: 12),
-              _buildPasswordField(
-                controller: confirmPasswordController,
-                label: 'Confirm new password',
-              ),
-            ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: _subtitleColor),
-              ),
+              child: const Text('Cancel'),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _accentColor,
-                foregroundColor: Colors.white,
-              ),
               onPressed: () {
-                if (newPasswordController.text.isEmpty ||
-                    confirmPasswordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please fill in all password fields.'),
-                    ),
-                  );
+                final currentPassword = currentPasswordController.text.trim();
+                final newPassword = newPasswordController.text.trim();
+                final confirmPassword = confirmPasswordController.text.trim();
+
+                if (currentPassword.isEmpty ||
+                    newPassword.isEmpty ||
+                    confirmPassword.isEmpty) {
+                  _showSnackBar('Please fill in all password fields.');
                   return;
                 }
 
-                if (newPasswordController.text !=
-                    confirmPasswordController.text) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('New passwords do not match.'),
-                    ),
-                  );
+                if (newPassword.length < 6) {
+                  _showSnackBar('New password must have at least 6 characters.');
+                  return;
+                }
+
+                if (newPassword != confirmPassword) {
+                  _showSnackBar('New passwords do not match.');
                   return;
                 }
 
                 Navigator.pop(dialogContext);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Password changed successfully.'),
-                  ),
-                );
+                _showSnackBar('Password changed successfully.');
               },
               child: const Text('Save'),
             ),
@@ -218,100 +328,47 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showPrivacyDialog() {
-    bool tempPrivateAccount = _privateAccount;
-    bool tempTwoFactorAuth = _twoFactorAuth;
-    bool tempBiometricLock = _biometricLock;
-
-    showDialog(
+  void _showPrivacyAndSecuritySheet(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: _cardColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Text(
-                'Privacy & security',
-                style: TextStyle(
-                  color: _textColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: _accentColor,
-                    title: Text(
-                      'Private account',
-                      style: TextStyle(color: _textColor),
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) {
+        return AnimatedBuilder(
+          animation: settings,
+          builder: (context, __) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Privacy & Security',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    value: tempPrivateAccount,
-                    onChanged: (value) {
-                      setDialogState(() => tempPrivateAccount = value);
-                    },
-                  ),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: _accentColor,
-                    title: Text(
-                      'Two-factor authentication',
-                      style: TextStyle(color: _textColor),
-                    ),
-                    value: tempTwoFactorAuth,
-                    onChanged: (value) {
-                      setDialogState(() => tempTwoFactorAuth = value);
-                    },
-                  ),
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: _accentColor,
-                    title: Text(
-                      'Biometric lock',
-                      style: TextStyle(color: _textColor),
-                    ),
-                    value: tempBiometricLock,
-                    onChanged: (value) {
-                      setDialogState(() => tempBiometricLock = value);
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(color: _subtitleColor),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _accentColor,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _privateAccount = tempPrivateAccount;
-                      _twoFactorAuth = tempTwoFactorAuth;
-                      _biometricLock = tempBiometricLock;
-                    });
-
-                    Navigator.pop(dialogContext);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Privacy settings updated.'),
+                    const SizedBox(height: 8),
+                    SwitchListTile.adaptive(
+                      value: settings.privateProfile,
+                      onChanged: settings.setPrivateProfile,
+                      title: const Text('Private profile'),
+                      subtitle: const Text(
+                        'Only approved users can view profile details',
                       ),
-                    );
-                  },
-                  child: const Text('Save'),
+                    ),
+                    SwitchListTile.adaptive(
+                      value: settings.twoFactorAuth,
+                      onChanged: settings.setTwoFactorAuth,
+                      title: const Text('Two-factor authentication'),
+                    ),
+                    SwitchListTile.adaptive(
+                      value: settings.biometricLock,
+                      onChanged: settings.setBiometricLock,
+                      title: const Text('Biometric app lock'),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             );
           },
         );
@@ -319,437 +376,49 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: true,
-      style: TextStyle(color: _textColor),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: _subtitleColor),
-        filled: true,
-        fillColor: _isDarkMode ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-      ),
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
+}
 
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 10, top: 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: _textColor,
-          fontSize: 22,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
+class _SectionTitle extends StatelessWidget {
+  final String title;
 
-  Widget _buildCard({required List<Widget> children}) {
-    final List<Widget> content = [];
-
-    for (int i = 0; i < children.length; i++) {
-      content.add(children[i]);
-      if (i != children.length - 1) {
-        content.add(Divider(height: 1, color: _dividerColor));
-      }
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(_isDarkMode ? 0.25 : 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(children: content),
-    );
-  }
-
-  Widget _buildTapTile({
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: _textColor,
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(
-          subtitle,
-          style: TextStyle(
-            color: _subtitleColor,
-            fontSize: 14,
-          ),
-        ),
-      ),
-      trailing: Icon(Icons.chevron_right, color: _subtitleColor),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: _cardColor,
-      child: SafeArea(
-        child: Column(
-          children: [
-            DrawerHeader(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.account_circle,
-                    size: 72,
-                    color: _accentColor,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Menu',
-                    style: TextStyle(
-                      color: _textColor,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.home_outlined, color: _textColor),
-              title: Text('Home', style: TextStyle(color: _textColor)),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: Icon(Icons.check_circle_outline, color: _textColor),
-              title: Text('Tasks', style: TextStyle(color: _textColor)),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: Icon(Icons.group_outlined, color: _textColor),
-              title: Text('Groups', style: TextStyle(color: _textColor)),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: Icon(Icons.settings_outlined, color: _accentColor),
-              title: Text(
-                'Settings',
-                style: TextStyle(
-                  color: _accentColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onTap: () => Navigator.pop(context),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  const _SectionTitle(this.title);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: _pageBackground,
-      drawer: _menuButtonOnRight ? null : _buildDrawer(),
-      endDrawer: _menuButtonOnRight ? _buildDrawer() : null,
-      appBar: AppBar(
-        backgroundColor: _cardColor,
-        elevation: 1,
-        automaticallyImplyLeading: false,
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            Icon(
-              Icons.account_circle_outlined,
-              size: 38,
-              color: _accentColor,
-            ),
-            const SizedBox(width: 10),
-            Text(
-              'Settings',
-              style: TextStyle(
-                color: _textColor,
-                fontWeight: FontWeight.w700,
-                fontSize: 28,
-              ),
-            ),
-          ],
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
         ),
-        actions: _menuButtonOnRight
-            ? [
-          IconButton(
-            onPressed: _openMenu,
-            icon: Icon(Icons.menu, color: _textColor, size: 32),
-          ),
-        ]
-            : null,
-        leading: !_menuButtonOnRight
-            ? IconButton(
-          onPressed: _openMenu,
-          icon: Icon(Icons.menu, color: _textColor, size: 32),
-        )
-            : null,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 18, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionTitle('Appearance'),
-            _buildCard(
-              children: [
-                _buildTapTile(
-                  title: 'Theme',
-                  subtitle: _selectedTheme,
-                  onTap: _showThemeSheet,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Accent color',
-                        style: TextStyle(
-                          color: _textColor,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 12,
-                        children: List.generate(_accentColors.length, (index) {
-                          final isSelected = index == _selectedAccentIndex;
+    );
+  }
+}
 
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() => _selectedAccentIndex = index);
-                            },
-                            child: Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _accentColors[index],
-                                border: Border.all(
-                                  color: isSelected
-                                      ? (_isDarkMode
-                                      ? Colors.white
-                                      : Colors.black87)
-                                      : Colors.transparent,
-                                  width: 3,
-                                ),
-                              ),
-                              child: isSelected
-                                  ? const Icon(
-                                Icons.check,
-                                color: Colors.white,
-                                size: 18,
-                              )
-                                  : null,
-                            ),
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Menu button placement',
-                        style: TextStyle(
-                          color: _textColor,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Row(
-                        children: [
-                          ChoiceChip(
-                            label: const Text('Left'),
-                            selected: !_menuButtonOnRight,
-                            selectedColor: _accentColor.withOpacity(0.22),
-                            labelStyle: TextStyle(
-                              color: !_menuButtonOnRight
-                                  ? _accentColor
-                                  : _textColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            onSelected: (_) {
-                              setState(() => _menuButtonOnRight = false);
-                            },
-                          ),
-                          const SizedBox(width: 12),
-                          ChoiceChip(
-                            label: const Text('Right'),
-                            selected: _menuButtonOnRight,
-                            selectedColor: _accentColor.withOpacity(0.22),
-                            labelStyle: TextStyle(
-                              color: _menuButtonOnRight
-                                  ? _accentColor
-                                  : _textColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            onSelected: (_) {
-                              setState(() => _menuButtonOnRight = true);
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _buildSectionTitle('Language'),
-            _buildCard(
-              children: [
-                _buildTapTile(
-                  title: 'Language',
-                  subtitle: _selectedLanguage,
-                  onTap: _showLanguageSheet,
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _buildSectionTitle('Notifications'),
-            _buildCard(
-              children: [
-                SwitchListTile.adaptive(
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                  activeThumbColor: _accentColor,
-                  title: Text(
-                    'Enable notifications',
-                    style: TextStyle(
-                      color: _textColor,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: _notificationsEnabled,
-                  onChanged: (value) {
-                    setState(() {
-                      _notificationsEnabled = value;
-                    });
-                  },
-                ),
-                SwitchListTile.adaptive(
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                  activeThumbColor: _accentColor,
-                  title: Text(
-                    'Task reminders',
-                    style: TextStyle(
-                      color: _notificationsEnabled
-                          ? _textColor
-                          : _subtitleColor,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: _taskReminders,
-                  onChanged: _notificationsEnabled
-                      ? (value) {
-                    setState(() => _taskReminders = value);
-                  }
-                      : null,
-                ),
-                SwitchListTile.adaptive(
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                  activeThumbColor: _accentColor,
-                  title: Text(
-                    'Invites',
-                    style: TextStyle(
-                      color: _notificationsEnabled
-                          ? _textColor
-                          : _subtitleColor,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: _invites,
-                  onChanged: _notificationsEnabled
-                      ? (value) {
-                    setState(() => _invites = value);
-                  }
-                      : null,
-                ),
-                SwitchListTile.adaptive(
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-                  activeThumbColor: _accentColor,
-                  title: Text(
-                    'Group invites',
-                    style: TextStyle(
-                      color: _notificationsEnabled
-                          ? _textColor
-                          : _subtitleColor,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  value: _groupInvites,
-                  onChanged: _notificationsEnabled
-                      ? (value) {
-                    setState(() => _groupInvites = value);
-                  }
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            _buildSectionTitle('Account settings'),
-            _buildCard(
-              children: [
-                _buildTapTile(
-                  title: 'Change password',
-                  subtitle: 'Update your account password',
-                  onTap: _showChangePasswordDialog,
-                ),
-                _buildTapTile(
-                  title: 'Privacy & security',
-                  subtitle: 'Manage security preferences',
-                  onTap: _showPrivacyDialog,
-                ),
-              ],
-            ),
-          ],
-        ),
+class _SettingsCard extends StatelessWidget {
+  final Widget child;
+
+  const _SettingsCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 1.5,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
       ),
-      bottomNavigationBar: MyBottomAppBar(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: child,
+      ),
     );
   }
 }

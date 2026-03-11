@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list/app_settings.dart';
 import 'screens/homepage.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -7,25 +9,30 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          elevation: 3,
-          centerTitle: true,
+    final settings = AppSettings.instance;
 
-
-        )
-      ),
-      home: const HomePage(),
+    return AnimatedBuilder(
+      animation: settings,
+      builder: (context, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          themeMode: settings.themeMode,
+          theme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.light,
+            colorSchemeSeed: settings.accentColor,
+            scaffoldBackgroundColor: Colors.white,
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            colorSchemeSeed: settings.accentColor,
+          ),
+          home: const HomePage(),
+        );
+      },
     );
   }
 }
