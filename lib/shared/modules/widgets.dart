@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart' hide Page;
-import 'package:todo_list/screens/mainpage.dart';
+import 'package:todo_list/shared/screens/mainpage.dart';
+import 'package:todo_list/shared/modules/task.dart';
+import 'package:todo_list/shared/modules/task_services.dart';
 
 //==================================================
 //                    Logo
 //==================================================
-class LogoWidget extends StatelessWidget {
-  const LogoWidget({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const CircleAvatar(
-      radius: 26,
-      backgroundImage: AssetImage("lib/assets/images/logo.png"),
-    );
-  }
-}
+// class LogoWidget extends StatelessWidget {
+//   const LogoWidget({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return const CircleAvatar(
+//       radius: 26,
+//       backgroundImage: AssetImage("lib/assets/images/logo.png"),
+//     );
+//   }
+// }
 
 //==================================================
 //                    AppBar
@@ -61,14 +63,6 @@ class SmoothNotch extends NotchedShape {
     return path;
   }
 }
-
-
-//==================================================
-// Enum AppPage z ikonami i labelami
-//==================================================
-
-
-
 //==================================================
 // MyBottomAppBar
 //==================================================
@@ -102,8 +96,8 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
   Color _iconColor(Page page, BuildContext context, {Color? selectedColor, Color? unselectedColor}) {
     final theme = Theme.of(context);
     return widget.activePage == page
-        ? (selectedColor ?? theme.colorScheme.primaryContainer.withOpacity(0.7))
-        : (unselectedColor ?? theme.colorScheme.onPrimary.withOpacity(0.3));
+        ? (selectedColor ?? theme.colorScheme.primaryContainer.withValues(alpha: 0.7))
+        : (unselectedColor ?? theme.colorScheme.onPrimary.withValues(alpha: 0.3));
   }
 
   Color _moreColor(BuildContext context) {
@@ -113,7 +107,7 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
 
     return (inPopMenu || _rotated)
         ? theme.colorScheme.onPrimary
-        : theme.colorScheme.onPrimary.withOpacity(0.7);
+        : theme.colorScheme.onPrimary.withValues(alpha: 0.7);
   }
 
   Future<Page?> showMoreMenu(Offset offset) async {
@@ -144,7 +138,7 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: widget.activePage == page
-              ? theme.colorScheme.primary.withOpacity(0.2)
+              ? theme.colorScheme.primary.withValues(alpha: 0.2)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
         ),
@@ -249,6 +243,46 @@ class _MyFloatingButtonState extends State<MyFloatingButton>{
               child : Icon(Icons.add, size: 50,),
             )
         )
+    );
+  }
+}
+//==========================================
+//             Task View
+//==========================================
+class TaskTile extends StatefulWidget {
+  final Task task;
+  const TaskTile({super.key, required this.task});
+
+  @override
+  State<TaskTile> createState() => _TaskTileState();
+}
+
+class _TaskTileState extends State<TaskTile> {
+  @override
+  Widget build(BuildContext context) {
+    // Sprawdzamy stan na podstawie liczby
+    bool isChecked = widget.task.status > 2;
+
+    return ListTile(
+      leading: Checkbox(
+        value: isChecked,
+        onChanged: (value) {
+          setState(() {
+            int newValue = isChecked ? widget.task.status - 1 : widget.task.status + 1;
+
+            taskServices.updateTask(widget.task.copyWith(status: newValue));
+          });
+        },
+      ),
+      title: Text(
+        widget.task.title,
+        style: TextStyle(
+          decoration: isChecked ? TextDecoration.lineThrough : null,
+          color: isChecked ? Colors.grey : Colors.black,
+        ),
+      ),
+      subtitle: Text(widget.task.description),
+      trailing: Chip(label: Text(widget.task.category)),
     );
   }
 }

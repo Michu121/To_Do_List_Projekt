@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'barrel.dart';
-import 'package:todo_list/assets/widgets.dart';
+import '../../screens/barrel.dart';
+import 'package:todo_list/shared/modules/task_services.dart';
+import 'package:todo_list/shared/modules/widgets.dart';
 import 'package:todo_list/l10n/app_localizations.dart';
 class MainPage extends StatefulWidget{
   const MainPage({super.key});

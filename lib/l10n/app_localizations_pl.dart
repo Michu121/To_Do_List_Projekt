@@ -25,4 +25,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get settings => 'Ustawienia';
+
+  @override
+  String get notask => 'Brak Zadań, Możesz odpoczywać';
 }

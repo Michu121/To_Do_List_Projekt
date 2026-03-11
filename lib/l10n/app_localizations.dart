@@ -130,6 +130,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
+
+  /// No description provided for @notask.
+  ///
+  /// In en, this message translates to:
+  /// **'No Task, Now you can rest'**
+  String get notask;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

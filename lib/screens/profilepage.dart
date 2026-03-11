@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:todo_list/assets/widgets.dart';
 class ProfilePage extends StatefulWidget{
   const ProfilePage({super.key});
 

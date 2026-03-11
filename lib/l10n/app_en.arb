@@ -4,5 +4,6 @@
   "group": "Groups",
   "home": "Home",
   "profile": "Profile",
-  "settings": "Settings"
+  "settings": "Settings",
+  "notask":"No Task, Now you can rest"
 }
