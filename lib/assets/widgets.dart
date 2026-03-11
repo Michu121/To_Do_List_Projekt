@@ -95,7 +95,9 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
 
   // Lista stron używana w pasku
   final List<Page> _pages = [Page.home, Page.groups, Page.calendar, Page.profile, Page.friends, Page.settings];
-  late final List<Page> _morePages = _pages.sublist(3); // profile, friends, settings
+  List<Page> get _morePages=> widget.isFloating ? _pages.sublist(3) : _pages.sublist(4);
+
+  // Funkcja do zmiany aktywnej strony,
 
   Color _iconColor(Page page, BuildContext context, {Color? selectedColor, Color? unselectedColor}) {
     final theme = Theme.of(context);
@@ -161,18 +163,18 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
   Widget _buildNavButton(Page page, BuildContext context) {
     final theme = Theme.of(context);
     return GestureDetector(
-      onTap: () => widget.onPageSelected(page), // Używamy callbacku!
+      onTap: () => widget.onPageSelected(page),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
+        duration: const Duration(milliseconds: 100),
         curve: Curves.fastOutSlowIn,
         margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: _iconColor(page, context),
           borderRadius: BorderRadius.circular(30),
         ),
-        width: widget.isFloating ? 55 : 46.4,
-        height: widget.isFloating ? 55 : 50,
-        padding: widget.isFloating ? const EdgeInsets.all(0) : const EdgeInsets.all(8),
+        width: 55,
+        height: 55,
+        padding: const EdgeInsets.all(8),
         alignment: Alignment.center,
         child: Icon(page.icon, color: theme.colorScheme.onPrimary, size: 28),
       ),
@@ -187,7 +189,7 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
         shape: widget.isFloating ? SmoothNotch() : null,
         notchMargin: 6,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: widget.isFloating?MainAxisAlignment.spaceBetween:MainAxisAlignment.center,
           children: [
             // Lewa strona (Home, Groups)
             Row(children: [
@@ -196,8 +198,7 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
 
             // Prawa strona (Calendar + More/Inne)
             Row(children: [
-              _buildNavButton(_pages[2], context), // Calendar
-              if (widget.isFloating)
+                ...(widget.isFloating ? [_buildNavButton(_pages[2], context)] : _pages.sublist(2, 4).map((page) => _buildNavButton(page, context)).toList()),
                 GestureDetector(
                   key: _moreKey,
                   onTap: () async {
@@ -219,8 +220,6 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
                     ),
                   ),
                 )
-              else
-                for (var page in _morePages) _buildNavButton(page, context),
             ]),
           ],
         ),
