@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/homepage.dart';
+import 'package:todo_list/l10n/app_localizations.dart';
+import 'screens/mainpage.dart';
 import 'themeData.dart';
 
 void main() {
@@ -12,11 +13,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const HomePage(),
+      home: const MainPage(),
     );
   }
 }

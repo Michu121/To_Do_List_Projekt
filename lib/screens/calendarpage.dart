@@ -9,11 +9,8 @@ class CalendarPage extends StatefulWidget{
 class _CalendarPageState extends State<CalendarPage>{
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-      appBar: const MyAppBar(),
-      bottomNavigationBar: MyBottomAppBar(activePage: AppPage.calendar),
+    return Center(
+        child: Text("Calendar"),
     );
   }
 }

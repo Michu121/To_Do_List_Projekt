@@ -9,11 +9,8 @@ class FriendsPage extends StatefulWidget{
 class _FriendsPageState extends State<FriendsPage>{
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-
-      appBar: const MyAppBar(),
-      bottomNavigationBar: MyBottomAppBar(activePage: AppPage.friends),
+    return Center(
+      child: Text("Calendar"),
     );
   }
 }
