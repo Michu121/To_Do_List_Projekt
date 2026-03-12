@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/l10n/app_localizations.dart';
-import 'shared/screens/mainpage.dart';
+import 'package:todo_list/shared/view/mainpage.dart';
 import 'themeData.dart';
 
 void main() {

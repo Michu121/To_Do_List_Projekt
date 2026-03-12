@@ -1,37 +1,46 @@
 import 'package:flutter/material.dart';
+import 'status.dart';
+import 'category.dart';
+import 'group.dart';
+import 'package:uuid/uuid.dart';
+
+Uuid uuid = const Uuid();
 
 class Task {
-  final int id;
+  final String id;
   final String title;
-  final String category;
-  final String group;
+  final Category category;
+  final Group group;
   final String description;
-  final int status;
+  final Status status;
   final DateTime date;
+  final Color color;
   final TimeOfDay timeStart;
   final TimeOfDay timeEnd;
 
   Task({
-    required this.id,
+    String? id,
     required this.title,
     required this.status,
     required this.category,
     required this.group,
     required this.description,
     required this.date,
+    this.color = Colors.grey,
     this.timeStart = const TimeOfDay(hour: 0, minute: 0),
     this.timeEnd = const TimeOfDay(hour: 0, minute: 0),
-  });
+  }) : id = id ?? uuid.v4();
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
-      id: json['id'] ?? 0,
+      id: json['id'] ?? "Null",
       title: json['title'] ?? "Null",
       status: json['status'] ?? 0,
       date: DateTime.parse(json['date']??DateTime.now().toString()),
       category: json['category']??"Null",
       group: json['group'] ?? "Null",
       description: json['description']??"Null",
+      color: Colors.grey,
       timeStart: TimeOfDay(
         hour: json['timeStart']['hour'],
         minute: json['timeStart']['minute'],
@@ -50,6 +59,7 @@ class Task {
       "date": formatDate(date),
       "category": category,
       "group": group,
+      "color": color, // Konwersja na wartość typu int"
       "description": description,
       "timeStart": {"hour": timeStart.hour, "minute": timeStart.minute},
       "timeEnd": {"hour": timeEnd.hour, "minute": timeEnd.minute},
@@ -57,24 +67,25 @@ class Task {
   }
 
   Task copyWith({
-    int? id,
     String? title,
-    int? status,
+    Status? status,
     DateTime? date,
-    String? category,
-    String? group,
+    Category? category,
+    Group? group,
     String? description,
+    Color? color,
     TimeOfDay? timeStart,
     TimeOfDay? timeEnd,
   }) {
     return Task(
-      id: id ?? this.id,
+      id: id,
       title: title ?? this.title,
       status: status ?? this.status,
       date: _validateDate(date ?? this.date),
       category: category ?? this.category,
       group: group ?? this.group,
       description: description ?? this.description,
+      color: color ?? this.color,
       timeStart: timeStart ?? this.timeStart,
       timeEnd: timeEnd ?? this.timeEnd,
     );
