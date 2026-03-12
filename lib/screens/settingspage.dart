@@ -336,7 +336,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (_) {
         return AnimatedBuilder(
           animation: settings,
-          builder: (context, __) {
+          builder: (context, _) {
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
