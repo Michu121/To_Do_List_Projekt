@@ -8,7 +8,7 @@ class GroupServices extends ChangeNotifier {
   List<Group> _groups = [];
   File? _file; // Plik będzie dostępny dopiero po inicjalizacji
 
-  List<Group> getgroups() => _groups;
+  List<Group> getGroups() => _groups;
 
   // 1. Zmieniamy inicjalizację na asynchroniczną
   Future<void> init() async {

@@ -1,12 +1,14 @@
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:flutter/material.dart';
-import '../models/group.dart';
+
 import '../models/category.dart';
+import '../models/colors.dart';
 import '../models/status.dart';
 import '../models/task.dart';
-import '../services/task_services.dart';
-import '../services/group_services.dart';
 import '../services/category_services.dart';
+import '../services/task_services.dart';
+import '../services/color_services.dart';
+import 'color_picker.dart';
+import 'dropdown_category_picker.dart';
 
 class AddTaskSheet extends StatefulWidget {
   const AddTaskSheet({super.key});
@@ -14,10 +16,13 @@ class AddTaskSheet extends StatefulWidget {
   static void show(BuildContext context) {
     showModalBottomSheet(
       context: context,
+
       isScrollControlled: true,
+
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+
       builder: (_) => const AddTaskSheet(),
     );
   }
@@ -27,96 +32,117 @@ class AddTaskSheet extends StatefulWidget {
 }
 
 class _AddTaskSheetState extends State<AddTaskSheet> {
+  final colorServices = ColorServices();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    groupServices.init();
-    categoryServices.init();
-    taskServices.init();
-  }
 
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descController.dispose();
-    super.dispose();
-  }
+  // 1. Dodajemy zmienną przechowującą wybór
+  Category? _selectedCategory = categoryServices.getCategories().values.first;
+  ColorsToPick? _selectedColor;
+  String? _errorText;
 
-  void _handleSave(BuildContext context) { // Dodaj context jako parametr
+
+  void _handleSave(BuildContext context) {
     final title = _titleController.text.trim();
 
     if (title.isNotEmpty) {
-      taskServices.addTask(Task(
-        title: title,
-        status: Status.todo,
-        category: Category(name: "General", color: Colors.blueAccent),
-        group: Group(name: "Personal", color: Colors.red),
-        description: _descController.text,
-        date: DateTime.now(),
-      ));
-
-      Navigator.of(context, rootNavigator: true).pop();
+      taskServices.addTask(
+        Task(
+          title: title,
+          status: Status.todo,
+          category: _selectedCategory!,
+          description: _descController.text,
+          color: _selectedColor?.color ?? Colors.grey.shade300,
+          date: DateTime.now(),
+        ),
+      );
+      Navigator.of(context).pop();
+    }else{
+      setState(() {
+        _errorText = "Tytuł nie może być pusty";
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // Padding dostosowany do klawiatury
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text("Nowe Zadanie", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          TextField(
-            controller: _titleController,
-            decoration: const InputDecoration(labelText: "Tytuł"),
-            autofocus: true,
-          ),
-          TextField(
-            controller: _descController,
-            decoration: const InputDecoration(labelText: "Opis"),
-          ),
-          
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => _handleSave(context), // Wywołujemy osobną funkcję
-            child: const SizedBox(
-              width: double.infinity,
-              child: Text("Zapisz", textAlign: TextAlign.center),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Nowe Zadanie",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-          ),
-        ],
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(labelText: "Tytuł", errorText: _errorText),
+              autofocus: true,
+            ),
+            TextField(
+              controller: _descController,
+              decoration: const InputDecoration(labelText: "Opis"),
+            ),
+            const SizedBox(height: 20),
+            // 3. Przekazujemy stan i funkcję aktualizującą
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text("Kategoria"),
+                    DropDownCategoryPicker(
+                      selectedCategory: _selectedCategory,
+                      onChanged: (Category? newValue) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      },
+                    ),
+
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ColorPicker(
+              colorServices: colorServices,
+              selectedColor: _selectedColor,
+              onTap: (String name) {
+                setState(() {
+                  colorServices.updateColor(name, true);
+                  final updatedColors = colorServices.getColors();
+                  _selectedColor = updatedColors[name];
+                });
+              },
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+
+                onPressed: () => _handleSave(context),
+                child: const Text("Zapisz", style: TextStyle(color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-// class DropDownCategoryPicker extends StatelessWidget {
-//   const DropDownCategoryPicker({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return DropdownButton
-//       (
-//       value: categoryServices.getCategories().first ?? TextField(),
-//       items: [
-//         DropdownMenuItem(
-//           value: TextField(),
-//           child: const Text("Wybierz kategorię"),
-//         ),
-//       ],
-//         onChanged: (){};
-//     );
-//   }
-// }
-// class CategoryTextField extends StatelessWidget {
-//   const CategoryTextField({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return TextField(
-//         decoration: const InputDecoration(labelText: "Kategoria"),
-//     );
-//   }
-// }

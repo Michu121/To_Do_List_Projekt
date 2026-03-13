@@ -5,10 +5,16 @@ import 'dart:io';
 import '../models/category.dart';
 
 class CategoryServices extends ChangeNotifier {
-  Map<String, Category> _categories = {};
+  Map<String, Category> _categories = {
+    "Default": Category(name: "Default", color: Colors.white),
+    "Work": Category(name: "Work", color: Colors.blue),
+    "Personal": Category(name: "Personal", color: Colors.red),
+    "Home": Category(name: "Home", color: Colors.green),
+    "Ahh": Category(name: "Ahh", color: Colors.green)
+  };
   File? _file;
 
-  Map<String, Category> get categories => _categories;
+  Map<String, Category> getCategories() => _categories;
 
   Future<void> init() async {
     final directory = await getApplicationDocumentsDirectory();
@@ -19,7 +25,6 @@ class CategoryServices extends ChangeNotifier {
       if (content.isNotEmpty) {
         final List<dynamic> jsonList = jsonDecode(content);
 
-        // Tworzymy mapę z listy obiektów JSON
         _categories = {
           for (var item in jsonList)
             Category.fromJson(item).name : Category.fromJson(item)
@@ -41,7 +46,6 @@ class CategoryServices extends ChangeNotifier {
     if (_categories.containsKey(category.name)) {
       return;
     }
-
     _categories[category.name] = category;
     saveCategories();
     notifyListeners();
