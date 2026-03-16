@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:todo_list/assets/widgets.dart';
 class FriendsPage extends StatefulWidget{
   const FriendsPage({super.key});
 
@@ -9,11 +8,8 @@ class FriendsPage extends StatefulWidget{
 class _FriendsPageState extends State<FriendsPage>{
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-
-      appBar: const MyAppBar(title: "Friends"),
-      bottomNavigationBar: MyBottomAppBar(),
+    return Center(
+      child: Text("Calendar"),
     );
   }
 }

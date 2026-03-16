@@ -1,0 +1,189 @@
+[
+  {
+    "id": 1773233944744,
+    "title": "New Task",
+    "status": 1,
+    "date": "2026-03-11",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 13,
+      "minute": 59
+    },
+    "timeEnd": {
+      "hour": 13,
+      "minute": 59
+    }
+  },
+  {
+    "id": 1773234434192,
+    "title": "New Task",
+    "status": 1,
+    "date": "2026-03-11",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 14,
+      "minute": 7
+    },
+    "timeEnd": {
+      "hour": 14,
+      "minute": 7
+    }
+  },
+  {
+    "id": 1773234434910,
+    "title": "New Task",
+    "status": 1,
+    "date": "2026-03-11",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 14,
+      "minute": 7
+    },
+    "timeEnd": {
+      "hour": 14,
+      "minute": 7
+    }
+  },
+  {
+    "id": 1773234435357,
+    "title": "New Task",
+    "status": 1,
+    "date": "2026-03-11",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 14,
+      "minute": 7
+    },
+    "timeEnd": {
+      "hour": 14,
+      "minute": 7
+    }
+  },
+  {
+    "id": 1773234441854,
+    "title": "New Task",
+    "status": 2,
+    "date": "2026-03-12",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 14,
+      "minute": 7
+    },
+    "timeEnd": {
+      "hour": 14,
+      "minute": 7
+    }
+  },
+  {
+    "id": 1773234442325,
+    "title": "New Task",
+    "status": 2,
+    "date": "2026-03-12",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 14,
+      "minute": 7
+    },
+    "timeEnd": {
+      "hour": 14,
+      "minute": 7
+    }
+  },
+  {
+    "id": 1773304353498,
+    "title": "New Task",
+    "status": 0,
+    "date": "2026-03-12",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 9,
+      "minute": 32
+    },
+    "timeEnd": {
+      "hour": 9,
+      "minute": 32
+    }
+  },
+  {
+    "id": 1773304354755,
+    "title": "New Task",
+    "status": 0,
+    "date": "2026-03-12",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 9,
+      "minute": 32
+    },
+    "timeEnd": {
+      "hour": 9,
+      "minute": 32
+    }
+  },
+  {
+    "id": 1773304355307,
+    "title": "New Task",
+    "status": 0,
+    "date": "2026-03-12",
+    "category": "Category",
+    "group": "Group",
+    "description": "Description",
+    "timeStart": {
+      "hour": 9,
+      "minute": 32
+    },
+    "timeEnd": {
+      "hour": 9,
+      "minute": 32
+    }
+  },
+  {
+    "id": 1773305750600,
+    "title": "Kokolino",
+    "status": 0,
+    "date": "2026-03-12",
+    "category": "General",
+    "group": "Personal",
+    "description": "Awadakadabra",
+    "timeStart": {
+      "hour": 9,
+      "minute": 55
+    },
+    "timeEnd": {
+      "hour": 9,
+      "minute": 55
+    }
+  },
+  {
+    "id": 1773305759208,
+    "title": "asss",
+    "status": 0,
+    "date": "2026-03-12",
+    "category": "General",
+    "group": "Personal",
+    "description": "",
+    "timeStart": {
+      "hour": 9,
+      "minute": 55
+    },
+    "timeEnd": {
+      "hour": 9,
+      "minute": 55
+    }
+  }
+]
