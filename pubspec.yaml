@@ -12,14 +12,25 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
-  path_provider: ^2.1.5
+  # Firebase
+  firebase_core: ^2.24.0
+  firebase_auth: ^4.15.0
+  cloud_firestore: ^4.13.0
 
+  # Google / Apple Sign-In
+  google_sign_in: ^6.1.5
+  sign_in_with_apple: ^5.0.0
+
+  # Localization
   flutter_localizations:
     sdk: flutter
+  intl: ^0.20.2
 
-  intl: any
-  uuid: ^4.5.3
+  # File storage
+  path_provider: ^2.0.15
+
+  # Utilities
+  uuid: ^4.2.1
 
 dev_dependencies:
   flutter_test:
