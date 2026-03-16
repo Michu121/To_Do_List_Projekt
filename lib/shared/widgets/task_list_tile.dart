@@ -1,116 +1,191 @@
 import 'package:flutter/material.dart';
-import 'package:todo_list/shared/models/status.dart';
-import 'package:todo_list/shared/widgets/dismissible_remove_background.dart';
-import 'package:todo_list/shared/widgets/status_checkbox.dart';
 import '../models/task.dart';
+import '../models/status.dart';
 import '../services/task_services.dart';
 import 'delete_confirmation_dialog.dart';
+import 'status_checkbox.dart';
 
-class TaskTile extends StatefulWidget {
+class TaskTile extends StatelessWidget {
   final Task task;
   const TaskTile({super.key, required this.task});
 
-  @override
-  State<TaskTile> createState() => _TaskTileState();
-}
+  void _cycleStatus(Task t) {
+    final next = switch (t.status) {
+      Status.todo => Status.inProgress,
+      Status.inProgress => Status.done,
+      Status.done => Status.todo,
+    };
+  }
+  bool? wasDone;
 
-class _TaskTileState extends State<TaskTile> {
   @override
   Widget build(BuildContext context) {
-    final currentStatus = widget.task.status;
-    final isDone = currentStatus == Status.done;
+    final theme = Theme.of(context);
+    final isDone = task.status == Status.done;
 
-    // Przenosimy margines tutaj jako Padding
     return Container(
-        clipBehavior: Clip.antiAlias,
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
-        color: Colors.red,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.black,
-            width: 1,
+        color: Colors.red.shade400,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Dismissible(
+        key: ValueKey(task.id),
+        direction: DismissDirection.horizontal,
+        confirmDismiss: (_) async =>
+        await const DeleteConfirmationDialog().show(context) ?? false,
+        onDismissed: (_) => taskServices.deleteTask(task),
+        background: _SwipeBackground(alignment: Alignment.centerLeft),
+        secondaryBackground: _SwipeBackground(alignment: Alignment.centerRight),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-          boxShadow:
-          [
-            BoxShadow(
-              color: widget.task.color,
-              blurRadius: 3,
-              spreadRadius: 2,
-            )
-          ]
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: ClipRRect(
-        clipBehavior: Clip.antiAlias,
-        borderRadius: BorderRadius.circular(10),
-        child: Dismissible(
-          key: Key(widget.task.id),
-          resizeDuration: const Duration(milliseconds: 150),
-          movementDuration: const Duration(milliseconds: 200),
-          onDismissed: (direction) {
-            taskServices.deleteTask(widget.task);
-          },
-          confirmDismiss: (direction) async {
-            if (widget.task.status == Status.done) return true;
-            return await DeleteConfirmationDialog().show(context) ?? false;
-          },
-          onUpdate: (details) {
-
-          },
-          background: const DismissibleRemoveBackground(mainAxisAlignment: MainAxisAlignment.start),
-          secondaryBackground: const DismissibleRemoveBackground(mainAxisAlignment: MainAxisAlignment.end),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: ListTile(
-                leading: StatusCheckbox(
-                status: currentStatus,
-                onTap: () {
-                  Status nextStatus;
-                  if (currentStatus == Status.todo) {
-                    nextStatus = Status.inProgress;
-                  } else if (currentStatus == Status.inProgress) {
-                    nextStatus = Status.done;
-                  } else {
-                    nextStatus = Status.todo;
-                  }
-                  final updatedTask = widget.task.copyWith(status: nextStatus);
-                  taskServices.updateTask(updatedTask);
-                  setState(() {});
-                }),
-                title: Text(
-                  widget.task.title,
-                  style: TextStyle(
-                    fontSize: 30,
-                    decoration: isDone ? TextDecoration.lineThrough : null,
-                    color: isDone ? Colors.grey : Colors.black,
-                  ),
-                ),
-                subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(widget.task.formatDate(widget.task.date)),
-                            Row(
+            borderRadius: BorderRadius.circular(14),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(width: 7, color: task.color),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      child: Row(
+                        children: [
+                          StatusCheckbox(
+                            status: task.status,
+                            onTap: () => {
+                             wasDone = _cycleStatus(task);
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Chip(label: Text(widget.task.category.name), backgroundColor: widget.task.category.color, padding: EdgeInsets.zero),
-                                widget.task.group == null ? Container() : Chip(label: Text(widget.task.group!.name), backgroundColor: widget.task.group!.color, padding: EdgeInsets.zero)
+                                Text(
+                                  task.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                    decoration: isDone ? TextDecoration.lineThrough : null,
+                                    color: isDone
+                                        ? theme.colorScheme.onSurface.withOpacity(0.4)
+                                        : theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    _CategoryChip(
+                                      label: task.category.name,
+                                      color: task.category.color,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    if (!wasDone)
+                                      _DifficultyBadge(task: task),
+                                  ],
+                                ),
                               ],
                             ),
-                          ]
-                      )
-                    ]
-                ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            task.formatDate(task.date),
+                            style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SwipeBackground extends StatelessWidget {
+  final Alignment alignment;
+  const _SwipeBackground({required this.alignment});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.red.shade400,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.delete_outline, color: Colors.white, size: 22),
+          SizedBox(width: 6),
+          Text('Usuń',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _CategoryChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _DifficultyBadge extends StatelessWidget {
+  final Task task;
+  const _DifficultyBadge({required this.task});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = task.difficulty;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(d.icon, size: 13, color: d.color),
+        const SizedBox(width: 2),
+        Text(
+          '+${d.points}',
+          style: TextStyle(fontSize: 11, color: d.color, fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
 }
