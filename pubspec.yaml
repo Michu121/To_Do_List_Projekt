@@ -19,7 +19,6 @@ dependencies:
 
   # Google / Apple Sign-In
   google_sign_in: ^6.1.5
-  sign_in_with_apple: ^5.0.0
 
   # Localization
   flutter_localizations:
