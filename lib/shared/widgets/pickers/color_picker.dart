@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/colors.dart';
-import '../services/color_services.dart';
+import '../../models/colors.dart';
+import '../../services/color_services.dart';
 import 'color_button.dart';
 
 class ColorPicker extends StatefulWidget {

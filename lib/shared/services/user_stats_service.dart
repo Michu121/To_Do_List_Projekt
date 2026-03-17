@@ -26,7 +26,7 @@ class UserStatsService extends ChangeNotifier {
 
     final doneTasks = tasks.where((t) => t.status == Status.done).toList();
 
-    _totalPoints = doneTasks.fold(0, (sum, t) => sum + t.points);
+    _totalPoints = doneTasks.fold(0, (sum, t) => sum + t.difficulty.points);
     _doneCount = doneTasks.length;
     _inProgressCount = tasks.where((t) => t.status == Status.inProgress).length;
     _streakDays = _computeStreak(doneTasks);

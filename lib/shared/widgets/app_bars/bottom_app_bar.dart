@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/pages.dart';
-import '../notches/smoth_notch.dart';
+import '../../models/pages.dart';
+import '../../notches/smoth_notch.dart';
 
 class MyBottomAppBar extends StatefulWidget {
   final bool isFloating;

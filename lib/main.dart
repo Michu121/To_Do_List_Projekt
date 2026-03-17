@@ -15,9 +15,6 @@ import 'theme_data.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // POPRAWKA: Usunięto nieistniejący parametr persistenceEnabled.
-  // Persystencja jest włączona domyślnie, więc działanie pozostaje bez zmian.
   FirebaseFirestore.instance.settings = const Settings();
 
   runApp(const MyApp());

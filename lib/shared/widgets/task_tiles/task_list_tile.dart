@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/task.dart';
-import '../models/status.dart';
-import '../services/task_services.dart';
+import '../../models/group.dart';
+import '../../models/task.dart';
+import '../../models/status.dart';
+import '../../services/group_task_service.dart';
+import '../../services/task_services.dart';
 import 'delete_confirmation_dialog.dart';
 import 'status_checkbox.dart';
 
@@ -15,13 +17,24 @@ class TaskTile extends StatelessWidget {
       Status.inProgress => Status.done,
       Status.done => Status.todo,
     };
+    taskServices.updateTask(t.copyWith(status: next));
   }
-  bool? wasDone;
-
+  Group? _group() {
+    final gid = task.group?.id;
+    if (gid == null) return null;
+    try {
+      return groupTaskService.groups.firstWhere((g) => g.id == gid);
+    } catch (_) {
+      return task.group;
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDone = task.status == Status.done;
+    final group = _group();
+    final groupId = task.group?.id;
+
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
@@ -30,11 +43,17 @@ class TaskTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Dismissible(
-        key: ValueKey(task.id),
+        key: Key(task.id),
         direction: DismissDirection.horizontal,
         confirmDismiss: (_) async =>
         await const DeleteConfirmationDialog().show(context) ?? false,
-        onDismissed: (_) => taskServices.deleteTask(task),
+        onDismissed: (_) {
+          if (groupId != null) {
+            groupTaskService.deleteTask(groupId, task.id);
+          } else {
+            taskServices.deleteTask(task);
+          }
+        },
         background: _SwipeBackground(alignment: Alignment.centerLeft),
         secondaryBackground: _SwipeBackground(alignment: Alignment.centerRight),
         child: Container(
@@ -43,7 +62,7 @@ class TaskTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -64,7 +83,7 @@ class TaskTile extends StatelessWidget {
                           StatusCheckbox(
                             status: task.status,
                             onTap: () => {
-                             wasDone = _cycleStatus(task);
+                             _cycleStatus(task)
                             },
                           ),
                           const SizedBox(width: 12),
@@ -80,7 +99,7 @@ class TaskTile extends StatelessWidget {
                                     fontSize: 15,
                                     decoration: isDone ? TextDecoration.lineThrough : null,
                                     color: isDone
-                                        ? theme.colorScheme.onSurface.withOpacity(0.4)
+                                        ? theme.colorScheme.onSurface.withValues(alpha: 0.4)
                                         : theme.colorScheme.onSurface,
                                   ),
                                 ),
@@ -92,8 +111,7 @@ class TaskTile extends StatelessWidget {
                                       color: task.category.color,
                                     ),
                                     const SizedBox(width: 6),
-                                    if (!wasDone)
-                                      _DifficultyBadge(task: task),
+                                    //_DifficultyBadge(task: task),
                                   ],
                                 ),
                               ],
@@ -157,9 +175,9 @@ class _CategoryChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -169,23 +187,3 @@ class _CategoryChip extends StatelessWidget {
   }
 }
 
-class _DifficultyBadge extends StatelessWidget {
-  final Task task;
-  const _DifficultyBadge({required this.task});
-
-  @override
-  Widget build(BuildContext context) {
-    final d = task.difficulty;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(d.icon, size: 13, color: d.color),
-        const SizedBox(width: 2),
-        Text(
-          '+${d.points}',
-          style: TextStyle(fontSize: 11, color: d.color, fontWeight: FontWeight.w600),
-        ),
-      ],
-    );
-  }
-}

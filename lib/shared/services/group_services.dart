@@ -68,11 +68,10 @@ class GroupServices extends ChangeNotifier {
 
   Future<List<UserModel>> getMembers(Group group) async {
     final results = await Future.wait(
-      group.memberUids.map((uid) => firestoreService.getUserById(uid)),
+      group.members.map((uid) => firestoreService.getUserById(uid)),
     );
     return results.whereType<UserModel>().toList();
   }
-
   @override
   void dispose() {
     _subscription?.cancel();

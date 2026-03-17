@@ -12,7 +12,7 @@ class FirestoreService {
       _db.collection('users').doc(uid).collection('categories');
 
   CollectionReference _groupsRef(String uid) =>
-      _db.collection('users').doc(uid).collection('groups');
+      _db.collection('groups').doc(uid).collection('users');
 
   Future<void> afterLogin(User user) async {
     final ref = _db.collection('users').doc(user.uid);
