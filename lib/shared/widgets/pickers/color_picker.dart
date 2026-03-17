@@ -20,17 +20,29 @@ class _ColorPickerState extends State<ColorPicker> {
     // Pobieramy mapę kolorów
     final colorsMap = widget.colorServices.getColors();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center, // Wyśrodkujmy je ładnie
-      children: colorsMap.entries.map((entry) {
-        final String name = entry.key;
-        final ColorsToPick colorData = entry.value;
-
-        return ColorButton(
-          color: colorData,
-          onTap: () => widget.onTap(name), // Teraz poprawnie wywołujemy funkcję z nazwą
-        );
-      }).toList(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          direction: Axis.horizontal,
+          children: [
+                ...colorsMap.entries.map((entry) {
+                final String name = entry.key;
+                final ColorsToPick colorData = entry.value;
+                return ColorButton(
+                  color: colorData,
+                  onTap: () => widget.onTap(name), // Teraz poprawnie wywołujemy funkcję z nazwą
+                );}).toList(),
+          ],
+        ),
+        ]
+      ),
     );
   }
 }

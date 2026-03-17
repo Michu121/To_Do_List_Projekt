@@ -72,7 +72,7 @@ class AppTheme {
 
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.blueAccent,
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
     ),
 
     appBarTheme: const AppBarTheme(

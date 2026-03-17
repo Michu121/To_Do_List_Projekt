@@ -34,7 +34,7 @@ class _CategoryPickerState extends State<CategoryPicker> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Category", style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            Text("Category", style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 6),
             InkWell(
               onTap: (){
@@ -66,7 +66,7 @@ class _CategoryPickerState extends State<CategoryPicker> {
                       valueListenable: rotateNotifier,
                       builder: (context, value, child) {
                         return AnimatedRotation(
-                          turns: value ? -0.5 : -1,
+                          turns: value ? 0.5 : 0.25,
                           duration: const Duration(milliseconds: 300),
                           child: Icon(Icons.arrow_drop_down),
                         );
@@ -88,7 +88,6 @@ class _CategoryPickerState extends State<CategoryPicker> {
 
     final categories = categoryServices.getCategories().values.toList();
 
-    // 2. Pokazuje menu jako mały "Dialog" pod spodem lub nad klawiaturą
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

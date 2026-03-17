@@ -24,9 +24,10 @@ class AddTaskSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (_) => AddTaskSheet(preselectedGroup: preselectedGroup),
     );
   }
@@ -86,7 +87,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
       status: Status.todo,
       category: _selectedCategory!,
       description: _descController.text,
-      color: _selectedColor?.color ?? Colors.grey.shade300,
+      color: _selectedColor?.color ?? Colors.transparent,
       date: DateTime.now(),
       group: _selectedGroup == groups.firstOrNull
           ? null
@@ -107,6 +108,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+    final theme = Theme.of(context);
+
 
     if (user == null) {
       return const Padding(
@@ -135,16 +138,16 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            const Center(
+            Center(
               child: Text(
                 'New Task',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
               ),
             ),
             const SizedBox(height: 16),
@@ -254,7 +257,7 @@ class _DifficultyPicker extends StatelessWidget {
       children: [
         Text(
           'Difficulty',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
         ),
         const SizedBox(height: 6),
         Row(

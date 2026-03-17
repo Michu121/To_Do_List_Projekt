@@ -60,7 +60,7 @@ class _GroupPickerState extends State<GroupPicker> {
                       valueListenable: rotateNotifier,
                       builder: (context, value, child) {
                         return AnimatedRotation(
-                          turns: value ? -0.5 : -1,
+                          turns: value ? 0.5 : 0.25,
                           duration: const Duration(milliseconds: 300),
                           child: Icon(Icons.arrow_drop_down),
                         );
