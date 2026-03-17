@@ -1,5 +1,5 @@
 name: todo_list
-description: "App that makes everydays diuties easier du to the fact planning"
+description: "App that makes everydays duties easier du to the fact planning"
 
 publish_to: 'none'
 
@@ -9,6 +9,7 @@ environment:
   sdk: ^3.11.0
 
 dependencies:
+  shared_preferences:
   flutter:
     sdk: flutter
 

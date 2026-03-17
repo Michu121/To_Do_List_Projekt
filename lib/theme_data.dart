@@ -110,4 +110,145 @@ class AppTheme {
       ),
     ),
   );
+  static ThemeData buildLightTheme(Color accentColor) {
+    return lightTheme.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: accentColor,
+        brightness: Brightness.light,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        highlightElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+      bottomAppBarTheme: BottomAppBarThemeData(
+        color: accentColor,
+        elevation: 8,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return Colors.grey.shade400;
+            } else if (states.contains(WidgetState.pressed)) {
+              return _darken(accentColor, 0.12);
+            }
+            return accentColor;
+          }),
+          foregroundColor: WidgetStateProperty.all(Colors.white),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return _withAlpha(accentColor, 0.35);
+          }
+          return null;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+    );
+  }
+
+  static ThemeData buildDarkTheme(Color accentColor) {
+    return darkTheme.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: accentColor,
+        brightness: Brightness.dark,
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        highlightElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+      bottomAppBarTheme: BottomAppBarThemeData(
+        color: AppColor.appBarDarkColor,
+        elevation: 8,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return Colors.grey.shade700;
+            } else if (states.contains(WidgetState.pressed)) {
+              return _darken(accentColor, 0.12);
+            }
+            return accentColor;
+          }),
+          foregroundColor: WidgetStateProperty.all(Colors.white),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return _withAlpha(accentColor, 0.45);
+          }
+          return null;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+    );
+  }
+
+  static Color _darken(Color color, double amount) {
+    final hsl = HSLColor.fromColor(color);
+    final darkened = hsl.withLightness(
+      (hsl.lightness - amount).clamp(0.0, 1.0),
+    );
+    return darkened.toColor();
+  }
+
+  static Color _withAlpha(Color color, double opacity) {
+    return color.withAlpha((255 * opacity).round());
+  }
 }
