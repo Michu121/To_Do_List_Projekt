@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_settings.dart';
-import '../shared/widgets/upper_app_bar.dart';
+import '../shared/widgets/app_bars/upper_app_bar.dart';
+import 'package:todo_list/shared/services/auth_service.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -55,8 +56,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                   (color) => _AccentColorCircle(
                                 color: color,
                                 isSelected:
-                                settings.accentColor.value ==
-                                    color.value,
+                                settings.accentColor.toARGB32() ==
+                                    color.toARGB32(),
                                 onTap: () => settings.setAccentColor(color),
                               ),
                             )
@@ -141,6 +142,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         );
                       },
                     ),
+                    const Divider(height: 1),
+                    _SimpleTile(
+                      title: 'Log out',
+                      onTap: () => _showLogoutDialog(context),
+                    ),
                   ],
                 ),
               ],
@@ -159,32 +165,29 @@ class _SettingsPageState extends State<SettingsPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<AppThemeMode>(
-                  value: AppThemeMode.light,
-                  groupValue: settings.themeMode,
-                  title: const Text('Light'),
-                  onChanged: (value) {
-                    if (value != null) {
-                      settings.setThemeMode(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-                RadioListTile<AppThemeMode>(
-                  value: AppThemeMode.dark,
-                  groupValue: settings.themeMode,
-                  title: const Text('Dark'),
-                  onChanged: (value) {
-                    if (value != null) {
-                      settings.setThemeMode(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-              ],
+            child: RadioGroup<AppThemeMode>(
+              groupValue: settings.themeMode,
+              onChanged: (AppThemeMode? value) {
+                if (value != null) {
+                  settings.setThemeMode(value);
+                  Navigator.pop(context);
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<AppThemeMode>(
+                    value: AppThemeMode.light,
+                    title: const Text('Light'),
+                    selected: settings.themeMode == AppThemeMode.light,
+                  ),
+                  RadioListTile<AppThemeMode>(
+                    value: AppThemeMode.dark,
+                    title: const Text('Dark'),
+                    selected: settings.themeMode == AppThemeMode.dark,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -200,19 +203,24 @@ class _SettingsPageState extends State<SettingsPage> {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                RadioListTile<String>(
-                  value: 'English',
-                  groupValue: settings.language,
-                  title: const Text('English'),
-                  onChanged: (value) {
-                    settings.setLanguage('English');
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
+            child: RadioGroup<String>(
+              groupValue: settings.language,
+              onChanged: (String? value) {
+                if (value != null) {
+                  settings.setLanguage(value);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  RadioListTile<String>(
+                    value: 'English',
+                    title: Text('English'),
+                    selected: true,
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -316,7 +324,41 @@ class _SettingsPageState extends State<SettingsPage> {
     confirmPasswordController.dispose();
   }
 }
+Future<void> _showLogoutDialog(BuildContext context) async {
+  final shouldLogout = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return AlertDialog(
+        title: const Text('Log out'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Log out'),
+          ),
+        ],
+      );
+    },
+  );
 
+  if (shouldLogout == true) {
+    try {
+      await authService.logout();
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to log out: $e'),
+        ),
+      );
+    }
+  }
+}
 class PrivacySecurityPage extends StatelessWidget {
   const PrivacySecurityPage({super.key});
 

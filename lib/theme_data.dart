@@ -7,6 +7,7 @@ class AppColor {
   static const Color appBarLightColor = Colors.blueAccent;
   static const Color chosenButtonColor = Colors.blue;
   static const Color unchosenButtonColor = Colors.white24;
+  static const Color defaultAccentColor = Color(0xFF5C6BC0);
 }
 
 class AppTheme {
@@ -110,11 +111,19 @@ class AppTheme {
       ),
     ),
   );
+
   static ThemeData buildLightTheme(Color accentColor) {
     return lightTheme.copyWith(
       colorScheme: ColorScheme.fromSeed(
         seedColor: accentColor,
         brightness: Brightness.light,
+      ),
+      appBarTheme: AppBarTheme(
+        elevation: 8,
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: accentColor,
@@ -176,10 +185,39 @@ class AppTheme {
   }
 
   static ThemeData buildDarkTheme(Color accentColor) {
+    final bool isDefaultBlue = _isDefaultBlueAccent(accentColor);
+
+    final ColorScheme dynamicColorScheme = ColorScheme.fromSeed(
+      seedColor: accentColor,
+      brightness: Brightness.dark,
+    );
+
+    final Color darkScaffoldColor = isDefaultBlue
+        ? AppColor.scaffoldDarkColor
+        : _buildDarkScaffoldColor(accentColor);
+
+    final Color darkSurfaceColor = isDefaultBlue
+        ? dynamicColorScheme.surface
+        : _buildDarkSurfaceColor(accentColor);
+
+    final Color darkDividerColor = isDefaultBlue
+        ? Colors.white.withAlpha(25)
+        : _mix(darkSurfaceColor, accentColor, 0.22);
+
     return darkTheme.copyWith(
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: accentColor,
-        brightness: Brightness.dark,
+      scaffoldBackgroundColor: darkScaffoldColor,
+      canvasColor: darkScaffoldColor,
+      colorScheme: dynamicColorScheme.copyWith(
+        surface: darkSurfaceColor,
+      ),
+      cardColor: darkSurfaceColor,
+      dividerColor: darkDividerColor,
+      appBarTheme: AppBarTheme(
+        elevation: 8,
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: accentColor,
@@ -191,7 +229,7 @@ class AppTheme {
         ),
       ),
       bottomAppBarTheme: BottomAppBarThemeData(
-        color: AppColor.appBarDarkColor,
+        color: accentColor,
         elevation: 8,
       ),
       textButtonTheme: TextButtonThemeData(
@@ -240,12 +278,36 @@ class AppTheme {
     );
   }
 
+  static bool _isDefaultBlueAccent(Color color) {
+    return color.toARGB32() == AppColor.defaultAccentColor.toARGB32();
+  }
+
+  static Color _buildDarkScaffoldColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness((hsl.lightness * 0.30).clamp(0.13, 0.19))
+        .withSaturation((hsl.saturation * 0.40).clamp(0.12, 0.55))
+        .toColor();
+  }
+
+  static Color _buildDarkSurfaceColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness((hsl.lightness * 0.13).clamp(0.04, 0.08))
+        .withSaturation((hsl.saturation * 0.24).clamp(0.05, 0.35))
+        .toColor();
+  }
+
   static Color _darken(Color color, double amount) {
     final hsl = HSLColor.fromColor(color);
     final darkened = hsl.withLightness(
       (hsl.lightness - amount).clamp(0.0, 1.0),
     );
     return darkened.toColor();
+  }
+
+  static Color _mix(Color a, Color b, double amount) {
+    return Color.lerp(a, b, amount) ?? a;
   }
 
   static Color _withAlpha(Color color, double opacity) {

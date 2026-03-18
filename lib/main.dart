@@ -11,11 +11,20 @@ import 'package:todo_list/shared/view/mainpage.dart';
 import 'package:todo_list/view/loginpage.dart';
 import 'firebase_options.dart';
 import 'theme_data.dart';
+import 'app_settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  FirebaseFirestore.instance.settings = const Settings();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+  );
+
+  await AppSettings.instance.load();
 
   runApp(const MyApp());
 }
@@ -25,14 +34,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const AuthGate(),
+    return AnimatedBuilder(
+      animation: AppSettings.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          debugShowCheckedModeBanner: false,
+
+          theme: AppTheme.buildLightTheme(AppSettings.instance.accentColor),
+          darkTheme: AppTheme.buildDarkTheme(AppSettings.instance.accentColor),
+          themeMode: AppSettings.instance.materialThemeMode,
+
+          home: const AuthGate(),
+        );
+      },
     );
   }
 }

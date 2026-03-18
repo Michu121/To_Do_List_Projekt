@@ -34,6 +34,7 @@ class AppSettings extends ChangeNotifier {
   bool _hideNotificationContent = false;
 
   AppThemeMode get themeMode => _themeMode;
+
   ThemeMode get materialThemeMode =>
       _themeMode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light;
 
@@ -57,7 +58,8 @@ class AppSettings extends ChangeNotifier {
     _themeMode = savedTheme == 'dark' ? AppThemeMode.dark : AppThemeMode.light;
 
     _accentColor = Color(
-      _prefs.getInt('accent_color') ?? availableAccentColors.first.value,
+      _prefs.getInt('accent_color') ??
+          availableAccentColors.first.toARGB32(),
     );
 
     _language = 'English';
@@ -82,7 +84,7 @@ class AppSettings extends ChangeNotifier {
 
   Future<void> setAccentColor(Color color) async {
     _accentColor = color;
-    await _prefs.setInt('accent_color', color.value);
+    await _prefs.setInt('accent_color', color.toARGB32());
     notifyListeners();
   }
 
@@ -103,7 +105,6 @@ class AppSettings extends ChangeNotifier {
 
       await _prefs.setBool('task_reminders', false);
       await _prefs.setBool('invitations', false);
-      await _prefs.setBool('group_invitationst', false);
       await _prefs.setBool('group_invitations', false);
     }
 
