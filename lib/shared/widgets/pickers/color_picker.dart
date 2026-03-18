@@ -22,26 +22,22 @@ class _ColorPickerState extends State<ColorPicker> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          direction: Axis.horizontal,
-          children: [
-                ...colorsMap.entries.map((entry) {
-                final String name = entry.key;
-                final ColorsToPick colorData = entry.value;
-                return ColorButton(
-                  color: colorData,
-                  onTap: () => widget.onTap(name), // Teraz poprawnie wywołujemy funkcję z nazwą
-                );}).toList(),
-          ],
-        ),
-        ]
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        alignment: WrapAlignment.center,
+        runAlignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        direction: Axis.horizontal,
+        children: [
+              ...colorsMap.entries.map((entry) {
+              final String name = entry.key;
+              final ColorsToPick colorData = entry.value;
+              return ColorButton(
+                color: colorData,
+                onTap: () => widget.onTap(name), // Teraz poprawnie wywołujemy funkcję z nazwą
+              );}),
+        ],
       ),
     );
   }

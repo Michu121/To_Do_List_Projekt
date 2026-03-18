@@ -59,7 +59,8 @@ class GroupTaskService extends ChangeNotifier {
 
     final activeIds = _groups.map((g) => g.id).toSet();
 
-    final staleIds = _taskSubs.keys.where((id) => !activeIds.contains(id)).toList();
+    final staleIds =
+    _taskSubs.keys.where((id) => !activeIds.contains(id)).toList();
     for (final id in staleIds) {
       _taskSubs[id]?.cancel();
       _taskSubs.remove(id);
@@ -72,6 +73,7 @@ class GroupTaskService extends ChangeNotifier {
             .collection('groups')
             .doc(group.id)
             .collection('tasks')
+            .where('isDeleted', isEqualTo: false) // ← only live tasks
             .orderBy('date')
             .snapshots()
             .listen(
@@ -90,10 +92,13 @@ class GroupTaskService extends ChangeNotifier {
   }
 
   void _onTasksSnapshot(String groupId, QuerySnapshot snapshot) {
-    _tasksByGroup[groupId] = snapshot.docs.map((doc) {
+    _tasksByGroup[groupId] = snapshot.docs
+        .map((doc) {
       final data = doc.data() as Map<String, dynamic>;
       return Task.fromJson({...data, 'id': doc.id});
-    }).toList();
+    })
+        .where((t) => !t.isDeleted) // guard against stale cache
+        .toList();
 
     _tasks = _tasksByGroup.values
         .expand((list) => list)
@@ -180,17 +185,33 @@ class GroupTaskService extends ChangeNotifier {
     }
   }
 
+  /// Soft-delete: sets isDeleted = true instead of removing the document.
   Future<void> deleteTask(String groupId, String taskId) async {
-    await _db
-        .collection('groups')
-        .doc(groupId)
-        .collection('tasks')
-        .doc(taskId)
-        .delete();
+    // 1. Remove from local cache immediately for instant UI feedback
+    _tasksByGroup[groupId]?.removeWhere((t) => t.id == taskId);
+    _tasks = _tasksByGroup.values
+        .expand((list) => list)
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    notifyListeners();
+
+    // 2. Persist soft-delete to Firestore in the background
+    try {
+      await _db
+          .collection('groups')
+          .doc(groupId)
+          .collection('tasks')
+          .doc(taskId)
+          .update({'isDeleted': true}).timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('GroupTaskService.deleteTask error: $e');
+    }
   }
 
   List<Task> tasksForGroup(String groupId) {
-    return List.unmodifiable(_tasksByGroup[groupId] ?? []);
+    return List.unmodifiable(
+      (_tasksByGroup[groupId] ?? []).where((t) => !t.isDeleted),
+    );
   }
 
   void reset() {

@@ -121,12 +121,16 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     }
 
 
-    return Padding(
+    return Container(
       padding: EdgeInsets.fromLTRB(
         20,
         20,
         20,
         MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        border: Border(top: BorderSide(color: Colors.grey.shade300, width: 2))
       ),
       child: SingleChildScrollView(
         child: Column(

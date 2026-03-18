@@ -44,6 +44,7 @@ class AppTheme {
     // BottomAppBar Theme
     bottomAppBarTheme: const BottomAppBarThemeData(
       color: AppColor.appBarLightColor,
+      height: 80,
       elevation: 8,
     ),
 

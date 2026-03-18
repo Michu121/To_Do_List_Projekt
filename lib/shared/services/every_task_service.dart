@@ -4,7 +4,7 @@ import '../models/task.dart';
 import 'task_services.dart';
 import 'group_task_service.dart';
 
-class EveryTaskService extends ChangeNotifier{
+class EveryTaskService extends ChangeNotifier {
   final uid = FirebaseAuth.instance.currentUser?.uid;
 
   bool get loading => groupTaskService.loading;
@@ -15,22 +15,26 @@ class EveryTaskService extends ChangeNotifier{
     taskServices.addListener(notifyListeners);
     groupTaskService.addListener(notifyListeners);
   }
+
   @override
   void dispose() {
     taskServices.removeListener(notifyListeners);
     groupTaskService.removeListener(notifyListeners);
     super.dispose();
   }
+
   List<Task>? getTasks() {
     if (uid == null) return null;
-    return [...taskServices.getTasks(),...groupTaskService.tasks];
+    return [...taskServices.getTasks(), ...groupTaskService.tasks];
   }
-  void removeTask(String? gid,Task task) {
-    if (uid == null) return;
-    if (task.group == null && gid == null) {
-       taskServices.deleteTask(task);
-    }else{
-      groupTaskService.deleteTask(task.group!.id, task.id);
+
+  /// Soft-deletes the task. The Firestore stream will push the update back,
+  /// removing it from the UI automatically — no local mutation needed.
+  void removeTask(String? gid, Task task) {
+    if (gid == null) {
+      taskServices.deleteTask(task);
+    } else {
+      groupTaskService.deleteTask(gid, task.id);
     }
   }
 }
