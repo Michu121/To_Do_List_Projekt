@@ -1,18 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'difficulty.dart';
 import 'status.dart';
 import 'category.dart';
 import 'group.dart';
 
-const uuid = Uuid();
+const _uuid = Uuid();
 
 class Task {
-
   final String id;
   final String title;
   final Category category;
   final Group? group;
   final String description;
+  final Difficulty difficulty;
   final Status status;
   final DateTime date;
   final Color color;
@@ -29,68 +31,80 @@ class Task {
     this.group,
     this.color = Colors.grey,
     this.timeStart = const TimeOfDay(hour: 0, minute: 0),
-    this.timeEnd = const TimeOfDay(hour: 0, minute: 0),
-  }) : id = id ?? uuid.v4();
+    this.timeEnd = const TimeOfDay(hour: 0, minute: 0), required this.difficulty,
+  }) : id = id ?? _uuid.v4();
 
   factory Task.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic raw) {
+      if (raw is Timestamp) return raw.toDate();
+      if (raw is String) return DateTime.parse(raw);
+      return DateTime.now();
+    }
 
     return Task(
-      id: json['id'],
-      title: json['title'],
-
-      status: Status.fromInt(json['status']),
-
-      category: Category.fromJson(json['category']),
-
+      id: json['id'] as String,
+      title: json['title'] as String,
+      status: Status.fromInt(json['status'] as int),
+      category: Category.fromJson(json['category'] as Map<String, dynamic>),
       group: json['group'] != null
-          ? Group.fromJson(json['group'])
+          ? Group.fromJson(json['group'] as Map<String, dynamic>)
           : null,
-
-      description: json['description'],
-
-      date: DateTime.parse(json['date']),
-
-      color: Color(json['color']),
-
+      description: json['description'] as String,
+      date: parseDate(json['date']),
+      color: Color(json['color'] as int),
       timeStart: TimeOfDay(
-        hour: json['timeStart']['hour'],
-        minute: json['timeStart']['minute'],
+        hour: (json['timeStart'] as Map)['hour'] as int,
+        minute: (json['timeStart'] as Map)['minute'] as int,
       ),
-
       timeEnd: TimeOfDay(
-        hour: json['timeEnd']['hour'],
-        minute: json['timeEnd']['minute'],
-      ),
+        hour: (json['timeEnd'] as Map)['hour'] as int,
+        minute: (json['timeEnd'] as Map)['minute'] as int,
+      ), difficulty: Difficulty.fromInt(json['difficulty'] as int),
     );
   }
 
   Map<String, dynamic> toJson() {
-
     return {
-
-      "id": id,
-      "title": title,
-      "status": status.toInt(),
-
-      "category": category.toJson(),
-
-      "group": group?.toJson(),
-
-      "description": description,
-
-      "date": date.toIso8601String(),
-
-      "color": color.value,
-
-      "timeStart": {
-        "hour": timeStart.hour,
-        "minute": timeStart.minute
-      },
-
-      "timeEnd": {
-        "hour": timeEnd.hour,
-        "minute": timeEnd.minute
-      }
+      'id': id,
+      'title': title,
+      'status': status.toInt(),
+      'category': category.toJson(),
+      'group': group?.toJson(),
+      'difficulty': difficulty.toInt(),
+      'description': description,
+      'date': date.toIso8601String(),
+      'color': color.toARGB32(),
+      'timeStart': {'hour': timeStart.hour, 'minute': timeStart.minute},
+      'timeEnd': {'hour': timeEnd.hour, 'minute': timeEnd.minute},
     };
   }
+
+  Task copyWith({
+    String? title,
+    Status? status,
+    DateTime? date,
+    Category? category,
+    Group? group,
+    String? description,
+    Difficulty? difficulty,
+    Color? color,
+    TimeOfDay? timeStart,
+    TimeOfDay? timeEnd,
+  }) {
+    return Task(
+      id: id,
+      title: title ?? this.title,
+      status: status ?? this.status,
+      date: date ?? this.date,
+      category: category ?? this.category,
+      group: group ?? this.group,
+      description: description ?? this.description,
+      color: color ?? this.color,
+      timeStart: timeStart ?? this.timeStart,
+      timeEnd: timeEnd ?? this.timeEnd,
+      difficulty: difficulty ?? this.difficulty,
+    );
+  }
+
+  String formatDate(DateTime d) => '${d.day}.${d.month}.${d.year}';
 }

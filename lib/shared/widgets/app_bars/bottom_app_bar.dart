@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/pages.dart';
-import '../notches/smoth_notch.dart';
+import '../../models/pages.dart';
+import '../../notches/smoth_notch.dart';
 
 class MyBottomAppBar extends StatefulWidget {
   final bool isFloating;
@@ -91,7 +91,6 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
   }
 
   Widget _buildNavButton(Pages page, BuildContext context) {
-    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => widget.onPageSelected(page),
       child: AnimatedContainer(
@@ -106,7 +105,7 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
         height: 55,
         padding: const EdgeInsets.all(8),
         alignment: Alignment.center,
-        child: Icon(page.icon, color: theme.colorScheme.onPrimary, size: 28),
+        child: Icon(page.icon, color: Colors.white, size: 28),
       ),
     );
   }
@@ -114,45 +113,43 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
-      child: BottomAppBar(
-        shape: widget.isFloating ? SmoothNotch() : null,
-        notchMargin: 6,
-        child: Row(
-          mainAxisAlignment: widget.isFloating?MainAxisAlignment.spaceBetween:MainAxisAlignment.center,
-          children: [
-            // Lewa strona (Home, Groups)
-            Row(children: [
-              for (var page in _pages.sublist(0, 2)) _buildNavButton(page, context),
-            ]),
+    return BottomAppBar(
+      shape: widget.isFloating ? SmoothNotch() : null,
+      notchMargin: 6,
+      child: Row(
+        mainAxisAlignment: widget.isFloating?MainAxisAlignment.spaceBetween:MainAxisAlignment.center,
+        children: [
+          // Lewa strona (Home, Groups)
+          Row(children: [
+            for (var page in _pages.sublist(0, 2)) _buildNavButton(page, context),
+          ]),
 
-            // Prawa strona (Calendar + More/Inne)
-            Row(children: [
-              ...(widget.isFloating ? [_buildNavButton(_pages[2], context)] : _pages.sublist(2, 4).map((page) => _buildNavButton(page, context)).toList()),
-              GestureDetector(
-                key: _moreKey,
-                onTap: () async {
-                  setState(() => _rotated = true);
-                  final renderBox = _moreKey.currentContext!.findRenderObject() as RenderBox;
-                  final offset = renderBox.localToGlobal(Offset.zero);
+          // Prawa strona (Calendar + More/Inne)
+          Row(children: [
+            ...(widget.isFloating ? [_buildNavButton(_pages[2], context)] : _pages.sublist(2, 4).map((page) => _buildNavButton(page, context)).toList()),
+            GestureDetector(
+              key: _moreKey,
+              onTap: () async {
+                setState(() => _rotated = true);
+                final renderBox = _moreKey.currentContext!.findRenderObject() as RenderBox;
+                final offset = renderBox.localToGlobal(Offset.zero);
 
-                  final selected = await showMoreMenu(offset);
-                  setState(() => _rotated = false);
+                final selected = await showMoreMenu(offset);
+                setState(() => _rotated = false);
 
-                  if (selected != null) widget.onPageSelected(selected);
-                },
-                child: AnimatedRotation(
-                  turns: _rotated ? -0.25 : 0,
-                  duration: const Duration(milliseconds: 300),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Icon(Icons.more_horiz, size: 35, color: _moreColor(context)),
-                  ),
+                if (selected != null) widget.onPageSelected(selected);
+              },
+              child: AnimatedRotation(
+                turns: _rotated ? -0.25 : 0,
+                duration: const Duration(milliseconds: 300),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(Icons.more_horiz, size: 35, color: _moreColor(context)),
                 ),
-              )
-            ]),
-          ],
-        ),
+              ),
+            )
+          ]),
+        ],
       ),
     );
   }

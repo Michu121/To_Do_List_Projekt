@@ -1,68 +1,74 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
-import 'dart:io';
 import '../models/category.dart';
+import 'fire_store_service.dart';
 
 class CategoryServices extends ChangeNotifier {
-  Map<String, Category> _categories = {
-    "Default": Category(name: "Default", color: Colors.white),
-    "Work": Category(name: "Work", color: Colors.blue),
-    "Personal": Category(name: "Personal", color: Colors.red),
-    "Home": Category(name: "Home", color: Colors.green),
-    "Ahh": Category(name: "Ahh", color: Colors.green)
+  static final Map<String, Category> _defaults = {
+    'Work': Category(name: 'Work', color: Colors.blue),
+    'Personal': Category(name: 'Personal', color: Colors.green),
+    'Default': Category(name: 'Default', color: Colors.grey),
   };
-  File? _file;
+
+  Map<String, Category> _categories = Map.of(_defaults);
+
+  StreamSubscription<QuerySnapshot>? _subscription;
 
   Map<String, Category> getCategories() => _categories;
 
-  Future<void> init() async {
-    final directory = await getApplicationDocumentsDirectory();
-    _file = File('${directory.path}/categories.json');
-
-    if (_file!.existsSync()) {
-      String content = await _file!.readAsString();
-      if (content.isNotEmpty) {
-        final List<dynamic> jsonList = jsonDecode(content);
-
-        _categories = {
-          for (var item in jsonList)
-            Category.fromJson(item).name : Category.fromJson(item)
-        };
-
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<void> saveCategories() async {
-    if (_file == null) return;
-
-    final jsonList = _categories.values.map((cat) => cat.toJson()).toList();
-    await _file!.writeAsString(jsonEncode(jsonList));
-  }
-
-  void addCategory(Category category) {
-    if (_categories.containsKey(category.name)) {
-      return;
-    }
-    _categories[category.name] = category;
-    saveCategories();
-    notifyListeners();
-  }
-
-  void updateCategory(Category category) {
-    if (_categories.containsKey(category.name)) {
-      _categories[category.name] = category;
-      saveCategories();
+  void init(String uid) {
+    _subscription?.cancel();
+    _subscription = firestoreService.categoriesStream(uid).listen((snapshot) {
+      final fromFirestore = {
+        for (final doc in snapshot.docs)
+          (doc.data() as Map<String, dynamic>)['name'] as String:
+          Category.fromJson(doc.data() as Map<String, dynamic>),
+      };
+      _categories = {
+        ..._defaults,
+        ...fromFirestore,
+      };
       notifyListeners();
-    }
+    });
   }
 
-  void deleteCategory(String name) {
-    _categories.remove(name);
-    saveCategories();
+  void clear() {
+    _subscription?.cancel();
+    _subscription = null;
+    _categories = Map.of(_defaults);
     notifyListeners();
+  }
+
+  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
+  Future<void> addCategory(Category category) async {
+    final uid = _uid;
+    if (uid == null) return;
+    if (_categories.containsKey(category.name)) return;
+    await firestoreService.setCategory(uid, category.id, category.toJson());
+  }
+
+  Future<void> updateCategory(Category category) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await firestoreService.setCategory(uid, category.id, category.toJson());
+  }
+
+  Future<void> deleteCategory(String name) async {
+    final uid = _uid;
+    if (uid == null) return;
+    if (_defaults.containsKey(name)) return;
+    final cat = _categories[name];
+    if (cat == null) return;
+    await firestoreService.deleteCategory(uid, cat.id);
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
 

@@ -5,6 +5,7 @@ class ColorServices extends ChangeNotifier {
   final Map<String,ColorsToPick> _colors = {
     "Red" : ColorsToPick(color: Colors.red, checked: false),
     "Blue" : ColorsToPick(color: Colors.blue, checked: false),
+    "DarkBlue" : ColorsToPick(color: Colors.blue.shade900, checked: false),
     "Green" : ColorsToPick(color: Colors.green, checked: false),
     "Orange" : ColorsToPick(color: Colors.orange, checked: false),
     "Purple" : ColorsToPick(color: Colors.purple, checked: false),

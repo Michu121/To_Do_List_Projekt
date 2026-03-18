@@ -7,18 +7,17 @@ class DismissibleRemoveBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // USUNIĘTO MARGINES - tło musi wypełnić obszar wyznaczony przez Padding rodzica
         decoration: BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.circular(10),
+          color: Colors.red.shade400,
+          borderRadius: BorderRadius.circular(12),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
             mainAxisAlignment: mainAxisAlignment,
             children: [
-              const Icon(Icons.delete, color: Colors.white),
-              const SizedBox(width: 8),
-              const Text("Usuń", style: TextStyle(color: Colors.white, fontSize: 20)),
+              const Icon(Icons.delete, color: Colors.white, size: 16),
+              const SizedBox(width: 4),
+              const Text("Usuń", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
             ]
         )
     );

@@ -1,53 +1,82 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart'; // DODAJ TO
-import 'dart:convert';
-import 'dart:io';
 import '../models/group.dart';
+import '../models/user_model.dart';
+import 'fire_store_service.dart';
 
 class GroupServices extends ChangeNotifier {
   List<Group> _groups = [];
-  File? _file; // Plik będzie dostępny dopiero po inicjalizacji
+  StreamSubscription<QuerySnapshot>? _subscription;
 
   List<Group> getGroups() => _groups;
 
-  // 1. Zmieniamy inicjalizację na asynchroniczną
-  Future<void> init() async {
-    final directory = await getApplicationDocumentsDirectory();
-    _file = File('${directory.path}/groups.json');
-
-    if (_file!.existsSync()) {
-      String content = await _file!.readAsString();
-      if (content.isNotEmpty) {
-        List<dynamic> jsonList = jsonDecode(content);
-        _groups = jsonList.map((e) => Group.fromJson(e)).toList();
-        notifyListeners(); // Ważne: powiadom o wczytanych danych!
-      }
-    }
+  void init(String uid) {
+    _subscription?.cancel();
+    _subscription = firestoreService.groupsStream(uid).listen((snapshot) {
+      _groups = snapshot.docs
+          .map((doc) => Group.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+      notifyListeners();
+    });
   }
 
-  Future<void> saveGroups() async {
-    if (_file == null) return;
-
-    String jsonList = jsonEncode(_groups.map((e) => e.toJson()).toList());
-    await _file!.writeAsString(jsonList);
-  }
-
-  void addGroup(Group group) {
-    _groups = [..._groups, group];
-    saveGroups();
+  void clear() {
+    _subscription?.cancel();
+    _subscription = null;
+    _groups = [];
     notifyListeners();
   }
 
-  void updateGroup(Group group) {
-    int index = _groups.indexWhere((element) => element.id == group.id);
-    _groups = [..._groups..removeAt(index)..insert(index, group)];
-    saveGroups();
-    notifyListeners();
+  String? get _uid => FirebaseAuth.instance.currentUser?.uid;
+
+  Future<void> addGroup(Group group) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await firestoreService.setGroup(uid, group.id, group.toJson());
   }
-  void deleteGroup(Group group) {
-    _groups = [..._groups..removeWhere((element) => element.id == group.id)];
-    saveGroups();
-    notifyListeners();
+
+  Future<void> updateGroup(Group group) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await firestoreService.setGroup(uid, group.id, group.toJson());
+  }
+
+  Future<void> deleteGroup(Group group) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await firestoreService.deleteGroup(uid, group.id);
+  }
+
+  // ── Members ──────────────────────────────────────────────────────────────────
+
+  Future<UserModel?> findUserByEmail(String email) =>
+      firestoreService.findUserByEmail(email);
+
+  Future<void> addMember(String groupId, String memberUid) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await firestoreService.addMemberToGroup(uid, groupId, memberUid);
+  }
+
+  Future<void> removeMember(String groupId, String memberUid) async {
+    final uid = _uid;
+    if (uid == null) return;
+    await firestoreService.removeMemberFromGroup(uid, groupId, memberUid);
+  }
+
+  Future<List<UserModel>> getMembers(Group group) async {
+    final results = await Future.wait(
+      group.members.map((uid) => firestoreService.getUserById(uid)),
+    );
+    return results.whereType<UserModel>().toList();
+  }
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
-final GroupServices groupServices = GroupServices();
+
+final groupServices = GroupServices();
