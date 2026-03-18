@@ -9,6 +9,12 @@ class AppColor {
   static const Color unchosenButtonColor = Colors.white24;
 }
 
+class themeColors {
+  static const Color red = Colors.redAccent;
+  static const Color green = Colors.greenAccent;
+  static const Color blue = Colors.blueAccent;
+}
+
 class AppTheme {
   //==========================
   // Jasny motyw
@@ -72,18 +78,18 @@ class AppTheme {
 
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.blueAccent,
-      brightness: Brightness.light,
+      brightness: Brightness.dark,
     ),
 
     appBarTheme: const AppBarTheme(
       elevation: 8,
       backgroundColor: AppColor.appBarDarkColor,
-      foregroundColor: Colors.white,
+      foregroundColor: Color(0xFF00136C),
     ),
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: Colors.blue.shade900,
-      foregroundColor: Colors.white,
+      foregroundColor: Color(0xFF00136C),
       elevation: 6,
       highlightElevation: 10,
       shape: RoundedRectangleBorder(
@@ -106,7 +112,7 @@ class AppTheme {
           }
           return Colors.blue.shade900;
         }),
-        foregroundColor: WidgetStateProperty.all(Colors.white),
+        foregroundColor: WidgetStateProperty.all(Color(0xFF00136C)),
       ),
     ),
   );

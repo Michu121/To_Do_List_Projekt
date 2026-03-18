@@ -7,9 +7,9 @@ import 'status_checkbox.dart';
 
 class TaskTile extends StatelessWidget {
   final Task task;
-  const TaskTile({super.key, required this.task});
+  TaskTile({super.key, required this.task});
 
-  void _cycleStatus(Task t) {
+  static _cycleStatus(Task t) {
     final next = switch (t.status) {
       Status.todo => Status.inProgress,
       Status.inProgress => Status.done,
@@ -64,7 +64,7 @@ class TaskTile extends StatelessWidget {
                           StatusCheckbox(
                             status: task.status,
                             onTap: () => {
-                             wasDone = _cycleStatus(task);
+                             wasDone = _cycleStatus(task),
                             },
                           ),
                           const SizedBox(width: 12),
@@ -92,7 +92,7 @@ class TaskTile extends StatelessWidget {
                                       color: task.category.color,
                                     ),
                                     const SizedBox(width: 6),
-                                    if (!wasDone)
+                                    if (wasDone == true)
                                       _DifficultyBadge(task: task),
                                   ],
                                 ),

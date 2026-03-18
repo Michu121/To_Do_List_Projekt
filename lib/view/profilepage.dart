@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../shared/models/group.dart';
 import '../shared/models/league.dart';
 import '../shared/models/user_model.dart';
 import '../shared/services/group_services.dart';
 import '../shared/services/user_stats_service.dart';
+import 'friendspage.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -13,18 +15,17 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // TODO: replace with real auth user once auth is wired up
   final UserModel _mockUser = UserModel(
-    uid: 'me',
-    email: 'user@example.com',
-    name: 'NickName',
-    photo: null,
+    uid: '${FirebaseAuth.instance.currentUser!.uid}',
+    email: '${FirebaseAuth.instance.currentUser!.email}',
+    name: '${FirebaseAuth.instance.currentUser!.displayName}',
+    photo: '${FirebaseAuth.instance.currentUser!.photoURL}',
   );
 
   // Mock friends – replace with real friends service data
   final List<_FriendStats> _friends = [
     _FriendStats(name: 'NickName', points: 1500, leagueName: 'bronze', photo: null),
-    _FriendStats(name: 'Alex', points: 3200, leagueName: 'silver', photo: null),
+    _FriendStats(name: 'Alex', points: 3200, leagueName: 'silver', photo: 'shared/images/logo.png'),
   ];
 
   @override
