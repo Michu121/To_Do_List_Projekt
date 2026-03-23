@@ -427,7 +427,7 @@ class _CreateViewState extends State<_CreateView> {
               ),
               child: ValueListenableBuilder(
                 valueListenable: _nameCtrl,
-                builder: (_, __, ___) => Row(
+                builder: (_, _, _) => Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.group,
@@ -647,7 +647,7 @@ class _GroupQrScannerPageState extends State<GroupQrScannerPage> {
         actions: [
           ValueListenableBuilder(
             valueListenable: _scanner,
-            builder: (_, value, __) {
+            builder: (_, value, _) {
               final isOn = value.torchState == TorchState.on;
               return IconButton(
                 icon: Icon(isOn ? Icons.flash_on : Icons.flash_off),

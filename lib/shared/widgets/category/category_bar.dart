@@ -1,18 +1,10 @@
-// lib/shared/widgets/category/category_bar.dart
-//
-// Horizontal scrollable bar of category filter buttons shown at the top of
-// the home feed. Extracted from homepage.dart.
-//
-// CategoryBar       — the scrollable row
-// CategoryBarButton — individual button (selected / unselected state)
-
 import 'package:flutter/material.dart';
-
 import '../../models/category.dart';
 import '../../models/task.dart';
 import '../add_forms/add_category_form.dart';
 
-// ── Bar ───────────────────────────────────────────────────────────────────────
+/// Built-in category names — long-press edit is disabled for these.
+const _kDefaultNames = {'All', 'Default'};
 
 class CategoryBar extends StatelessWidget {
   const CategoryBar({
@@ -26,7 +18,6 @@ class CategoryBar extends StatelessWidget {
   final List<Category> categories;
   final Category selectedCategory;
   final ValueChanged<Category> onSelected;
-  // Pass in the full task list so each button can show a count.
   final List<Task> allTasks;
 
   @override
@@ -36,21 +27,22 @@ class CategoryBar extends StatelessWidget {
       child: Row(
         children: categories
             .map((cat) => CategoryBarButton(
-                  cat: cat,
-                  tasksInCategory: allTasks
-                      .where((t) =>
-                          cat.name == 'All' || t.category.id == cat.id)
-                      .length,
-                  selectedCategory: selectedCategory,
-                  onSelected: onSelected,
-                ))
+          cat: cat,
+          // Count by name so DB tasks (which may have different UUIDs)
+          // are included in the count correctly.
+          tasksInCategory: cat.name == 'All'
+              ? allTasks.length
+              : allTasks
+              .where((t) => t.category.name == cat.name)
+              .length,
+          selectedCategory: selectedCategory,
+          onSelected: onSelected,
+        ))
             .toList(),
       ),
     );
   }
 }
-
-// ── Button ────────────────────────────────────────────────────────────────────
 
 class CategoryBarButton extends StatelessWidget {
   const CategoryBarButton({
@@ -68,33 +60,58 @@ class CategoryBarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSelected = cat.id == selectedCategory.id;
-    final isAll = cat.name == 'All';
+    // Compare by name so the stable '__all__' sentinel still works
+    final isSelected = cat.name == selectedCategory.name;
+    final isDefault = _kDefaultNames.contains(cat.name);
+
+    final textColor = isSelected
+        ? (cat.color.computeLuminance() > 0.45 ? Colors.black87 : Colors.white)
+        : Colors.white;
 
     return InkWell(
       onTap: () => onSelected(cat),
-      // Long-press opens the category edit overlay (not available for "All").
+      // Only non-default, non-All categories support long-press editing
       onLongPress:
-          isAll ? null : () => CategoryOverlay.show(context, cat: cat),
-      child: Container(
+      isDefault ? null : () => CategoryOverlay.show(context, cat: cat),
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 5),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected
-              ? cat.color
-              : cat.color.withValues(alpha: 0.13),
+          color: isSelected ? cat.color : cat.color.withValues(alpha: 0.18),
           border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.onSurface
-                : cat.color,
-            width: 1,
+            color: isSelected ? cat.color : cat.color.withValues(alpha: 0.4),
+            width: isSelected ? 1.5 : 1,
           ),
           borderRadius: BorderRadius.circular(14),
+          boxShadow: isSelected
+              ? [
+            BoxShadow(
+                color: cat.color.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ]
+              : [],
         ),
-        child: Text(
-          '${cat.name} ($tasksInCategory)',
-          style: const TextStyle(color: Colors.white),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+             isDefault ? Padding(
+               padding: const EdgeInsets.only(right:2.0),
+               child: const Icon(Icons.block, size: 16, color: Colors.white),
+             )
+                 :const SizedBox(),
+            Text(
+              '${cat.name} ($tasksInCategory)',
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+
+          ],
         ),
       ),
     );

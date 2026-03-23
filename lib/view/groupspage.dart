@@ -10,13 +10,12 @@ import '../shared/models/user_model.dart';
 import '../shared/services/fire_store_service.dart';
 import '../shared/services/group_task_service.dart';
 import '../shared/widgets/add_forms/add_task_form.dart';
+import '../shared/widgets/in_app_notification.dart';
 import '../shared/widgets/task_tiles/delete_confirmation_dialog.dart';
 import '../shared/widgets/task_tiles/dismissible_remove_background.dart';
 import '../shared/widgets/task_tiles/status_checkbox.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Root page
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
 
 class GroupsPage extends StatelessWidget {
   const GroupsPage({super.key});
@@ -33,10 +32,6 @@ class GroupsPage extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Not logged in
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _NotLoggedIn extends StatelessWidget {
   const _NotLoggedIn();
 
@@ -48,25 +43,23 @@ class _NotLoggedIn extends StatelessWidget {
         children: [
           Icon(Icons.group_off,
               size: 64,
-              color: Colors.blueAccent.withValues(alpha: 0.4)),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.25)),
           const SizedBox(height: 16),
           Text('Sign in to use groups',
               style: TextStyle(
-                fontSize: 18,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.6),
-              )),
+                  fontSize: 18,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.5))),
         ],
       ),
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// Groups list
-// ═══════════════════════════════════════════════════════════════════════════════
 
 class _GroupsList extends StatelessWidget {
   const _GroupsList();
@@ -79,8 +72,7 @@ class _GroupsList extends StatelessWidget {
         final groups = groupTaskService.groups;
         if (groups.isEmpty) return const _EmptyState();
         return ListView.builder(
-          padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           physics: const BouncingScrollPhysics(),
           itemCount: groups.length + 1,
           itemBuilder: (context, i) {
@@ -93,10 +85,6 @@ class _GroupsList extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Empty state
-// ═══════════════════════════════════════════════════════════════════════════════
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
@@ -108,36 +96,34 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(Icons.group_add,
               size: 72,
-              color: Colors.blueAccent.withValues(alpha: 0.3)),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.18)),
           const SizedBox(height: 20),
           Text('No groups yet',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.5),
-              )),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.45))),
           const SizedBox(height: 8),
           Text('Create one or join with a code / QR',
               style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.4),
-              )),
+                  fontSize: 14,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.35))),
         ],
       ),
     );
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Group card — FIX: single popup menu instead of 3 icon buttons (no overflow)
-// Leave button removed from card — it's in the Members tab now
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── Group card ────────────────────────────────────────────────────────────────
 
 class _GroupCard extends StatelessWidget {
   const _GroupCard({required this.group});
@@ -147,25 +133,20 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final taskCount = groupTaskService.tasksForGroup(group.id).length;
     final memberCount = group.members.length;
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    final isOwner = group.createdBy == uid;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape:
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-              builder: (_) => GroupDetailPage(group: group)),
-        ),
+            MaterialPageRoute(
+                builder: (_) => GroupDetailPage(group: group))),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border:
-            Border(left: BorderSide(color: group.color, width: 5)),
+            border: Border(left: BorderSide(color: group.color, width: 5)),
           ),
           padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
           child: Row(
@@ -181,42 +162,45 @@ class _GroupCard extends StatelessWidget {
                   children: [
                     Text(group.name,
                         style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700)),
+                            fontSize: 16, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.people,
-                            size: 13, color: Colors.grey.shade500),
+                            size: 13,
+                            color: Colors.grey.shade500),
                         const SizedBox(width: 3),
                         Text(
                           '$memberCount member${memberCount != 1 ? 's' : ''}',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade500),
+                              fontSize: 12,
+                              color: Colors.grey.shade500),
                         ),
                         const SizedBox(width: 10),
                         Icon(Icons.task_alt,
-                            size: 13, color: Colors.grey.shade500),
+                            size: 13,
+                            color: Colors.grey.shade500),
                         const SizedBox(width: 3),
                         Text(
                           '$taskCount task${taskCount != 1 ? 's' : ''}',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade500),
+                              fontSize: 12,
+                              color: Colors.grey.shade500),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              // QR tap → sheet; long-press → copy ID silently
               GestureDetector(
-                onTap: () => _showQrSheet(context),
-                onLongPress: () =>
-                    Clipboard.setData(ClipboardData(text: group.id)),
+                onTap: () => _showQr(context),
+                onLongPress: () {
+                  Clipboard.setData(ClipboardData(text: group.id));
+                  InAppNotification.success(context, 'Group ID copied');
+                },
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.qr_code,
-                      color: group.color, size: 24),
+                  child: Icon(Icons.qr_code, color: group.color, size: 24),
                 ),
               ),
             ],
@@ -226,21 +210,17 @@ class _GroupCard extends StatelessWidget {
     );
   }
 
-  void _showQrSheet(BuildContext context) {
+  void _showQr(BuildContext context) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _GroupQrSheet(group: group),
     );
   }
 }
 
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// QR invite sheet
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── QR sheet ──────────────────────────────────────────────────────────────────
 
 class _GroupQrSheet extends StatelessWidget {
   const _GroupQrSheet({required this.group});
@@ -262,8 +242,8 @@ class _GroupQrSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text('Invite to ${group.name}',
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
+              style:
+              const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text('Scan or share to join',
               style: TextStyle(
@@ -276,61 +256,51 @@ class _GroupQrSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: group.color.withValues(alpha: 0.25),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
+                    color: group.color.withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    spreadRadius: 2)
               ],
             ),
             child: QrImageView(
               data: group.id,
               version: QrVersions.auto,
               size: 220,
-              eyeStyle: QrEyeStyle(
-                eyeShape: QrEyeShape.square,
-                color: group.color,
-              ),
+              eyeStyle:
+              QrEyeStyle(eyeShape: QrEyeShape.square, color: group.color),
               dataModuleStyle: const QrDataModuleStyle(
-                dataModuleShape: QrDataModuleShape.square,
-                color: Colors.black87,
-              ),
+                  dataModuleShape: QrDataModuleShape.square,
+                  color: Colors.black87),
             ),
           ),
           const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 10),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: group.color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border:
-              Border.all(color: group.color.withValues(alpha: 0.3)),
+              border: Border.all(
+                  color: group.color.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Flexible(
-                  child: Text(
-                    group.id,
-                    style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        letterSpacing: 0.5),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: Text(group.id,
+                      style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          letterSpacing: 0.5),
+                      overflow: TextOverflow.ellipsis),
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: group.id));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Group ID copied'),
-                          duration: Duration(seconds: 2)),
-                    );
+                    Navigator.pop(context);
+                    InAppNotification.success(context, 'Group ID copied');
                   },
-                  child:
-                  Icon(Icons.copy, size: 16, color: group.color),
+                  child: Icon(Icons.copy, size: 16, color: group.color),
                 ),
               ],
             ),
@@ -341,9 +311,7 @@ class _GroupQrSheet extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Group detail page
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── Group detail page ─────────────────────────────────────────────────────────
 
 class GroupDetailPage extends StatelessWidget {
   const GroupDetailPage({super.key, required this.group});
@@ -361,13 +329,11 @@ class GroupDetailPage extends StatelessWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.qr_code),
-              tooltip: 'Show invite QR',
               onPressed: () => showModalBottomSheet(
                 context: context,
                 shape: const RoundedRectangleBorder(
-                  borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(20)),
-                ),
+                    borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(20))),
                 builder: (_) => _GroupQrSheet(group: group),
               ),
             ),
@@ -378,9 +344,7 @@ class GroupDetailPage extends StatelessWidget {
             indicatorColor: Colors.white,
             tabs: [
               Tab(text: 'Tasks', icon: Icon(Icons.checklist, size: 18)),
-              Tab(
-                  text: 'Members',
-                  icon: Icon(Icons.people, size: 18)),
+              Tab(text: 'Members', icon: Icon(Icons.people, size: 18)),
             ],
           ),
         ),
@@ -402,9 +366,7 @@ class GroupDetailPage extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Tasks tab
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── Tasks tab ─────────────────────────────────────────────────────────────────
 
 class _TasksTab extends StatelessWidget {
   const _TasksTab({required this.group});
@@ -439,8 +401,8 @@ class _TasksTab extends StatelessWidget {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 12),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           physics: const BouncingScrollPhysics(),
           itemCount: tasks.length + 1,
           itemBuilder: (context, i) {
@@ -487,20 +449,18 @@ class _GroupDetailTaskCard extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       child: Card(
         margin: const EdgeInsets.only(bottom: 10),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border:
-            Border(left: BorderSide(color: task.color, width: 4)),
-          ),
-          padding: const EdgeInsets.symmetric(
-              horizontal: 12, vertical: 12),
+              borderRadius: BorderRadius.circular(12),
+              border:
+              Border(left: BorderSide(color: task.color, width: 4))),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
-              StatusCheckbox(
-                  status: task.status, onTap: onStatusTap),
+              StatusCheckbox(status: task.status, onTap: onStatusTap),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -508,13 +468,12 @@ class _GroupDetailTaskCard extends StatelessWidget {
                   children: [
                     Text(task.title,
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          decoration: isDone
-                              ? TextDecoration.lineThrough
-                              : null,
-                          color: isDone ? Colors.grey : null,
-                        )),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            decoration: isDone
+                                ? TextDecoration.lineThrough
+                                : null,
+                            color: isDone ? Colors.grey : null)),
                     if (task.description.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(task.description,
@@ -562,15 +521,7 @@ class _GroupDetailTaskCard extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// Members tab
-//
-// FIX 1: takes groupId, always reads live group from groupTaskService
-//         → member list is never stale
-// FIX 2: invite button visible to ALL members
-// FIX 3: leave button here only, for non-creators
-// FIX 4: remove button only for creator/owner
-// ═══════════════════════════════════════════════════════════════════════════════
+// ── Members tab ───────────────────────────────────────────────────────────────
 
 class _MembersTab extends StatefulWidget {
   const _MembersTab({required this.groupId});
@@ -582,17 +533,14 @@ class _MembersTab extends StatefulWidget {
 
 class _MembersTabState extends State<_MembersTab>
     with AutomaticKeepAliveClientMixin {
-  // Cache of uid → UserModel so we don't re-fetch unchanged users
   final Map<String, UserModel> _cache = {};
   List<UserModel> _members = [];
   bool _loading = true;
-  // Track the last members list we fetched for, to detect changes
-  List<String> _lastFetchedUids = [];
+  List<String> _lastUids = [];
 
   @override
   bool get wantKeepAlive => true;
 
-  // Get the live group from the service (never stale)
   Group? _liveGroup() {
     try {
       return groupTaskService.groups
@@ -605,7 +553,6 @@ class _MembersTabState extends State<_MembersTab>
   @override
   void initState() {
     super.initState();
-    // Re-fetch whenever the group's member list changes
     groupTaskService.addListener(_onServiceChange);
     _fetchMembers();
   }
@@ -617,55 +564,44 @@ class _MembersTabState extends State<_MembersTab>
   }
 
   void _onServiceChange() {
-    final group = _liveGroup();
-    if (group == null) return;
-    // Only re-fetch if the members list actually changed
-    final currentUids = List<String>.from(group.members)..sort();
-    final lastSorted = List<String>.from(_lastFetchedUids)..sort();
-    if (currentUids.toString() != lastSorted.toString()) {
-      _fetchMembers();
-    }
+    final g = _liveGroup();
+    if (g == null) return;
+    final cur = List<String>.from(g.members)..sort();
+    final last = List<String>.from(_lastUids)..sort();
+    if (cur.toString() != last.toString()) _fetchMembers();
   }
 
   Future<void> _fetchMembers() async {
-    final group = _liveGroup();
-    if (group == null) return;
-
+    final g = _liveGroup();
+    if (g == null) return;
     if (mounted) setState(() => _loading = true);
-    _lastFetchedUids = List.from(group.members);
+    _lastUids = List.from(g.members);
 
-    final currentUid =
-        FirebaseAuth.instance.currentUser?.uid;
-
-    final results = await Future.wait(
-      group.members.map((uid) async {
-        // Use cache when available
-        if (_cache.containsKey(uid)) return _cache[uid]!;
-        try {
-          final user = await firestoreService.getUserById(uid);
-          if (user != null) {
-            _cache[uid] = user;
-            return user;
-          }
-        } catch (_) {}
-        // Fallback: if Firestore doc missing (e.g. new account not yet
-        // written), create a minimal stub so the member still shows.
-        final stub = UserModel(
-          uid: uid,
-          email: uid == currentUid
-              ? (FirebaseAuth.instance.currentUser?.email ?? '')
-              : '',
-          name: uid == currentUid
-              ? (FirebaseAuth.instance.currentUser?.displayName ?? '')
-              : 'Member',
-          photo: uid == currentUid
-              ? FirebaseAuth.instance.currentUser?.photoURL
-              : null,
-        );
-        _cache[uid] = stub;
-        return stub;
-      }),
-    );
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    final results = await Future.wait(g.members.map((uid) async {
+      if (_cache.containsKey(uid)) return _cache[uid]!;
+      try {
+        final u = await firestoreService.getUserById(uid);
+        if (u != null) {
+          _cache[uid] = u;
+          return u;
+        }
+      } catch (_) {}
+      final stub = UserModel(
+        uid: uid,
+        email: uid == myUid
+            ? (FirebaseAuth.instance.currentUser?.email ?? '')
+            : '',
+        name: uid == myUid
+            ? (FirebaseAuth.instance.currentUser?.displayName ?? '')
+            : 'Member',
+        photo: uid == myUid
+            ? FirebaseAuth.instance.currentUser?.photoURL
+            : null,
+      );
+      _cache[uid] = stub;
+      return stub;
+    }));
 
     if (mounted) {
       setState(() {
@@ -675,65 +611,62 @@ class _MembersTabState extends State<_MembersTab>
     }
   }
 
-  void _confirmRemove(BuildContext context, Group group, UserModel member) {
+  void _confirmRemove(BuildContext context, Group g, UserModel m) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Remove member'),
         content: Text(
-            'Remove ${member.name.isNotEmpty ? member.name : member.email} from the group?'),
+            'Remove ${m.name.isNotEmpty ? m.name : m.email} from the group?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              groupTaskService.removeMember(group.id, member.uid);
-              _cache.remove(member.uid);
+              groupTaskService.removeMember(g.id, m.uid);
+              _cache.remove(m.uid);
             },
-            child: Text('Remove',
-                style: TextStyle(color: Colors.red.shade400)),
+            child:
+            Text('Remove', style: TextStyle(color: Colors.red.shade400)),
           ),
         ],
       ),
     );
   }
 
-  void _confirmLeave(BuildContext context, Group group) {
+  void _confirmLeave(BuildContext context, Group g) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Leave group'),
-        content: Text('Leave "${group.name}"?'),
+        content: Text('Leave "${g.name}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              groupTaskService.leaveGroup(group.id);
-              Navigator.of(context).pop(); // pop detail page too
+              groupTaskService.leaveGroup(g.id);
+              Navigator.of(context).pop();
             },
-            child: Text('Leave',
-                style: TextStyle(color: Colors.red.shade400)),
+            child:
+            Text('Leave', style: TextStyle(color: Colors.red.shade400)),
           ),
         ],
       ),
     );
   }
 
-  void _confirmDeleteGroup(BuildContext context, Group group) {
+  void _confirmDelete(BuildContext context, Group g) {
     final ctrl = TextEditingController();
-    String? error;
-
+    String? err;
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
+        builder: (ctx, setSt) => AlertDialog(
           title: const Text('Delete group'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -743,12 +676,10 @@ class _MembersTabState extends State<_MembersTab>
                 text: TextSpan(
                   style: DefaultTextStyle.of(ctx).style,
                   children: [
-                    const TextSpan(
-                        text: 'This will permanently delete '),
+                    const TextSpan(text: 'This will permanently delete '),
                     TextSpan(
-                        text: group.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold)),
+                        text: g.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     const TextSpan(
                         text:
                         ' and all its tasks.\n\nType the group name to confirm:'),
@@ -760,33 +691,28 @@ class _MembersTabState extends State<_MembersTab>
                 controller: ctrl,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: group.name,
-                  border: const OutlineInputBorder(),
-                  errorText: error,
-                ),
+                    hintText: g.name,
+                    border: const OutlineInputBorder(),
+                    errorText: err),
                 onChanged: (_) {
-                  if (error != null) {
-                    setDialogState(() => error = null);
-                  }
+                  if (err != null) setSt(() => err = null);
                 },
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
             TextButton(
               onPressed: () {
-                if (ctrl.text.trim() != group.name) {
-                  setDialogState(
-                          () => error = 'Name does not match');
+                if (ctrl.text.trim() != g.name) {
+                  setSt(() => err = 'Name does not match');
                   return;
                 }
-                Navigator.pop(ctx);       // close dialog
-                Navigator.of(context).pop(); // leave detail page first
-                groupTaskService.deleteGroup(group.id); // then delete
+                Navigator.pop(ctx);
+                Navigator.of(context).pop();
+                groupTaskService.deleteGroup(g.id);
               },
               child: Text('Delete',
                   style: TextStyle(
@@ -802,18 +728,15 @@ class _MembersTabState extends State<_MembersTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-
-    // Always use live group data from service
     return ListenableBuilder(
       listenable: groupTaskService,
       builder: (context, _) {
-        final group = _liveGroup();
-        if (group == null) {
+        final g = _liveGroup();
+        if (g == null) {
           return const Center(child: Text('Group not found'));
         }
-
         final myUid = FirebaseAuth.instance.currentUser?.uid;
-        final isOwner = group.createdBy == myUid;
+        final isOwner = g.createdBy == myUid;
 
         if (_loading) {
           return const Center(child: CircularProgressIndicator());
@@ -822,8 +745,8 @@ class _MembersTabState extends State<_MembersTab>
         return RefreshIndicator(
           onRefresh: _fetchMembers,
           child: ListView(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16, vertical: 12),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             children: [
               Text(
                 '${_members.length} member${_members.length != 1 ? 's' : ''}',
@@ -835,7 +758,7 @@ class _MembersTabState extends State<_MembersTab>
               const SizedBox(height: 8),
               ..._members.map((m) {
                 final isMe = m.uid == myUid;
-                final isMemberCreator = m.uid == group.createdBy;
+                final isCreator = m.uid == g.createdBy;
                 final initials = m.name.isNotEmpty
                     ? m.name
                     .trim()
@@ -848,13 +771,10 @@ class _MembersTabState extends State<_MembersTab>
                     ? m.email[0].toUpperCase()
                     : '?';
 
-                // Build subtitle: "Creator" / "You" / "Creator · You" / nothing
                 final subtitleParts = [
-                  if (isMemberCreator) 'Creator',
+                  if (isCreator) 'Creator',
                   if (isMe) 'You',
                 ];
-                final subtitleText =
-                subtitleParts.isNotEmpty ? subtitleParts.join(' · ') : null;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
@@ -864,7 +784,7 @@ class _MembersTabState extends State<_MembersTab>
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor:
-                      group.color.withValues(alpha: 0.15),
+                      g.color.withValues(alpha: 0.15),
                       child: m.photo != null
                           ? ClipOval(
                           child: Image.network(m.photo!,
@@ -873,41 +793,37 @@ class _MembersTabState extends State<_MembersTab>
                               fit: BoxFit.cover))
                           : Text(initials,
                           style: TextStyle(
-                              color: group.color,
+                              color: g.color,
                               fontWeight: FontWeight.bold)),
                     ),
                     title: Text(
-                      m.name.isNotEmpty ? m.name : m.email,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: subtitleText != null
-                        ? Text(subtitleText,
+                        m.name.isNotEmpty ? m.name : m.email,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: subtitleParts.isNotEmpty
+                        ? Text(subtitleParts.join(' · '),
                         style: TextStyle(
                             fontSize: 11,
-                            color: isMemberCreator
-                                ? group.color
+                            color: isCreator
+                                ? g.color
                                 : Colors.grey.shade500,
-                            fontWeight: isMemberCreator
+                            fontWeight: isCreator
                                 ? FontWeight.w600
                                 : FontWeight.normal))
                         : null,
-                    trailing: isOwner && !isMemberCreator
+                    trailing: isOwner && !isCreator
                         ? IconButton(
                       icon: Icon(Icons.person_remove,
                           size: 18, color: Colors.red.shade400),
                       tooltip: 'Remove member',
                       onPressed: () =>
-                          _confirmRemove(context, group, m),
+                          _confirmRemove(context, g, m),
                     )
                         : (!isOwner && isMe)
                         ? TextButton(
                       onPressed: () =>
-                          _confirmLeave(context, group),
+                          _confirmLeave(context, g),
                       style: TextButton.styleFrom(
-                          foregroundColor:
-                          Colors.red.shade400),
+                          foregroundColor: Colors.red.shade400),
                       child: const Text('Leave'),
                     )
                         : null,
@@ -919,8 +835,7 @@ class _MembersTabState extends State<_MembersTab>
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
-                    onPressed: () =>
-                        _confirmDeleteGroup(context, group),
+                    onPressed: () => _confirmDelete(context, g),
                     icon: Icon(Icons.delete_forever,
                         color: Colors.red.shade600),
                     label: Text('Delete group',
@@ -928,8 +843,7 @@ class _MembersTabState extends State<_MembersTab>
                             color: Colors.red.shade600,
                             fontWeight: FontWeight.w600)),
                     style: OutlinedButton.styleFrom(
-                      padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: Colors.red.shade300),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),

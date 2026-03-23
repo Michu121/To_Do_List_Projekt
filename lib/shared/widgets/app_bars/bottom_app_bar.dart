@@ -191,7 +191,6 @@ void initState() {
   }
 @override
 Widget build(BuildContext context) {
-  final theme = Theme.of(context);
   return BottomAppBar(
     shape: widget.isFloating ? SmoothNotch() : null,
     notchMargin: 6,

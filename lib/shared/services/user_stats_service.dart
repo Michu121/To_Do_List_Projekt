@@ -4,31 +4,36 @@ import '../models/task.dart';
 import '../models/league.dart';
 import 'task_services.dart';
 
+/// Computes local/offline stats from the task list.
+/// Used for STREAK (requires local task data).
+/// Points and task counts are now Firestore-backed via StatsService.
 class UserStatsService extends ChangeNotifier {
   UserStatsService() {
     taskServices.addListener(_recompute);
     _recompute();
   }
 
-  int _totalPoints = 0;
   int _doneCount = 0;
   int _inProgressCount = 0;
   int _streakDays = 0;
+  int _totalPoints = 0;
 
   int get totalPoints => _totalPoints;
   int get doneCount => _doneCount;
   int get inProgressCount => _inProgressCount;
   int get streakDays => _streakDays;
+
+  /// League based on local points — used as fallback only.
   League get league => League.forPoints(_totalPoints);
 
   void _recompute() {
     final tasks = taskServices.getTasks();
-
     final doneTasks = tasks.where((t) => t.status == Status.done).toList();
 
     _totalPoints = doneTasks.fold(0, (sum, t) => sum + t.difficulty.points);
     _doneCount = doneTasks.length;
-    _inProgressCount = tasks.where((t) => t.status == Status.inProgress).length;
+    _inProgressCount =
+        tasks.where((t) => t.status == Status.inProgress).length;
     _streakDays = _computeStreak(doneTasks);
 
     notifyListeners();
@@ -47,13 +52,15 @@ class UserStatsService extends ChangeNotifier {
     final todayNorm = DateTime(today.year, today.month, today.day);
 
     if (completedDays.first != todayNorm &&
-        completedDays.first != todayNorm.subtract(const Duration(days: 1))) {
+        completedDays.first !=
+            todayNorm.subtract(const Duration(days: 1))) {
       return 0;
     }
 
     int streak = 1;
     for (int i = 0; i < completedDays.length - 1; i++) {
-      final diff = completedDays[i].difference(completedDays[i + 1]).inDays;
+      final diff =
+          completedDays[i].difference(completedDays[i + 1]).inDays;
       if (diff == 1) {
         streak++;
       } else {
