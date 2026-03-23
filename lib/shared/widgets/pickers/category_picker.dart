@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../../models/category.dart';
-import '../../services/category_services.dart';
 import '../../notifiers/rotate_notifier.dart';
+import '../../services/category_services.dart';
 
 class CategoryPicker extends StatefulWidget {
   final Category? selectedCategory;
   final ValueChanged<Category?> onChanged;
-
-
 
   const CategoryPicker({
     super.key,
@@ -17,50 +16,65 @@ class CategoryPicker extends StatefulWidget {
 
   @override
   State<CategoryPicker> createState() => _CategoryPickerState();
-
 }
 
 class _CategoryPickerState extends State<CategoryPicker> {
   bool rotate = false;
   final rotateNotifier = RotateNotifier();
 
-
-
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.only(right:8.0),
+        padding: const EdgeInsets.only(right: 8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Category", style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface)),
+            Text(
+              "Category",
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
             const SizedBox(height: 6),
             InkWell(
-              onTap: (){
+              onTap: () {
                 _showPicker(context);
                 setState(() {
                   rotateNotifier.changeValue(true);
                 });
-
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 10,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade400),
                   borderRadius: BorderRadius.circular(8),
-                  color: Theme.of(context).cardColor
+                  color: Theme.of(context).cardColor,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.max,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(backgroundColor: widget.selectedCategory?.color ?? Colors.grey.shade400, radius: 8),
-                        const SizedBox(width: 10),
-                        Text(widget.selectedCategory?.name ?? "Wybierz", style: Theme.of(context).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w500)),
-                      ],
+                    CircleAvatar(
+                      backgroundColor:
+                          widget.selectedCategory?.color ??
+                          Colors.grey.shade400,
+                      radius: 8,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        widget.selectedCategory?.name ?? "Wybierz",
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                     ValueListenableBuilder(
                       valueListenable: rotateNotifier,
@@ -70,7 +84,7 @@ class _CategoryPickerState extends State<CategoryPicker> {
                           duration: const Duration(milliseconds: 300),
                           child: Icon(Icons.arrow_drop_down),
                         );
-                      }
+                      },
                     ),
                   ],
                 ),
@@ -109,18 +123,25 @@ class _CategoryPickerState extends State<CategoryPicker> {
                       color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: cat == widget.selectedCategory ? cat.color : Colors.grey.shade200
+                        color: cat == widget.selectedCategory
+                            ? cat.color
+                            : Colors.grey.shade200,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: cat == widget.selectedCategory ? cat.color.withValues(alpha:0.2) : Colors.transparent,
+                          color: cat == widget.selectedCategory
+                              ? cat.color.withValues(alpha: 0.2)
+                              : Colors.transparent,
                           blurRadius: 6,
-                          spreadRadius: 1
-                        )
-                      ]
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
                     child: ListTile(
-                      leading: CircleAvatar(backgroundColor: cat.color, radius: 8),
+                      leading: CircleAvatar(
+                        backgroundColor: cat.color,
+                        radius: 8,
+                      ),
                       title: Text(cat.name),
                       onTap: () {
                         setState(() {
@@ -137,9 +158,10 @@ class _CategoryPickerState extends State<CategoryPicker> {
           ),
         ),
       ),
-    ).then((_) => setState(() {
-      rotateNotifier.changeValue(false);
-
-    }));
+    ).then(
+      (_) => setState(() {
+        rotateNotifier.changeValue(false);
+      }),
+    );
   }
 }

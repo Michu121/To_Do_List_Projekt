@@ -9,13 +9,16 @@ class TaskServices extends ChangeNotifier {
   List<Task> _tasks = [];
   StreamSubscription<QuerySnapshot>? _subscription;
 
-  List<Task> getTasks() => _tasks;
+  /// Returns only non-deleted tasks (the Firestore query already filters,
+  /// but we guard here too for safety).
+  List<Task> getTasks() => _tasks.where((t) => !t.isDeleted).toList();
 
   void init(String uid) {
     _subscription?.cancel();
     _subscription = firestoreService.tasksStream(uid).listen((snapshot) {
       _tasks = snapshot.docs
           .map((doc) => Task.fromJson(doc.data() as Map<String, dynamic>))
+          .where((t) => !t.isDeleted)
           .toList();
       notifyListeners();
     });
@@ -42,6 +45,7 @@ class TaskServices extends ChangeNotifier {
     await firestoreService.updateTask(uid, task.id, task.toJson());
   }
 
+  /// Soft-delete: sets isDeleted = true in Firestore.
   Future<void> deleteTask(Task task) async {
     final uid = _uid;
     if (uid == null) return;

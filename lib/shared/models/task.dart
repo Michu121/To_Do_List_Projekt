@@ -20,6 +20,7 @@ class Task {
   final Color color;
   final TimeOfDay timeStart;
   final TimeOfDay timeEnd;
+  final bool isDeleted; // ← soft-delete flag
 
   Task({
     String? id,
@@ -31,7 +32,9 @@ class Task {
     this.group,
     this.color = Colors.grey,
     this.timeStart = const TimeOfDay(hour: 0, minute: 0),
-    this.timeEnd = const TimeOfDay(hour: 0, minute: 0), required this.difficulty,
+    this.timeEnd = const TimeOfDay(hour: 0, minute: 0),
+    required this.difficulty,
+    this.isDeleted = false,
   }) : id = id ?? _uuid.v4();
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -59,7 +62,9 @@ class Task {
       timeEnd: TimeOfDay(
         hour: (json['timeEnd'] as Map)['hour'] as int,
         minute: (json['timeEnd'] as Map)['minute'] as int,
-      ), difficulty: Difficulty.fromInt(json['difficulty'] as int),
+      ),
+      difficulty: Difficulty.fromInt(json['difficulty'] as int),
+      isDeleted: json['isDeleted'] as bool? ?? false,
     );
   }
 
@@ -76,6 +81,7 @@ class Task {
       'color': color.toARGB32(),
       'timeStart': {'hour': timeStart.hour, 'minute': timeStart.minute},
       'timeEnd': {'hour': timeEnd.hour, 'minute': timeEnd.minute},
+      'isDeleted': isDeleted,
     };
   }
 
@@ -90,6 +96,7 @@ class Task {
     Color? color,
     TimeOfDay? timeStart,
     TimeOfDay? timeEnd,
+    bool? isDeleted,
   }) {
     return Task(
       id: id,
@@ -103,6 +110,7 @@ class Task {
       timeStart: timeStart ?? this.timeStart,
       timeEnd: timeEnd ?? this.timeEnd,
       difficulty: difficulty ?? this.difficulty,
+      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 

@@ -66,8 +66,12 @@ class FirestoreService {
 
   // ── Tasks ────────────────────────────────────────────────────────────────────
 
+  /// Streams only non-deleted tasks, ordered by date.
   Stream<QuerySnapshot> tasksStream(String uid) =>
-      _tasksRef(uid).orderBy('date').snapshots();
+      _tasksRef(uid)
+          .where('isDeleted', isEqualTo: false)
+          .orderBy('date')
+          .snapshots();
 
   Future<void> setTask(String uid, String id, Map<String, dynamic> data) =>
       _tasksRef(uid).doc(id).set(data);
@@ -75,8 +79,9 @@ class FirestoreService {
   Future<void> updateTask(String uid, String id, Map<String, dynamic> data) =>
       _tasksRef(uid).doc(id).update(data);
 
+  /// Soft-delete: marks the task as deleted instead of removing it.
   Future<void> deleteTask(String uid, String id) =>
-      _tasksRef(uid).doc(id).delete();
+      _tasksRef(uid).doc(id).update({'isDeleted': true});
 
   // ── Categories ───────────────────────────────────────────────────────────────
 

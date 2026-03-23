@@ -1,12 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_list/l10n/app_localizations.dart';
+import 'package:todo_list/shared/services/category_services.dart';
 import 'package:todo_list/shared/services/task_services.dart';
-import '../shared/models/group.dart';
+
+import '../shared/models/category.dart';
 import '../shared/models/status.dart';
 import '../shared/models/task.dart';
 import '../shared/services/every_task_service.dart';
 import '../shared/services/group_task_service.dart';
+import '../shared/widgets/add_forms/add_category_form.dart';
 import '../shared/widgets/task_tiles/delete_confirmation_dialog.dart';
 import '../shared/widgets/task_tiles/dismissible_remove_background.dart';
 import '../shared/widgets/task_tiles/status_checkbox.dart';
@@ -22,88 +25,125 @@ class HomePage extends StatelessWidget {
         if (authSnap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (authSnap.data == null) {
-          return _SignInPrompt();
-        }
         return _TaskFeed();
       },
     );
   }
 }
 
-class _SignInPrompt extends StatelessWidget {
+class _TaskFeed extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.lock_outline, size: 64,
-              color: Colors.blueAccent.withValues(alpha: 0.35)),
-          const SizedBox(height: 20),
-          Text(
-            'Sign in to see your tasks',
-            style: TextStyle(
-              fontSize: 18,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.55),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Go to Profile to log in or register',
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.35),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  State<_TaskFeed> createState() => _TaskFeedState();
 }
 
-class _TaskFeed extends StatelessWidget {
+class _TaskFeedState extends State<_TaskFeed> {
+  final CategoryOverlay addCategoryForm = CategoryOverlay();
+  late Category selectedCategory;
+  @override
+  void initState() {
+    selectedCategory = categoryServices.getCategories().values.first;
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
-    return ListenableBuilder(
-      listenable: everyTaskService,
-      builder: (context, _) {
-        if (everyTaskService.loading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        ListenableBuilder(
+          listenable: everyTaskService,
+          builder: (context, child) => ListenableBuilder(
+            listenable: categoryServices,
+            builder: (context, child) {
+              List<Category> categories = categoryServices
+                  .getCategories()
+                  .values
+                  .toList();
+              categories.insert(0, Category(name: "All", color: Colors.grey.withValues(alpha: 0.90)));
+              return Container(
+                height: 100,
+                padding: EdgeInsetsGeometry.symmetric(horizontal: 10),
+                width: double.infinity,
+                decoration: BoxDecoration(color: theme.appBarTheme.backgroundColor),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          child: Text("Kategorie", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                        ),
+                        TextButton(
+                          isSemanticButton: false,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          ),
+                          onPressed: () => CategoryOverlay.show(context), // Simple static call
+                          child: const Text("+Kategoria", style: TextStyle(fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                    _CategoryChoseBar(
+                      categories: categories,
+                      onSelected: (c) => setState(() {
+                        selectedCategory = c;
+                      }),
+                      selectedCategory: selectedCategory,
+                    ),
+                  ],
+                ),
+              );
+            }
+          ),
+        ),
+        Expanded(
+          child: ListenableBuilder(
+            listenable: everyTaskService,
+            builder: (context, _) {
+              if (everyTaskService.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-        final tasks = everyTaskService.getTasks();
+              final tasks = everyTaskService.getTasks();
+              final filterTasks = tasks?.where((t) => t.category.id == selectedCategory.id || selectedCategory.name == "All").toList();
 
-        if (tasks!.isEmpty) {
-          return Center(
-            child: Text(
-              t.notask,
-              style: TextStyle(
-                  color: Theme.of(context).primaryColor, fontSize: 20),
-            ),
-          );
-        }
 
-        final sections = _groupByDate(tasks);
+              if (filterTasks!.isEmpty) {
+                return Center(
+                  child: Text(
+                    t.notask,
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.55),
+                      fontSize: 20,
+                    ),
+                  ),
+                );
+              }
 
-        return ListView.builder(
-          physics: const BouncingScrollPhysics(),
-          itemCount: sections.length + 1,
-          itemBuilder: (context, index) {
-            if (index == sections.length) return const SizedBox(height: 80);
-            final s = sections[index];
-            return _DateSection(label: s.label, tasks: s.tasks);
-          },
-        );
-      },
+              final sections = _groupByDate(filterTasks);
+
+              return ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                itemCount: sections.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == sections.length) return const SizedBox(height: 80);
+                  final s = sections[index];
+                  return _DateSection(label: s.label, tasks: s.tasks);
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -121,11 +161,13 @@ class _TaskFeed extends StatelessWidget {
 class _Section {
   final String label;
   final List<Task> tasks;
+
   _Section({required this.label, required this.tasks});
 }
 
 class _DateSection extends StatelessWidget {
   const _DateSection({required this.label, required this.tasks});
+
   final String label;
   final List<Task> tasks;
 
@@ -142,14 +184,13 @@ class _DateSection extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.7),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.7),
             ),
           ),
         ),
-        ...tasks.map((t) => GroupTaskListTile(task: t)),
+        ...tasks.map((t) => TaskListTile(task: t)),
       ],
     );
   }
@@ -158,24 +199,43 @@ class _DateSection extends StatelessWidget {
     final parts = isoKey.split('-');
     if (parts.length != 3) return isoKey;
     final date = DateTime(
-        int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
     if (date == today) return 'TODAY';
     if (date == tomorrow) return 'TOMORROW';
     final months = [
-      'JAN','FEB','MAR','APR','MAY','JUN',
-      'JUL','AUG','SEP','OCT','NOV','DEC'
+      'JAN',
+      'FEB',
+      'MAR',
+      'APR',
+      'MAY',
+      'JUN',
+      'JUL',
+      'AUG',
+      'SEP',
+      'OCT',
+      'NOV',
+      'DEC',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
 
-class GroupTaskListTile extends StatelessWidget {
-  const GroupTaskListTile({super.key, required this.task});
+class TaskListTile extends StatefulWidget {
+  const TaskListTile({super.key, required this.task});
+
   final Task task;
 
+  @override
+  State<TaskListTile> createState() => _TaskListTileState();
+}
+
+class _TaskListTileState extends State<TaskListTile> {
   Status _nextStatus(Status s) {
     switch (s) {
       case Status.todo:
@@ -187,40 +247,10 @@ class GroupTaskListTile extends StatelessWidget {
     }
   }
 
-  Group? _group() {
-    final gid = task.group?.id;
-    if (gid == null) return null;
-    try {
-      return groupTaskService.groups.firstWhere((g) => g.id == gid);
-    } catch (_) {
-      return task.group;
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
-    final groupId = task.group?.id;
-    final group = _group();
-    final isDone = task.status == Status.done;
-    
-    String formatLabel(String isoKey) {
-      final parts = isoKey.split('.');
-      if (parts.length != 3) return isoKey;
-      final date = DateTime(
-          int.parse(parts[2]), int.parse(parts[1]), int.parse(parts[0]));
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final tomorrow = today.add(const Duration(days: 1));
-      if (date == today) return 'TODAY';
-      if (date == tomorrow) return 'TOMORROW';
-      final months = [
-        'JAN','FEB','MAR','APR','MAY','JUN',
-        'JUL','AUG','SEP','OCT','NOV','DEC'
-      ];
-      return '${date.day} ${months[date.month - 1]} ${date.year}';
-    }
-
+    final groupId = widget.task.group?.id;
+    final isDone = widget.task.status == Status.done;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
@@ -228,7 +258,10 @@ class GroupTaskListTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Dismissible(
-        key: Key(task.id),
+        key: ValueKey('task_${widget.task.id}_${widget.task.group?.id ?? "no_group"}'),
+        dismissThresholds: const <DismissDirection, double>{
+          DismissDirection.horizontal: 0.3,
+        },
         direction: DismissDirection.horizontal,
         background: const DismissibleRemoveBackground(
           mainAxisAlignment: MainAxisAlignment.start,
@@ -238,33 +271,30 @@ class GroupTaskListTile extends StatelessWidget {
         ),
         confirmDismiss: (_) => const DeleteConfirmationDialog().show(context),
         onDismissed: (_) {
-          everyTaskService.removeTask(groupId, task);
-        },
-        dismissThresholds: <DismissDirection, double>{
-          DismissDirection.horizontal: 20,
+          setState(() {});
+          everyTaskService.removeTask(groupId, widget.task);
         },
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border(
-                left: BorderSide(color: task.color, width: 4)),
+            border: Border(left: BorderSide(color: widget.task.color, width: 4)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
               StatusCheckbox(
-                status: task.status,
+                status: widget.task.status,
                 onTap: () {
                   if (groupId == null) {
                     taskServices.updateTask(
-                      task.copyWith(status: _nextStatus(task.status)),
+                      widget.task.copyWith(status: _nextStatus(widget.task.status)),
                     );
                   } else {
                     groupTaskService.updateTask(
-                    groupId,
-                    task.copyWith(status: _nextStatus(task.status)),
-                  );
+                      groupId,
+                      widget.task.copyWith(status: _nextStatus(widget.task.status)),
+                    );
                   }
                 },
               ),
@@ -274,13 +304,11 @@ class GroupTaskListTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      task.title,
+                      widget.task.title,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        decoration: isDone
-                            ? TextDecoration.lineThrough
-                            : null,
+                        decoration: isDone ? TextDecoration.lineThrough : null,
                         color: isDone ? Colors.grey : null,
                       ),
                     ),
@@ -288,23 +316,21 @@ class GroupTaskListTile extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _DifficultyBadge(task: task),
+                        _DifficultyBadge(task: widget.task),
                         Row(
                           children: [
                             _Chip(
-                              label: task.category.name,
-                              color: task.category.color,
+                              label: widget.task.category.name,
+                              color: widget.task.category.color,
                             ),
-                            if (group != null) ...[
-                            const SizedBox(width: 6),
+                            if (widget.task.group != null) ...[
+                              const SizedBox(width: 6),
                               _Chip(
-                                label: group.name,
-                                color: group.color,
+                                label: widget.task.group!.name,
+                                color: widget.task.group!.color,
                                 icon: Icons.group,
                               ),
-                          ],
-
-
+                            ],
                           ],
                         ),
                       ],
@@ -312,14 +338,6 @@ class GroupTaskListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                formatLabel(task.formatDate(task.date)),
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: 13,
-                ),
-              )
             ],
           ),
         ),
@@ -330,6 +348,7 @@ class GroupTaskListTile extends StatelessWidget {
 
 class _Chip extends StatelessWidget {
   const _Chip({required this.label, required this.color, this.icon});
+
   final String label;
   final Color color;
   final IconData? icon;
@@ -350,12 +369,16 @@ class _Chip extends StatelessWidget {
             Icon(icon, size: 10, color: color),
             const SizedBox(width: 3),
           ],
-          Text(
-            label,
-            style: TextStyle(
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
                 fontSize: 10,
                 color: color,
-                fontWeight: FontWeight.w600),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -363,45 +386,9 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _NoGroupsState extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.group_add, size: 72,
-              color: Colors.blueAccent.withValues(alpha: 0.25)),
-          const SizedBox(height: 20),
-          Text(
-            'Join or create a group',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.45),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tasks shared in groups will appear here',
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.35),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 class _DifficultyBadge extends StatelessWidget {
   final Task task;
+
   const _DifficultyBadge({required this.task});
 
   @override
@@ -414,9 +401,92 @@ class _DifficultyBadge extends StatelessWidget {
         const SizedBox(width: 2),
         Text(
           '+${d.points}',
-          style: TextStyle(fontSize: 11, color: d.color, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 11,
+            color: d.color,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _CategoryChoseBar extends StatefulWidget {
+  const _CategoryChoseBar({
+    required this.categories,
+    required this.onSelected,
+    required this.selectedCategory,
+  });
+
+  final List<Category> categories;
+  final Category selectedCategory;
+  final ValueChanged<Category> onSelected;
+
+  @override
+  State<_CategoryChoseBar> createState() => _CategoryChoseBarState();
+}
+
+class _CategoryChoseBarState extends State<_CategoryChoseBar> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          ...widget.categories.map(
+            (cat) => _CategoryChoseButton(
+              cat: cat,
+              tasksInCategory: everyTaskService.getTasks()!.where((t) => t.category.id == cat.id || cat.name == "All").length,
+              selectedCategory: widget.selectedCategory,
+              onSelected: widget.onSelected,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryChoseButton extends StatelessWidget {
+  const _CategoryChoseButton({
+    required this.cat,
+    required this.onSelected,
+    required this.selectedCategory,
+    required this.tasksInCategory,
+  });
+
+  final Category cat;
+  final int tasksInCategory;
+  final Category selectedCategory;
+  final ValueChanged<Category> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    bool isSelected = cat.id == selectedCategory.id;
+    print("isSelected: $isSelected");
+    return InkWell(
+      onTap: () => onSelected(cat),
+      onLongPress: () {
+        CategoryOverlay.show(context, cat: cat);
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? cat.color : cat.color.withValues(alpha: 0.13),
+          border: Border.all(
+            color: isSelected
+                ? Theme.of(context).colorScheme.onSurface
+                : cat.color,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        child: Text("${cat.name} ($tasksInCategory)", style: TextStyle(color: Colors.white)),
+      ),
     );
   }
 }

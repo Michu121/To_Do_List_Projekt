@@ -48,6 +48,7 @@ class CategoryServices extends ChangeNotifier {
     if (uid == null) return;
     if (_categories.containsKey(category.name)) return;
     await firestoreService.setCategory(uid, category.id, category.toJson());
+    notifyListeners();
   }
 
   Future<void> updateCategory(Category category) async {
