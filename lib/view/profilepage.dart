@@ -1,384 +1,131 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../shared/models/user_stats.dart';
-import '../shared/services/auth_service.dart';
-import '../shared/services/group_task_service.dart';
-import '../shared/services/stats_service.dart';
-import 'loginpage.dart';
+import '../shared/models/group.dart';
+import '../shared/models/league.dart';
+import '../shared/models/user_model.dart';
+import '../shared/services/group_services.dart';
+import '../shared/services/user_stats_service.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final user = snap.data;
-        if (user == null) return const LoginPage();
-        return _ProfileContent(user: user);
-      },
-    );
-  }
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfileContent extends StatelessWidget {
-  const _ProfileContent({required this.user});
-  final User user;
+class _ProfilePageState extends State<ProfilePage> {
+  // TODO: replace with real auth user once auth is wired up
+  final UserModel _mockUser = UserModel(
+    uid: 'me',
+    email: 'user@example.com',
+    name: 'NickName',
+    photo: null,
+  );
 
-  String _initials() {
-    final name = user.displayName;
-    if (name != null && name.isNotEmpty) {
-      final parts = name.trim().split(' ');
-      if (parts.length >= 2) {
-        return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-      }
-      return name[0].toUpperCase();
-    }
-    return user.email?[0].toUpperCase() ?? '?';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return StreamBuilder<UserStats?>(
-      stream: statsService.watchMyStats(),
-      builder: (context, statsSnap) {
-        final stats = statsSnap.data;
-
-        return ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          children: [
-            _AvatarSection(user: user, initials: _initials(), theme: theme),
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                user.displayName?.isNotEmpty == true
-                    ? user.displayName!
-                    : 'User',
-                style: const TextStyle(
-                    fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Center(
-              child: Text(
-                user.email ?? '',
-                style:
-                TextStyle(fontSize: 13, color: Colors.grey.shade500),
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (stats != null) _RankBadge(stats: stats),
-            const SizedBox(height: 20),
-            _StatsGrid(stats: stats),
-            const SizedBox(height: 28),
-            _SectionTitle('Points breakdown'),
-            const SizedBox(height: 10),
-            _PointsBreakdown(),
-            const SizedBox(height: 28),
-            _SectionTitle('Account'),
-            const SizedBox(height: 10),
-            _SettingsTile(
-              icon: Icons.email_outlined,
-              title: 'Email',
-              subtitle: user.email ?? '',
-            ),
-            _SettingsTile(
-              icon: Icons.verified_user_outlined,
-              title: 'Email verified',
-              subtitle:
-              user.emailVerified ? 'Verified' : 'Not verified',
-              trailing: user.emailVerified
-                  ? const Icon(Icons.check_circle,
-                  color: Colors.green, size: 18)
-                  : TextButton(
-                onPressed: () => user.sendEmailVerification(),
-                child: const Text('Verify',
-                    style: TextStyle(fontSize: 12)),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _SectionTitle('Actions'),
-            const SizedBox(height: 10),
-            _SettingsTile(
-              icon: Icons.logout,
-              title: 'Sign out',
-              iconColor: Colors.red.shade400,
-              titleColor: Colors.red.shade400,
-              onTap: () async {
-                await AuthService().logout();
-                groupTaskService.reset();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({
-    required this.user,
-    required this.initials,
-    required this.theme,
-  });
-  final User user;
-  final String initials;
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        children: [
-          CircleAvatar(
-            radius: 48,
-            backgroundImage: user.photoURL != null
-                ? NetworkImage(user.photoURL!)
-                : null,
-            backgroundColor:
-            theme.colorScheme.primary.withValues(alpha: 0.15),
-            child: user.photoURL == null
-                ? Text(
-              initials,
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            )
-                : null,
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              shape: BoxShape.circle,
-              border: Border.all(
-                  color: theme.scaffoldBackgroundColor, width: 2),
-            ),
-            padding: const EdgeInsets.all(6),
-            child:
-            const Icon(Icons.person, size: 16, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RankBadge extends StatelessWidget {
-  const _RankBadge({required this.stats});
-  final UserStats stats;
-
-  @override
-  Widget build(BuildContext context) {
-    final rank = UserStats.rankTitle(stats.points);
-    final progress = _progressToNext(stats.points);
-    final nextThreshold = _nextThreshold(stats.points);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.blueAccent.withValues(alpha: 0.15),
-            Colors.blueAccent.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-            color: Colors.blueAccent.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                rank,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.blueAccent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${stats.points} pts',
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          if (nextThreshold != null) ...[
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 6,
-                backgroundColor:
-                Colors.blueAccent.withValues(alpha: 0.15),
-                valueColor: const AlwaysStoppedAnimation(
-                    Colors.blueAccent),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${stats.points} / $nextThreshold pts to next rank',
-              style: TextStyle(
-                  fontSize: 11, color: Colors.grey.shade500),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  static const _thresholds = [20, 50, 100, 200, 500];
-
-  double _progressToNext(int pts) {
-    for (int i = 0; i < _thresholds.length; i++) {
-      if (pts < _thresholds[i]) {
-        final prev = i == 0 ? 0 : _thresholds[i - 1];
-        final range = _thresholds[i] - prev;
-        return (pts - prev) / range;
-      }
-    }
-    return 1.0;
-  }
-
-  int? _nextThreshold(int pts) {
-    for (final t in _thresholds) {
-      if (pts < t) return t;
-    }
-    return null;
-  }
-}
-
-class _StatsGrid extends StatelessWidget {
-  const _StatsGrid({required this.stats});
-  final UserStats? stats;
+  // Mock friends – replace with real friends service data
+  final List<_FriendStats> _friends = [
+    _FriendStats(name: 'NickName', points: 1500, leagueName: 'bronze', photo: null),
+    _FriendStats(name: 'Alex', points: 3200, leagueName: 'silver', photo: null),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: groupTaskService,
+      listenable: Listenable.merge([userStatsService, groupServices]),
       builder: (context, _) {
-        final groupCount = groupTaskService.groups.length;
-        final taskCount = groupTaskService.tasks.length;
-        final doneCount = groupTaskService.tasks
-            .where((t) => t.status.status == 2)
-            .length;
-        final points = stats?.points ?? 0;
+        final stats = userStatsService;
+        final league = stats.league;
+        final groups = groupServices.getGroups();
 
-        return GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 1.6,
-          children: [
-            _StatCard(
-              value: '$points',
-              label: 'Total Points',
-              icon: Icons.star_rounded,
-              color: Colors.amber.shade600,
-            ),
-            _StatCard(
-              value: '$groupCount',
-              label: 'Groups',
-              icon: Icons.group_rounded,
-              color: Colors.blueAccent,
-            ),
-            _StatCard(
-              value: '$taskCount',
-              label: 'Tasks',
-              icon: Icons.task_alt,
-              color: Colors.teal,
-            ),
-            _StatCard(
-              value: '$doneCount',
-              label: 'Completed',
-              icon: Icons.check_circle_rounded,
-              color: Colors.green,
-            ),
-          ],
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _ProfileHeader(user: _mockUser),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _LeagueCard(
+                      league: league,
+                      points: stats.totalPoints,
+                    ),
+                    const SizedBox(height: 20),
+                    _SectionHeader(title: 'Znajomi', trailing: '${_friends.length} znajomych'),
+                    const SizedBox(height: 10),
+                    _FriendsList(friends: _friends),
+                    const SizedBox(height: 20),
+                    const _SectionHeader(title: 'Statystyki'),
+                    const SizedBox(height: 10),
+                    _StatsRow(
+                      doneCount: stats.doneCount,
+                      inProgressCount: stats.inProgressCount,
+                      streakDays: stats.streakDays,
+                    ),
+                    const SizedBox(height: 20),
+                    const _SectionHeader(title: 'Grupy'),
+                    const SizedBox(height: 10),
+                    _GroupsRow(groups: groups),
+                    const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
+// ── Header ──────────────────────────────────────────────────────────────────
 
-  final String value;
-  final String label;
-  final IconData icon;
-  final Color color;
+class _ProfileHeader extends StatelessWidget {
+  final UserModel user;
+  const _ProfileHeader({required this.user});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-      const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF3A7BD5), Color(0xFF6A3DE8)],
+        ),
       ),
-      child: Row(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha:0.6), width: 3),
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: CircleAvatar(
+              radius: 44,
+              backgroundColor: Colors.white.withValues(alpha:0.2),
+              backgroundImage: user.photo != null ? NetworkImage(user.photo!) : null,
+              child: user.photo == null
+                  ? const Icon(Icons.person, size: 50, color: Colors.white)
+                  : null,
+            ),
           ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                  height: 1,
-                ),
-              ),
-              Text(
-                label,
-                style: TextStyle(
-                    fontSize: 11,
-                    color: color.withValues(alpha: 0.7)),
-              ),
-            ],
+          const SizedBox(height: 12),
+          Text(
+            user.name.isNotEmpty ? user.name : 'NickName',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            user.email,
+            style: TextStyle(color: Colors.white.withValues(alpha:0.8), fontSize: 13),
           ),
         ],
       ),
@@ -386,148 +133,363 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _PointsBreakdown extends StatelessWidget {
-  const _PointsBreakdown();
+// ── League Card ─────────────────────────────────────────────────────────────
+
+class _LeagueCard extends StatelessWidget {
+  final League league;
+  final int points;
+  const _LeagueCard({required this.league, required this.points});
 
   @override
   Widget build(BuildContext context) {
-    final rows = [
-      (
-      Icons.add_task,
-      'Create a task',
-      '+${StatsService.pointsCreateTask} pts',
-      Colors.teal
-      ),
-      (
-      Icons.check_circle_outline,
-      'Complete a task',
-      '+${StatsService.pointsCompleteTask} pts',
-      Colors.green
-      ),
-      (
-      Icons.group_add,
-      'Create a group',
-      '+${StatsService.pointsCreateGroup} pts',
-      Colors.blueAccent
-      ),
-      (
-      Icons.login,
-      'Join a group',
-      '+${StatsService.pointsJoinGroup} pts',
-      Colors.purple
-      ),
-    ];
+    final progress = league.progressIn(points);
+    final toNext = league.pointsToNext(points);
 
-    return Column(
-      children: rows.map((r) {
-        final (icon, label, pts, color) = r;
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(12),
-            border:
-            Border.all(color: color.withValues(alpha: 0.15)),
-          ),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.07), blurRadius: 12, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        children: [
+          Row(
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(label,
-                    style: const TextStyle(fontSize: 14)),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: league.badgeColor.withValues(alpha:0.15),
                 child: Text(
-                  pts,
-                  style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13),
+                  league.label[0],
+                  style: TextStyle(color: league.badgeColor, fontWeight: FontWeight.bold, fontSize: 18),
                 ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Liga', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(
+                    league.label,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: league.badgeColor),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const Text('Punkty', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(
+                    '$points',
+                    style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ],
               ),
             ],
           ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.title);
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title.toUpperCase(),
-      style: TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.2,
-        color: Colors.grey.shade500,
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: AlwaysStoppedAnimation<Color>(league.color),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Punkty', style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+              Text(
+                '$points/${league.maxPoints}',
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+              ),
+            ],
+          ),
+          if (toNext > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '$toNext Punkty(-ów) do następnej ligi',
+                style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class _SettingsTile extends StatelessWidget {
-  const _SettingsTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.iconColor,
-    this.titleColor,
-    this.trailing,
-    this.onTap,
-  });
+// ── Section header ───────────────────────────────────────────────────────────
 
-  final IconData icon;
+class _SectionHeader extends StatelessWidget {
   final String title;
-  final String? subtitle;
-  final Color? iconColor;
-  final Color? titleColor;
-  final Widget? trailing;
-  final VoidCallback? onTap;
+  final String? trailing;
+  const _SectionHeader({required this.title, this.trailing});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12)),
-      elevation: 0,
+    return Row(
+      children: [
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Spacer(),
+        if (trailing != null)
+          Text(trailing!, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+      ],
+    );
+  }
+}
+
+// ── Friends ──────────────────────────────────────────────────────────────────
+
+class _FriendStats {
+  final String name;
+  final int points;
+  final String leagueName;
+  final String? photo;
+  _FriendStats({required this.name, required this.points, required this.leagueName, this.photo});
+}
+
+class _FriendsList extends StatelessWidget {
+  final List<_FriendStats> friends;
+  const _FriendsList({required this.friends});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ...friends.map((f) => _FriendTile(friend: f)),
+        _AddFriendTile(),
+      ],
+    );
+  }
+}
+
+class _FriendTile extends StatelessWidget {
+  final _FriendStats friend;
+  const _FriendTile({required this.friend});
+
+  @override
+  Widget build(BuildContext context) {
+    final league = League.all.firstWhere(
+          (l) => l.name == friend.leagueName,
+      orElse: () => League.all.first,
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.05), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
       child: ListTile(
-        leading: Icon(icon, color: iconColor, size: 22),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            color: titleColor,
-            fontWeight: FontWeight.w500,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: CircleAvatar(
+          radius: 26,
+          backgroundImage: friend.photo != null ? NetworkImage(friend.photo!) : null,
+          backgroundColor: Colors.grey.shade300,
+          child: friend.photo == null
+              ? Text(friend.name[0].toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold))
+              : null,
+        ),
+        title: Text(friend.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Row(
+          children: [
+            CircleAvatar(
+              radius: 9,
+              backgroundColor: league.badgeColor.withValues(alpha:0.15),
+              child: Text(
+                league.label[0],
+                style: TextStyle(color: league.badgeColor, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(league.label, style: TextStyle(color: league.badgeColor, fontSize: 12)),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🏅', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 4),
+            Text(
+              '${friend.points}',
+              style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AddFriendTile extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.05), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: ListTile(
+        onTap: () {
+          // TODO: open add friend sheet
+        },
+        leading: Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.grey.shade400, width: 2),
+          ),
+          child: Icon(Icons.add, color: Colors.grey.shade500),
+        ),
+        title: Text('Dodaj znajomego', style: TextStyle(color: Colors.grey.shade500)),
+      ),
+    );
+  }
+}
+
+// ── Stats Row ────────────────────────────────────────────────────────────────
+
+class _StatsRow extends StatelessWidget {
+  final int doneCount;
+  final int inProgressCount;
+  final int streakDays;
+  const _StatsRow({required this.doneCount, required this.inProgressCount, required this.streakDays});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatBox(
+            value: '$doneCount',
+            label: 'Wykonane',
+            icon: Icons.check_circle_outline,
+            iconColor: Colors.green,
           ),
         ),
-        subtitle: subtitle != null
-            ? Text(subtitle!,
-            style: TextStyle(
-                fontSize: 12, color: Colors.grey.shade500))
-            : null,
-        trailing: trailing ??
-            (onTap != null
-                ? const Icon(Icons.chevron_right, size: 18)
-                : null),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatBox(
+            value: '$inProgressCount',
+            label: 'W trakcie',
+            icon: Icons.access_time_filled,
+            iconColor: Colors.blueAccent,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _StatBox(
+            value: '$streakDays',
+            label: 'Dni z rzędu',
+            icon: Icons.local_fire_department,
+            iconColor: Colors.deepOrange,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  const _StatBox({required this.value, required this.label, required this.icon, required this.iconColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha:0.06), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: iconColor, size: 28),
+          const SizedBox(height: 6),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(color: Colors.grey.shade500, fontSize: 11), textAlign: TextAlign.center),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Groups Row ───────────────────────────────────────────────────────────────
+
+class _GroupsRow extends StatelessWidget {
+  final List<Group> groups;
+  const _GroupsRow({required this.groups});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 72,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          ...groups.map((g) => _GroupCircle(group: g)),
+          _AddGroupCircle(),
+        ],
+      ),
+    );
+  }
+}
+
+class _GroupCircle extends StatelessWidget {
+  final Group group;
+  const _GroupCircle({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: CircleAvatar(
+        radius: 30,
+        backgroundColor: group.color,
+        child: Text(
+          group.name.isNotEmpty ? group.name[0].toUpperCase() : '?',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+      ),
+    );
+  }
+}
+
+class _AddGroupCircle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: GestureDetector(
+        onTap: () {
+          // TODO: open add group sheet
+        },
+        child: CircleAvatar(
+          radius: 30,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade400, width: 2),
+            ),
+            child: Icon(Icons.add, color: Colors.grey.shade500, size: 28),
+          ),
+        ),
       ),
     );
   }
