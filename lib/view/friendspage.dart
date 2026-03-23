@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../shared/services/friend_services.dart';
 import '../shared/models/user_model.dart';
-import 'package:uuid/uuid.dart';
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({super.key});
@@ -30,7 +29,6 @@ class _StatusBadge extends StatelessWidget {
 
 class _FriendsPageState extends State<FriendsPage> {
   final TextEditingController _searchController = TextEditingController();
-  final Uuid _uuid = const Uuid();
 
   @override
   void initState() {
@@ -45,28 +43,25 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   void _addFriendDialog() {
-    final TextEditingController nameController = TextEditingController();
     final TextEditingController emailController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Wyślij zaproszenie"),
+        title: const Text("Dodaj znajomego"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: "Imię"),
-            ),
+            const Text("Wpisz adres email osoby, którą chcesz dodać do znajomych."),
+            const SizedBox(height: 16),
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(labelText: "Email"),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Dla celów testowych, to 'wyśle' zaproszenie, które pojawi się w sekcji oczekujące",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              decoration: const InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
             ),
           ],
         ),
@@ -76,18 +71,16 @@ class _FriendsPageState extends State<FriendsPage> {
             child: const Text("Anuluj"),
           ),
           ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty && emailController.text.isNotEmpty) {
-                // Simulating receiving a request for prototype purposes
-                friendServices.receiveRequest(UserModel(
-                  uid: _uuid.v4(),
-                  name: nameController.text,
-                  email: emailController.text,
-                ));
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Zaproszenie wysłane")),
-                );
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isNotEmpty) {
+                final error = await friendServices.sendRequestByEmail(email);
+                if (mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error ?? "Zaproszenie zostało wysłane!")),
+                  );
+                }
               }
             },
             child: const Text("Wyślij"),
@@ -117,11 +110,11 @@ class _FriendsPageState extends State<FriendsPage> {
                 children: [
                   Expanded(
                     child: TextField(
-                      style: TextStyle(color: Colors.blueAccent,),
+                      style: const TextStyle(color: Colors.blueAccent),
                       controller: _searchController,
                       decoration: InputDecoration(
-                        hintText: "Szukaj znajomych...",
-                        hintStyle: TextStyle(color: Colors.blueAccent),
+                        hintText: "Szukaj w swoich znajomych...",
+                        hintStyle: const TextStyle(color: Colors.blueAccent),
                         prefixIcon: const Icon(Icons.search),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -163,10 +156,12 @@ class _FriendsPageState extends State<FriendsPage> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: Colors.orangeAccent.withValues(alpha: 0.2),
-                          child: Text(req.name[0].toUpperCase(), style: const TextStyle(color: Colors.orange)),
+                          backgroundColor: Colors.orangeAccent.withOpacity(0.2),
+                          child: Text(req.name.isNotEmpty ? req.name[0].toUpperCase() : "?", 
+                            style: const TextStyle(color: Colors.orange)),
                         ),
-                        title: Text(req.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(req.name.isNotEmpty ? req.name : "Użytkownik", 
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(req.email),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -198,7 +193,7 @@ class _FriendsPageState extends State<FriendsPage> {
                         padding: const EdgeInsets.only(top: 40),
                         child: Column(
                           children: [
-                            Icon(Icons.people_outline, size: 60, color: Colors.grey.withValues(alpha: 0.5)),
+                            Icon(Icons.people_outline, size: 60, color: Colors.grey.withOpacity(0.5)),
                             const SizedBox(height: 16),
                             Text(
                               allFriends.isEmpty ? "Nie masz jeszcze znajomych." : "Nie znaleziono znajomych.",
@@ -212,11 +207,13 @@ class _FriendsPageState extends State<FriendsPage> {
                     ...filteredFriends.map((friend) => ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
-                        backgroundColor: Colors.blueAccent.withValues(alpha: 0.1),
-                        child: Text(friend.name[0].toUpperCase(), style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                        backgroundColor: Colors.blueAccent.withOpacity(0.1),
+                        child: Text(friend.name.isNotEmpty ? friend.name[0].toUpperCase() : "?", 
+                          style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
                       ),
-                      title: Text(friend.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent,)),
-                      subtitle: Text(friend.email, style: const TextStyle(color: Colors.blueAccent,)),
+                      title: Text(friend.name.isNotEmpty ? friend.name : "Użytkownik", 
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                      subtitle: Text(friend.email, style: const TextStyle(color: Colors.blueAccent)),
                       trailing: IconButton(
                         icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
                         onPressed: () => friendServices.removeFriend(friend.uid),

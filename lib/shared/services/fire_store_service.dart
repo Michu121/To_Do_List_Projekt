@@ -14,6 +14,12 @@ class FirestoreService {
   CollectionReference _groupsRef(String uid) =>
       _db.collection('users').doc(uid).collection('groups');
 
+  CollectionReference _friendsRef(String uid) =>
+      _db.collection('users').doc(uid).collection('friends');
+
+  CollectionReference _requestsRef(String uid) =>
+      _db.collection('users').doc(uid).collection('friendRequests');
+
   Future<void> afterLogin(User user) async {
     final ref = _db.collection('users').doc(user.uid);
     final doc = await ref.get();
@@ -46,6 +52,40 @@ class FirestoreService {
     final doc = await _db.collection('users').doc(uid).get();
     if (!doc.exists) return null;
     return UserModel.fromJson(doc.data()!);
+  }
+
+  // ── Friends & Requests ───────────────────────────────────────────────────────
+
+  Stream<QuerySnapshot> friendsStream(String uid) => _friendsRef(uid).snapshots();
+
+  Stream<QuerySnapshot> requestsStream(String uid) => _requestsRef(uid).snapshots();
+
+  Future<void> sendFriendRequest(UserModel fromUser, String toUid) async {
+    await _requestsRef(toUid).doc(fromUser.uid).set(fromUser.toJson());
+  }
+
+  Future<void> acceptFriendRequest(UserModel currentUser, UserModel friendUser) async {
+    final batch = _db.batch();
+
+    // Add to my friends
+    batch.set(_friendsRef(currentUser.uid).doc(friendUser.uid), friendUser.toJson());
+    // Add to their friends
+    batch.set(_friendsRef(friendUser.uid).doc(currentUser.uid), currentUser.toJson());
+    // Remove request
+    batch.delete(_requestsRef(currentUser.uid).doc(friendUser.uid));
+
+    await batch.commit();
+  }
+
+  Future<void> declineFriendRequest(String myUid, String friendUid) async {
+    await _requestsRef(myUid).doc(friendUid).delete();
+  }
+
+  Future<void> removeFriend(String myUid, String friendUid) async {
+    final batch = _db.batch();
+    batch.delete(_friendsRef(myUid).doc(friendUid));
+    batch.delete(_friendsRef(friendUid).doc(myUid));
+    await batch.commit();
   }
 
   // ── Group members ────────────────────────────────────────────────────────────
