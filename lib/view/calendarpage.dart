@@ -58,7 +58,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             _Bottom(
               selectedDate: selectedDate,
-            )
+            ),
           ],
         ),
       ),
@@ -79,6 +79,9 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+
     var data = CalendarMonthData(
       year: selectedMonth.year,
       month: selectedMonth.month,
@@ -90,18 +93,21 @@ class _Body extends StatelessWidget {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: const [
-              Text('M', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              Text('T', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              Text('W', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              Text('T', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              Text('F', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              Text('S', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-              Text('S', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+            children: [
+              Text('M', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+              Text('T', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+              Text('W', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+              Text('T', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+              Text('F', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+              Text('S', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
+              Text('S', style: TextStyle(color: accentColor, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 12),
-          Container(height: 1, color: Colors.blue.withValues(alpha: 0.2)),
+          Container(
+            height: 1,
+            color: accentColor.withAlpha(50),
+          ),
           const SizedBox(height: 8),
           Expanded(
             child: ListView(
@@ -114,7 +120,8 @@ class _Body extends StatelessWidget {
                           date: d.date,
                           isActiveMonth: d.isActiveMonth,
                           onTap: () => selectDate(d.date),
-                          isSelected: selectedDate != null && selectedDate!.isSameDate(d.date),
+                          isSelected: selectedDate != null &&
+                              selectedDate!.isSameDate(d.date),
                         ),
                       );
                     }).toList(),
@@ -143,6 +150,11 @@ class _RowItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final uiColor = theme.bottomAppBarTheme.color ??
+        theme.appBarTheme.backgroundColor ??
+        theme.colorScheme.primary;
+    final onSurface = theme.colorScheme.onSurface;
     final isToday = date.isToday;
     final bool isPassed = date.isBefore(DateTime.now().dayStart);
 
@@ -154,23 +166,32 @@ class _RowItem extends StatelessWidget {
         height: 50,
         margin: const EdgeInsets.all(2),
         decoration: isSelected
-            ? const BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle)
+            ? BoxDecoration(
+          color: uiColor,
+          shape: BoxShape.circle,
+        )
             : isToday
             ? BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.blueAccent, width: 2),
+          border: Border.all(color: uiColor, width: 2),
         )
             : null,
         child: Text(
           date.day.toString(),
           style: TextStyle(
             fontSize: 16,
-            fontWeight: isSelected || isToday ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isSelected || isToday
+                ? FontWeight.bold
+                : FontWeight.normal,
             color: isSelected
                 ? Colors.white
                 : isPassed
-                ? (isActiveMonth ? Colors.grey[700] : Colors.transparent)
-                : (isActiveMonth ? Colors.lightBlue[200] : Colors.grey[400]),
+                ? (isActiveMonth
+                ? onSurface.withAlpha(140)
+                : Colors.transparent)
+                : (isActiveMonth
+                ? onSurface.withAlpha(190)
+                : onSurface.withAlpha(90)),
           ),
         ),
       ),
@@ -191,9 +212,23 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accentColor = theme.colorScheme.primary;
+    final mutedColor = theme.colorScheme.onSurface.withAlpha(150);
+
     final List<String> months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
 
     return Padding(
@@ -204,26 +239,37 @@ class _Header extends StatelessWidget {
             selectedDate == null
                 ? 'No date selected'
                 : 'Selected: ${selectedDate!.day} ${months[selectedDate!.month - 1]} ${selectedDate!.year}',
-            style: const TextStyle(color: Colors.grey, fontSize: 14),
+            style: TextStyle(
+              color: mutedColor,
+              fontSize: 14,
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
                 onPressed: () => onChange(selectedMonth.addMonth(-1)),
-                icon: const Icon(Icons.chevron_left, color: Colors.blueAccent, size: 30),
+                icon: Icon(
+                  Icons.chevron_left,
+                  color: accentColor,
+                  size: 30,
+                ),
               ),
               Text(
                 '${months[selectedMonth.month - 1]} ${selectedMonth.year}',
-                style: const TextStyle(
-                    color: Colors.blueAccent,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               IconButton(
                 onPressed: () => onChange(selectedMonth.addMonth(1)),
-                icon: const Icon(Icons.chevron_right, color: Colors.blueAccent, size: 30),
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: accentColor,
+                  size: 30,
+                ),
               ),
             ],
           ),
@@ -235,10 +281,16 @@ class _Header extends StatelessWidget {
 
 class _Bottom extends StatelessWidget {
   const _Bottom({required this.selectedDate});
+
   final DateTime? selectedDate;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final uiColor = theme.bottomAppBarTheme.color ??
+        theme.appBarTheme.backgroundColor ??
+        theme.colorScheme.primary;
+
     return Padding(
       padding: const EdgeInsets.all(20.0),
       child: SizedBox(
@@ -246,24 +298,31 @@ class _Bottom extends StatelessWidget {
         height: 50,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: uiColor,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
           ),
           onPressed: () {
             if (selectedDate != null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Saved: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'),
-                    action: SnackBarAction(
-                      label: 'OK',
-                      onPressed: () {},
-                    ),
+                SnackBar(
+                  content: Text(
+                    'Saved: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}',
                   ),
+                  action: SnackBarAction(
+                    label: 'OK',
+                    onPressed: () {},
+                  ),
+                ),
               );
             }
           },
-          child: const Text('test', style: TextStyle(fontSize: 18)),
+          child: const Text(
+            'test',
+            style: TextStyle(fontSize: 18),
+          ),
         ),
       ),
     );
@@ -274,12 +333,15 @@ class CalendarMonthData {
   final int year;
   final int month;
 
-  const CalendarMonthData({required this.year, required this.month});
+  const CalendarMonthData({
+    required this.year,
+    required this.month,
+  });
 
   int get daysInMonth => DateUtils.getDaysInMonth(year, month);
 
   int get firstDayOffset {
-    int weekday = DateTime(year, month, 1).weekday; // 1 = Mon, 7 = Sun
+    int weekday = DateTime(year, month, 1).weekday;
     return weekday - 1;
   }
 
@@ -288,7 +350,8 @@ class CalendarMonthData {
   List<List<CalendarDayData>> get weeks {
     final res = <List<CalendarDayData>>[];
     var firstDayMonth = DateTime(year, month, 1);
-    var firstDayToShow = firstDayMonth.subtract(Duration(days: firstDayOffset));
+    var firstDayToShow =
+    firstDayMonth.subtract(Duration(days: firstDayOffset));
 
     for (var w = 0; w < weeksCount; w++) {
       final week = List<CalendarDayData>.generate(7, (index) {

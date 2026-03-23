@@ -45,7 +45,7 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: const MyAppBar(),
+      appBar: const MyAppBar(title: '',),
       body: _activePage.pageWidget,
       floatingActionButton: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
