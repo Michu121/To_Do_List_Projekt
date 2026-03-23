@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../shared/services/friend_services.dart';
 import '../shared/models/user_model.dart';
+import '../shared/widgets/in_app_notification.dart';
 
 class FriendsPage extends StatefulWidget {
   const FriendsPage({super.key});
@@ -18,17 +19,17 @@ class _StatusBadge extends StatelessWidget {
     if (count == 0) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(6),
-      decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-      child: Text(
-        '$count',
-        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-      ),
+      decoration:
+      const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+      child: Text('$count',
+          style: const TextStyle(
+              color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
     );
   }
 }
 
 class _FriendsPageState extends State<FriendsPage> {
-  final TextEditingController _searchController = TextEditingController();
+  final _searchCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -38,52 +39,67 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
   void _addFriendDialog() {
-    final TextEditingController emailController = TextEditingController();
+    final theme = Theme.of(context);
+    final emailCtrl = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Dodaj znajomego"),
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.person_add, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Add friend'),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Wpisz adres email osoby, którą chcesz dodać do znajomych."),
-            const SizedBox(height: 16),
+            Text('Enter the email of the person you want to add.',
+                style: TextStyle(
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 0.6))),
+            const SizedBox(height: 14),
             TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
+              controller: emailCtrl,
               autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Anuluj"),
-          ),
-          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
+          FilledButton(
             onPressed: () async {
-              final email = emailController.text.trim();
-              if (email.isNotEmpty) {
-                final error = await friendServices.sendRequestByEmail(email);
-                if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(error ?? "Zaproszenie zostało wysłane!")),
-                  );
-                }
+              final email = emailCtrl.text.trim();
+              if (email.isEmpty) return;
+              final error =
+              await friendServices.sendRequestByEmail(email);
+              if (!mounted) return;
+              Navigator.pop(ctx);
+              if (error != null) {
+                InAppNotification.error(context, error);
+              } else {
+                InAppNotification.success(
+                    context, 'Friend request sent!');
               }
             },
-            child: const Text("Wyślij"),
+            child: const Text('Send'),
           ),
         ],
       ),
@@ -92,46 +108,64 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final onAccent =
+    accent.computeLuminance() > 0.4 ? Colors.black87 : Colors.white;
+
     return ListenableBuilder(
       listenable: friendServices,
       builder: (context, _) {
         final requests = friendServices.getRequests();
-        final allFriends = friendServices.getFriends();
-        final filteredFriends = allFriends.where((f) => 
-          f.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-          f.email.toLowerCase().contains(_searchController.text.toLowerCase())
-        ).toList();
+        final all = friendServices.getFriends();
+        final q = _searchCtrl.text.toLowerCase();
+        final filtered = all
+            .where((f) =>
+        f.name.toLowerCase().contains(q) ||
+            f.email.toLowerCase().contains(q))
+            .toList();
 
         return Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            // ── Search bar on accent background ────────────────
+            Container(
+              color: theme.appBarTheme.backgroundColor,
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      style: const TextStyle(color: Colors.blueAccent),
-                      controller: _searchController,
+                      controller: _searchCtrl,
+                      style: TextStyle(color: onAccent),
                       decoration: InputDecoration(
-                        hintText: "Szukaj w swoich znajomych...",
-                        hintStyle: const TextStyle(color: Colors.blueAccent),
-                        prefixIcon: const Icon(Icons.search),
+                        hintText: 'Search friends…',
+                        hintStyle: TextStyle(
+                            color: onAccent.withValues(alpha: 0.5)),
+                        prefixIcon: Icon(Icons.search,
+                            color: onAccent.withValues(alpha: 0.7)),
+                        filled: true,
+                        fillColor: onAccent.withValues(alpha: 0.12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 16),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      onChanged: (value) => setState(() {}),
+                      onChanged: (v) => setState(() {}),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Stack(
                     alignment: Alignment.topRight,
                     children: [
                       CircleAvatar(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor:
+                        onAccent.withValues(alpha: 0.15),
                         child: IconButton(
-                          icon: const Icon(Icons.person_add, color: Colors.white),
+                          icon: Icon(Icons.person_add, color: onAccent),
                           onPressed: _addFriendDialog,
+                          tooltip: 'Add friend',
                         ),
                       ),
                       _StatusBadge(count: requests.length),
@@ -140,84 +174,59 @@ class _FriendsPageState extends State<FriendsPage> {
                 ],
               ),
             ),
+
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 80),
                 children: [
+                  // ── Pending requests ─────────────────────────
                   if (requests.isNotEmpty) ...[
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                      child: Text(
-                        "Oczekujące zaproszenia",
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                      ),
-                    ),
-                    ...requests.map((req) => Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.orangeAccent.withOpacity(0.2),
-                          child: Text(req.name.isNotEmpty ? req.name[0].toUpperCase() : "?", 
-                            style: const TextStyle(color: Colors.orange)),
-                        ),
-                        title: Text(req.name.isNotEmpty ? req.name : "Użytkownik", 
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(req.email),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.check_circle, color: Colors.green),
-                              onPressed: () => friendServices.acceptRequest(req),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.cancel, color: Colors.redAccent),
-                              onPressed: () => friendServices.declineRequest(req.uid),
-                            ),
-                          ],
-                        ),
-                      ),
+                    _SectionHeader(
+                        label: 'Pending requests (${requests.length})',
+                        color: Colors.orange),
+                    const SizedBox(height: 6),
+                    ...requests.map((r) => _RequestCard(
+                      user: r,
+                      onAccept: () =>
+                          friendServices.acceptRequest(r),
+                      onDecline: () =>
+                          friendServices.declineRequest(r.uid),
                     )),
-                    const Divider(height: 32),
+                    const Divider(height: 24),
                   ],
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      "Twoi znajomi",
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey),
-                    ),
-                  ),
-                  if (filteredFriends.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 40),
-                        child: Column(
-                          children: [
-                            Icon(Icons.people_outline, size: 60, color: Colors.grey.withOpacity(0.5)),
-                            const SizedBox(height: 16),
-                            Text(
-                              allFriends.isEmpty ? "Nie masz jeszcze znajomych." : "Nie znaleziono znajomych.",
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
+
+                  // ── Friends ────────────────────────────────
+                  _SectionHeader(
+                      label: 'Your friends (${all.length})',
+                      color: accent),
+                  const SizedBox(height: 6),
+
+                  if (filtered.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 40),
+                      child: Column(
+                        children: [
+                          Icon(Icons.people_outline,
+                              size: 56,
+                              color: theme.colorScheme.onSurface
+                                  .withValues(alpha: 0.2)),
+                          const SizedBox(height: 12),
+                          Text(
+                            all.isEmpty
+                                ? 'No friends yet. Add someone!'
+                                : 'No friends match your search.',
+                            style: TextStyle(
+                                color: theme.colorScheme.onSurface
+                                    .withValues(alpha: 0.45)),
+                          ),
+                        ],
                       ),
                     )
                   else
-                    ...filteredFriends.map((friend) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                        child: Text(friend.name.isNotEmpty ? friend.name[0].toUpperCase() : "?", 
-                          style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
-                      ),
-                      title: Text(friend.name.isNotEmpty ? friend.name : "Użytkownik", 
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
-                      subtitle: Text(friend.email, style: const TextStyle(color: Colors.blueAccent)),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
-                        onPressed: () => friendServices.removeFriend(friend.uid),
-                      ),
+                    ...filtered.map((f) => _FriendCard(
+                      friend: f,
+                      onRemove: () =>
+                          friendServices.removeFriend(f.uid),
                     )),
                 ],
               ),
@@ -225,6 +234,136 @@ class _FriendsPageState extends State<FriendsPage> {
           ],
         );
       },
+    );
+  }
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _SectionHeader({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(2)),
+        ),
+        const SizedBox(width: 8),
+        Text(label,
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: color, fontSize: 13)),
+      ],
+    );
+  }
+}
+
+// ── Request card ──────────────────────────────────────────────────────────────
+
+class _RequestCard extends StatelessWidget {
+  final UserModel user;
+  final VoidCallback onAccept;
+  final VoidCallback onDecline;
+  const _RequestCard(
+      {required this.user,
+        required this.onAccept,
+        required this.onDecline});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.orange.withValues(alpha: 0.15),
+          child: Text(
+            user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+            style: const TextStyle(
+                color: Colors.orange, fontWeight: FontWeight.bold),
+          ),
+        ),
+        title: Text(user.name.isNotEmpty ? user.name : 'User',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(user.email,
+            style: TextStyle(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.55))),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.check_circle, color: Colors.green),
+              tooltip: 'Accept',
+              onPressed: onAccept,
+            ),
+            IconButton(
+              icon: const Icon(Icons.cancel, color: Colors.redAccent),
+              tooltip: 'Decline',
+              onPressed: onDecline,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Friend card ───────────────────────────────────────────────────────────────
+
+class _FriendCard extends StatelessWidget {
+  final UserModel friend;
+  final VoidCallback onRemove;
+  const _FriendCard({required this.friend, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
+    final initials = friend.name.isNotEmpty
+        ? friend.name.trim().split(' ').map((p) => p[0]).take(2).join().toUpperCase()
+        : friend.email.isNotEmpty
+        ? friend.email[0].toUpperCase()
+        : '?';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: accent.withValues(alpha: 0.12),
+          backgroundImage:
+          friend.photo != null ? NetworkImage(friend.photo!) : null,
+          child: friend.photo == null
+              ? Text(initials,
+              style: TextStyle(
+                  color: accent, fontWeight: FontWeight.bold))
+              : null,
+        ),
+        title: Text(
+            friend.name.isNotEmpty ? friend.name : friend.email,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: friend.name.isNotEmpty
+            ? Text(friend.email,
+            style: TextStyle(
+                color: theme.colorScheme.onSurface
+                    .withValues(alpha: 0.55)))
+            : null,
+        trailing: IconButton(
+          icon: const Icon(Icons.remove_circle_outline,
+              color: Colors.redAccent),
+          tooltip: 'Remove friend',
+          onPressed: onRemove,
+        ),
+      ),
     );
   }
 }

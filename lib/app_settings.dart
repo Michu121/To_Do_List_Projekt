@@ -5,18 +5,26 @@ enum AppThemeMode { light, dark }
 
 class AppSettings extends ChangeNotifier {
   AppSettings._();
-
   static final AppSettings instance = AppSettings._();
 
   static const List<Color> availableAccentColors = [
-    Color(0xFF5C6BC0), // blue
-    Color(0xFF4CAF50), // green
-    Color(0xFFEC407A), // pink
-    Color(0xFFFFA726), // orange
-    Color(0xFFFDD835), // yellow
-    Color(0xFF26C6DA), // cyan
-    Color(0xFFEF5350), // red
+    Color(0xFF5C6BC0),
+    Color(0xFF4CAF50),
+    Color(0xFFEC407A),
+    Color(0xFFFFA726),
+    Color(0xFFFDD835),
+    Color(0xFF26C6DA),
+    Color(0xFFEF5350),
   ];
+
+  /// Minutes-before options for task reminders.
+  static const List<int> notificationTimingOptions = [0, 5, 15, 30, 60, 1440];
+  static String timingLabel(int minutes) {
+    if (minutes == 0) return 'At task time';
+    if (minutes < 60) return '$minutes min before';
+    if (minutes == 60) return '1 hour before';
+    return '1 day before';
+  }
 
   late SharedPreferences _prefs;
 
@@ -28,17 +36,17 @@ class AppSettings extends ChangeNotifier {
   bool _taskReminders = false;
   bool _invitations = false;
   bool _groupInvitations = false;
+  int _notificationMinutesBefore = 15;
 
   bool _biometricLock = false;
   bool _lockWhenBackgrounded = false;
   bool _hideNotificationContent = false;
 
   AppThemeMode get themeMode => _themeMode;
-
   ThemeMode get materialThemeMode =>
       _themeMode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light;
-
-  String get themeLabel => _themeMode == AppThemeMode.dark ? 'Dark' : 'Light';
+  String get themeLabel =>
+      _themeMode == AppThemeMode.dark ? 'Dark' : 'Light';
   Color get accentColor => _accentColor;
   String get language => _language;
 
@@ -46,6 +54,7 @@ class AppSettings extends ChangeNotifier {
   bool get taskReminders => _taskReminders;
   bool get invitations => _invitations;
   bool get groupInvitations => _groupInvitations;
+  int get notificationMinutesBefore => _notificationMinutesBefore;
 
   bool get biometricLock => _biometricLock;
   bool get lockWhenBackgrounded => _lockWhenBackgrounded;
@@ -55,7 +64,8 @@ class AppSettings extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
 
     final savedTheme = _prefs.getString('theme_mode');
-    _themeMode = savedTheme == 'dark' ? AppThemeMode.dark : AppThemeMode.light;
+    _themeMode =
+    savedTheme == 'dark' ? AppThemeMode.dark : AppThemeMode.light;
 
     _accentColor = Color(
       _prefs.getInt('accent_color') ??
@@ -64,10 +74,13 @@ class AppSettings extends ChangeNotifier {
 
     _language = 'English';
 
-    _notificationsEnabled = _prefs.getBool('notifications_enabled') ?? false;
+    _notificationsEnabled =
+        _prefs.getBool('notifications_enabled') ?? false;
     _taskReminders = _prefs.getBool('task_reminders') ?? false;
     _invitations = _prefs.getBool('invitations') ?? false;
     _groupInvitations = _prefs.getBool('group_invitations') ?? false;
+    _notificationMinutesBefore =
+        _prefs.getInt('notification_minutes_before') ?? 15;
 
     _biometricLock = _prefs.getBool('biometric_lock') ?? false;
     _lockWhenBackgrounded =
@@ -97,17 +110,14 @@ class AppSettings extends ChangeNotifier {
   Future<void> setNotificationsEnabled(bool value) async {
     _notificationsEnabled = value;
     await _prefs.setBool('notifications_enabled', value);
-
     if (!value) {
       _taskReminders = false;
       _invitations = false;
       _groupInvitations = false;
-
       await _prefs.setBool('task_reminders', false);
       await _prefs.setBool('invitations', false);
       await _prefs.setBool('group_invitations', false);
     }
-
     notifyListeners();
   }
 
@@ -126,6 +136,12 @@ class AppSettings extends ChangeNotifier {
   Future<void> setGroupInvitations(bool value) async {
     _groupInvitations = value;
     await _prefs.setBool('group_invitations', value);
+    notifyListeners();
+  }
+
+  Future<void> setNotificationMinutesBefore(int minutes) async {
+    _notificationMinutesBefore = minutes;
+    await _prefs.setInt('notification_minutes_before', minutes);
     notifyListeners();
   }
 

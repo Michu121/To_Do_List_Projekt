@@ -6,6 +6,7 @@ import 'package:todo_list/app_settings.dart';
 import 'package:todo_list/l10n/app_localizations.dart';
 import 'package:todo_list/shared/services/auth_service.dart';
 import 'package:todo_list/shared/services/category_services.dart';
+import 'package:todo_list/shared/services/notification_service.dart';
 import 'package:todo_list/shared/services/task_services.dart';
 import 'package:todo_list/shared/view/mainpage.dart';
 import 'package:todo_list/view/loginpage.dart';
@@ -17,6 +18,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppSettings.instance.load(); // load persisted settings before runApp
   FirebaseFirestore.instance.settings = const Settings();
+  await notificationService.init();
   runApp(const MyApp());
 }
 

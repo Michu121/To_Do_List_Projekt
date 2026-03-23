@@ -6,10 +6,9 @@ import '../models/category.dart';
 import 'fire_store_service.dart';
 
 class CategoryServices extends ChangeNotifier {
+  // TYLKO ta kategoria jest zablokowana do edycji i nieusuwalna
   static final Map<String, Category> _defaults = {
-    'Work': Category(name: 'Work', color: Colors.blue),
-    'Personal': Category(name: 'Personal', color: Colors.green),
-    'Default': Category(name: 'Default', color: Colors.grey),
+    'Default': Category(id: 'default', name: 'Default', color: Colors.grey),
   };
 
   Map<String, Category> _categories = Map.of(_defaults);
@@ -20,14 +19,35 @@ class CategoryServices extends ChangeNotifier {
   void init(String uid) {
     _subscription?.cancel();
     _subscription = firestoreService.categoriesStream(uid).listen((snapshot) {
+
+      // Jeśli użytkownik nie ma żadnych kategorii w Firestore (nowy user)
+      // tworzymy Work i Personal w bazie.
+      if (snapshot.docs.isEmpty) {
+        _seedInitialCategories(uid);
+        return;
+      }
+
       final fromFirestore = {
         for (final doc in snapshot.docs)
           (doc.data() as Map<String, dynamic>)['name'] as String:
           Category.fromJson(doc.data() as Map<String, dynamic>),
       };
+
+      // Łączymy: Default (z kodu) + wszystko co w bazie (Work, Personal, inne)
       _categories = {..._defaults, ...fromFirestore};
       notifyListeners();
     });
+  }
+
+  Future<void> _seedInitialCategories(String uid) async {
+    final starter = [
+      Category(name: 'Work', color: Colors.blue),
+      Category(name: 'Personal', color: Colors.green),
+    ];
+
+    for (var cat in starter) {
+      await firestoreService.setCategory(uid, cat.id, cat.toJson());
+    }
   }
 
   void clear() {
@@ -39,85 +59,82 @@ class CategoryServices extends ChangeNotifier {
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
+  // ── DODAWANIE ──────────────────────────────────────────────────────────────
+
   Future<void> addCategory(Category category) async {
     final uid = _uid;
-    if (uid == null) return;
-    if (_categories.containsKey(category.name)) return;
+    if (uid == null || _categories.containsKey(category.name)) return;
 
-    // 1. Optimistic local update
     _categories = {..._categories, category.name: category};
     notifyListeners();
 
-    // 2. Persist in background — roll back on failure
     unawaited(
-      firestoreService
-          .setCategory(uid, category.id, category.toJson())
-          .catchError((e) {
+      firestoreService.setCategory(uid, category.id, category.toJson()).catchError((e) {
         _categories.remove(category.name);
         notifyListeners();
-        debugPrint('addCategory error: $e');
       }),
     );
   }
+
+  // ── AKTUALIZACJA (Teraz pozwoli edytować Work/Personal) ────────────────────
 
   Future<void> updateCategory(Category category) async {
     final uid = _uid;
     if (uid == null) return;
 
+    // Szukamy po ID, żeby móc zmienić nazwę
     final oldEntry = _categories.entries.firstWhere(
           (e) => e.value.id == category.id,
       orElse: () => MapEntry(category.name, category),
     );
+
+    // Blokada TYLKO dla systemowego Default
+    if (oldEntry.value.id == 'default') return;
+
     final oldName = oldEntry.key;
     final oldCategory = oldEntry.value;
 
-    // 1. Optimistic local update
     _categories = {
       for (final e in _categories.entries)
         if (e.key == oldName) category.name: category else e.key: e.value,
     };
     notifyListeners();
 
-    // 2. Persist in background — roll back on failure
     unawaited(
-      firestoreService
-          .setCategory(uid, category.id, category.toJson())
-          .catchError((e) {
+      firestoreService.setCategory(uid, category.id, category.toJson()).catchError((e) {
         _categories = {
           for (final entry in _categories.entries)
-            if (entry.key == category.name)
-              oldName: oldCategory
-            else
-              entry.key: entry.value,
+            if (entry.key == category.name) oldName: oldCategory else entry.key: entry.value,
         };
         notifyListeners();
-        debugPrint('updateCategory error: $e');
       }),
     );
   }
 
+  // ── USUWANIE ───────────────────────────────────────────────────────────────
+
   Future<void> deleteCategory(String name) async {
     final uid = _uid;
-    if (uid == null) return;
-    if (_defaults.containsKey(name)) return;
+    if (uid == null || name == 'Default') return;
+
     final cat = _categories[name];
     if (cat == null) return;
 
-    // 1. Optimistic local removal
-    _categories = {
-      for (final e in _categories.entries)
-        if (e.key != name) e.key: e.value,
-    };
+    final backup = Map<String, Category>.from(_categories);
+    _categories.remove(name);
     notifyListeners();
 
-    // 2. Persist in background — roll back on failure
-    unawaited(
-      firestoreService.deleteCategory(uid, cat.id).catchError((e) {
-        _categories = {..._categories, name: cat};
-        notifyListeners();
-        debugPrint('deleteCategory error: $e');
-      }),
-    );
+    try {
+      await firestoreService.moveTasksToDefaultCategory(
+        uid: uid,
+        oldCategoryId: cat.id,
+        defaultCategoryId: 'default',
+      );
+      await firestoreService.deleteCategory(uid, cat.id);
+    } catch (e) {
+      _categories = backup;
+      notifyListeners();
+    }
   }
 
   @override

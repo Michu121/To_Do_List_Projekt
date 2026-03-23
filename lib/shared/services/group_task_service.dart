@@ -7,8 +7,6 @@ import '../models/status.dart';
 import '../models/task.dart';
 import 'stats_service.dart';
 
-
-
 class GroupTaskService extends ChangeNotifier {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
@@ -48,7 +46,9 @@ class GroupTaskService extends ChangeNotifier {
   }
 
   void _cancelTaskSubs() {
-    for (final sub in _taskSubs.values) sub.cancel();
+    for (final sub in _taskSubs.values) {
+      sub.cancel();
+    }
     _taskSubs.clear();
     _tasksByGroup.clear();
   }
@@ -71,8 +71,6 @@ class GroupTaskService extends ChangeNotifier {
       _tasksByGroup.remove(id);
     }
 
-    // No compound where+orderBy — would need a Firestore composite index.
-    // We filter isDeleted in Dart instead.
     for (final group in _groups) {
       if (!_taskSubs.containsKey(group.id)) {
         _taskSubs[group.id] = _db
@@ -93,8 +91,6 @@ class GroupTaskService extends ChangeNotifier {
       _tasks = [];
       _loading = false;
     } else if (_taskSubs.isEmpty) {
-      // All subs were already active — tasks snapshot may not fire again,
-      // so ensure loading is cleared here too.
       _loading = false;
     }
 
@@ -134,7 +130,6 @@ class GroupTaskService extends ChangeNotifier {
 
   // ── Group CRUD ────────────────────────────────────────────────────────────
 
-  /// Optimistic: adds to local list immediately, persists in the background.
   Future<Group?> createGroup(String name, int colorValue) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
@@ -149,12 +144,10 @@ class GroupTaskService extends ChangeNotifier {
     };
     final group = Group.fromJson(data);
 
-    // 1. Show in UI immediately
     _groups = [..._groups, group];
     _tasksByGroup[group.id] = [];
     notifyListeners();
 
-    // 2. Background write — roll back on failure
     unawaited(
       ref.set(data).then((_) => statsService.onGroupCreated()).catchError((e) {
         _groups = _groups.where((g) => g.id != group.id).toList();
@@ -168,9 +161,6 @@ class GroupTaskService extends ChangeNotifier {
     return group;
   }
 
-  /// Joins a group by ID.
-  /// Returns an empty string on success.
-  /// Returns true on success, false on any failure.
   Future<bool> joinGroup(String groupId) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return false;
@@ -202,7 +192,6 @@ class GroupTaskService extends ChangeNotifier {
     );
   }
 
-  /// Owner removes a specific member from the group.
   void removeMember(String groupId, String memberUid) {
     unawaited(
       _db.collection('groups').doc(groupId).update({
@@ -211,8 +200,6 @@ class GroupTaskService extends ChangeNotifier {
     );
   }
 
-  /// Creator deletes the entire group document.
-  /// Optimistic: removes from local list immediately, Firestore in background.
   void deleteGroup(String groupId) {
     _groups = _groups.where((g) => g.id != groupId).toList();
     _tasksByGroup.remove(groupId);
@@ -230,15 +217,13 @@ class GroupTaskService extends ChangeNotifier {
     );
   }
 
-  // ── Task CRUD — all fully optimistic, zero blocking Firestore calls ────────
+  // ── Task CRUD — fully optimistic ─────────────────────────────────────────
 
   void addTask(String groupId, Task task) {
-    // 1. Add locally → UI updates instantly
     _tasksByGroup.putIfAbsent(groupId, () => []).add(task);
     _rebuildTaskList();
     notifyListeners();
 
-    // 2. Background write — roll back on failure
     unawaited(
       _db
           .collection('groups')
@@ -265,14 +250,12 @@ class GroupTaskService extends ChangeNotifier {
         oldTask.status != Status.done &&
         newTask.status == Status.done;
 
-    // 1. Replace locally → instant feedback
     if (oldIndex >= 0) {
       bucket![oldIndex] = newTask;
       _rebuildTaskList();
       notifyListeners();
     }
 
-    // 2. Background write — roll back on failure
     unawaited(
       _db
           .collection('groups')
@@ -280,8 +263,9 @@ class GroupTaskService extends ChangeNotifier {
           .collection('tasks')
           .doc(newTask.id)
           .set(newTask.toJson())
-          .then((_) =>
-      justCompleted ? statsService.onTaskCompleted() : Future.value())
+          .then((_) => justCompleted
+          ? statsService.onTaskCompleted(newTask.difficulty.points)
+          : Future.value())
           .catchError((e) {
         if (oldTask != null && oldIndex >= 0) {
           _tasksByGroup[groupId]?[oldIndex] = oldTask;
@@ -293,14 +277,11 @@ class GroupTaskService extends ChangeNotifier {
     );
   }
 
-  /// Soft-delete — optimistic local removal, background Firestore write.
   void deleteTask(String groupId, String taskId) {
-    // 1. Remove locally right away
     _tasksByGroup[groupId]?.removeWhere((t) => t.id == taskId);
     _rebuildTaskList();
     notifyListeners();
 
-    // 2. Background write
     unawaited(
       _db
           .collection('groups')

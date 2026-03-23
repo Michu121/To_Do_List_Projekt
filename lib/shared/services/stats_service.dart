@@ -7,10 +7,9 @@ class StatsService {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  static const int pointsCreateTask = 2;
-  static const int pointsCompleteTask = 10;
-  static const int pointsCreateGroup = 5;
-  static const int pointsJoinGroup = 3;
+  static const int pointsCreateTask = 5;
+  static const int pointsCreateGroup = 15;
+  static const int pointsJoinGroup = 10;
 
   String? get _uid => _auth.currentUser?.uid;
 
@@ -26,6 +25,7 @@ class StatsService {
     await ref.set(fields, SetOptions(merge: true));
   }
 
+  /// Called when a task is created. Awards [pointsCreateTask] points.
   Future<void> onTaskCreated() async {
     await _increment({
       'points': FieldValue.increment(pointsCreateTask),
@@ -33,9 +33,11 @@ class StatsService {
     });
   }
 
-  Future<void> onTaskCompleted() async {
+  /// Called when a task is marked as done.
+  /// Awards the task's difficulty points (10 / 25 / 50).
+  Future<void> onTaskCompleted(int difficultyPoints) async {
     await _increment({
-      'points': FieldValue.increment(pointsCompleteTask),
+      'points': FieldValue.increment(difficultyPoints),
       'tasksCompleted': FieldValue.increment(1),
     });
   }
@@ -64,9 +66,6 @@ class StatsService {
   }
 
   /// Fetches stats for each member individually.
-  /// If a document can't be read (e.g. permission-denied for another user's
-  /// doc under strict Firestore rules), that member is silently skipped
-  /// instead of crashing the whole leaderboard.
   Future<List<UserStats>> fetchMembersStats(List<String> uids) async {
     if (uids.isEmpty) return [];
 
@@ -77,8 +76,6 @@ class StatsService {
           if (!doc.exists || doc.data() == null) return null;
           return UserStats.fromJson({...doc.data()!, 'uid': doc.id});
         } catch (e) {
-          // Permission-denied or network error for this specific user —
-          // skip them rather than failing the whole leaderboard.
           debugPrint('fetchMembersStats: could not load uid=$uid — $e');
           return null;
         }

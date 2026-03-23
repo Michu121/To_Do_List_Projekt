@@ -64,14 +64,9 @@ class FirestoreService {
 
   Future<void> acceptFriendRequest(UserModel currentUser, UserModel friendUser) async {
     final batch = _db.batch();
-
-    // Add to my friends
     batch.set(_friendsRef(currentUser.uid).doc(friendUser.uid), friendUser.toJson());
-    // Add to their friends
     batch.set(_friendsRef(friendUser.uid).doc(currentUser.uid), currentUser.toJson());
-    // Remove request
     batch.delete(_requestsRef(currentUser.uid).doc(friendUser.uid));
-
     await batch.commit();
   }
 
@@ -104,10 +99,6 @@ class FirestoreService {
 
   // ── Tasks ────────────────────────────────────────────────────────────────────
 
-  // FIX: removed `.where('isDeleted', isEqualTo: false)` — combining a where
-  // filter with orderBy requires a composite Firestore index that may not exist,
-  // causing the stream to fail silently. isDeleted is filtered in TaskServices
-  // in Dart code instead, which requires no index.
   Stream<QuerySnapshot> tasksStream(String uid) =>
       _tasksRef(uid).orderBy('date').snapshots();
 
@@ -117,9 +108,25 @@ class FirestoreService {
   Future<void> updateTask(String uid, String id, Map<String, dynamic> data) =>
       _tasksRef(uid).doc(id).update(data);
 
-  /// Soft-delete: marks the task as deleted instead of removing the document.
   Future<void> deleteTask(String uid, String id) =>
       _tasksRef(uid).doc(id).update({'isDeleted': true});
+
+  /// Przenosi wszystkie zadania z usuwanej kategorii do kategorii domyślnej
+  Future<void> moveTasksToDefaultCategory({
+    required String uid,
+    required String oldCategoryId,
+    required String defaultCategoryId,
+  }) async {
+    final batch = _db.batch();
+    final tasksSnapshot = await _tasksRef(uid)
+        .where('categoryId', isEqualTo: oldCategoryId)
+        .get();
+
+    for (var doc in tasksSnapshot.docs) {
+      batch.update(doc.reference, {'categoryId': defaultCategoryId});
+    }
+    await batch.commit();
+  }
 
   // ── Categories ───────────────────────────────────────────────────────────────
 
