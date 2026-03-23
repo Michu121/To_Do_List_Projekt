@@ -1,5 +1,5 @@
 name: todo_list
-description: "App that makes everydays duties easier du to the fact planning"
+description: "App that makes everydays duties easier due to the fact planning"
 
 publish_to: 'none'
 
@@ -9,7 +9,6 @@ environment:
   sdk: ^3.11.0
 
 dependencies:
-  shared_preferences:
   flutter:
     sdk: flutter
 
@@ -18,20 +17,22 @@ dependencies:
   firebase_auth: ^4.15.0
   cloud_firestore: ^4.13.0
 
-  # Google / Apple Sign-In
+  # Google Sign-In
   google_sign_in: ^6.1.5
 
-  # Localization
+  # Localisation
   flutter_localizations:
     sdk: flutter
   intl: ^0.20.2
 
-  # File storage
+  # Storage
   path_provider: ^2.0.15
+  shared_preferences: ^2.3.2   # ← version added
 
   # Utilities
   uuid: ^4.2.1
-  #Qr to groups
+
+  # QR / scanner for group invites
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.2.0
 

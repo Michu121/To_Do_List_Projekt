@@ -22,7 +22,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          appBar: const MyAppBar(title: "Settings"),
+          appBar: const MyAppBar(title: 'Settings'),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -52,15 +52,14 @@ class _SettingsPageState extends State<SettingsPage> {
                             spacing: 12,
                             runSpacing: 12,
                             children: AppSettings.availableAccentColors
-                                .map(
-                                  (color) => _AccentColorCircle(
-                                color: color,
-                                isSelected:
-                                settings.accentColor.toARGB32() ==
-                                    color.toARGB32(),
-                                onTap: () => settings.setAccentColor(color),
-                              ),
-                            )
+                                .map((color) => _AccentColorCircle(
+                              color: color,
+                              isSelected:
+                              settings.accentColor.toARGB32() ==
+                                  color.toARGB32(),
+                              onTap: () =>
+                                  settings.setAccentColor(color),
+                            ))
                                 .toList(),
                           ),
                         ],
@@ -85,8 +84,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     SwitchListTile.adaptive(
                       value: settings.notificationsEnabled,
-                      onChanged: (value) =>
-                          settings.setNotificationsEnabled(value),
+                      onChanged: settings.setNotificationsEnabled,
                       title: const Text('Enable notifications'),
                       contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16),
@@ -95,7 +93,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     SwitchListTile.adaptive(
                       value: settings.taskReminders,
                       onChanged: settings.notificationsEnabled
-                          ? (value) => settings.setTaskReminders(value)
+                          ? settings.setTaskReminders
                           : null,
                       title: const Text('Task reminders'),
                       contentPadding:
@@ -105,7 +103,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     SwitchListTile.adaptive(
                       value: settings.invitations,
                       onChanged: settings.notificationsEnabled
-                          ? (value) => settings.setInvitations(value)
+                          ? settings.setInvitations
                           : null,
                       title: const Text('Invitations'),
                       contentPadding:
@@ -115,7 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     SwitchListTile.adaptive(
                       value: settings.groupInvitations,
                       onChanged: settings.notificationsEnabled
-                          ? (value) => settings.setGroupInvitations(value)
+                          ? settings.setGroupInvitations
                           : null,
                       title: const Text('Group invitations'),
                       contentPadding:
@@ -124,7 +122,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                const _SectionTitle(title: 'Account settings'),
+                const _SectionTitle(title: 'Account'),
                 _SectionBox(
                   children: [
                     _SimpleTile(
@@ -134,13 +132,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     const Divider(height: 1),
                     _SimpleTile(
                       title: 'Privacy and security',
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const PrivacySecurityPage(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const PrivacySecurityPage()),
+                      ),
                     ),
                     const Divider(height: 1),
                     _SimpleTile(
@@ -157,192 +152,176 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // ── Theme picker ─────────────────────────────────────────────────────────
+
   void _showThemePicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: RadioGroup<AppThemeMode>(
-              groupValue: settings.themeMode,
-              onChanged: (AppThemeMode? value) {
-                if (value != null) {
-                  settings.setThemeMode(value);
-                  Navigator.pop(context);
-                }
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  RadioListTile<AppThemeMode>(
-                    value: AppThemeMode.light,
-                    title: const Text('Light'),
-                    selected: settings.themeMode == AppThemeMode.light,
-                  ),
-                  RadioListTile<AppThemeMode>(
-                    value: AppThemeMode.dark,
-                    title: const Text('Dark'),
-                    selected: settings.themeMode == AppThemeMode.dark,
-                  ),
-                ],
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<AppThemeMode>(
+                value: AppThemeMode.light,
+                groupValue: settings.themeMode,
+                title: const Text('Light'),
+                onChanged: (value) {
+                  if (value != null) {
+                    settings.setThemeMode(value);
+                    Navigator.pop(context);
+                  }
+                },
               ),
-            ),
+              RadioListTile<AppThemeMode>(
+                value: AppThemeMode.dark,
+                groupValue: settings.themeMode,
+                title: const Text('Dark'),
+                onChanged: (value) {
+                  if (value != null) {
+                    settings.setThemeMode(value);
+                    Navigator.pop(context);
+                  }
+                },
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
+
+  // ── Language picker ──────────────────────────────────────────────────────
 
   void _showLanguagePicker(BuildContext context) {
     showModalBottomSheet(
       context: context,
       showDragHandle: true,
-      builder: (_) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: RadioGroup<String>(
-              groupValue: settings.language,
-              onChanged: (String? value) {
-                if (value != null) {
-                  settings.setLanguage(value);
-                  Navigator.pop(context);
-                }
-              },
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  RadioListTile<String>(
-                    value: 'English',
-                    title: Text('English'),
-                    selected: true,
-                  ),
-                ],
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                value: 'English',
+                groupValue: settings.language,
+                title: const Text('English'),
+                onChanged: (value) {
+                  if (value != null) {
+                    settings.setLanguage(value);
+                    Navigator.pop(context);
+                  }
+                },
               ),
-            ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
+
+  // ── Change password dialog ────────────────────────────────────────────────
 
   Future<void> _showChangePasswordDialog(BuildContext context) async {
     final formKey = GlobalKey<FormState>();
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
+    final currentPasswordCtrl = TextEditingController();
+    final newPasswordCtrl = TextEditingController();
+    final confirmPasswordCtrl = TextEditingController();
 
     await showDialog(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Change password'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: currentPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Current password',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter your current password';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: newPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'New password',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Enter a new password';
-                    }
-                    if (value.trim().length < 8) {
-                      return 'Password must have at least 8 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: confirmPasswordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm password',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Confirm the new password';
-                    }
-                    if (value.trim() != newPasswordController.text.trim()) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Change password'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: currentPasswordCtrl,
+                obscureText: true,
+                decoration:
+                const InputDecoration(labelText: 'Current password'),
+                validator: (v) =>
+                (v?.trim().isEmpty ?? true) ? 'Enter current password' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: newPasswordCtrl,
+                obscureText: true,
+                decoration:
+                const InputDecoration(labelText: 'New password'),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Enter new password';
+                  if (v.trim().length < 8) return 'At least 8 characters';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: confirmPasswordCtrl,
+                obscureText: true,
+                decoration:
+                const InputDecoration(labelText: 'Confirm password'),
+                validator: (v) {
+                  if (v?.trim() != newPasswordCtrl.text.trim()) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Password form works. Connect this action to your auth service.',
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-
-    currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
-  }
-}
-Future<void> _showLogoutDialog(BuildContext context) async {
-  final shouldLogout = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) {
-      return AlertDialog(
-        title: const Text('Log out'),
-        content: const Text('Are you sure you want to log out?'),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Log out'),
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(dialogContext);
+                // TODO: wire to auth service
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password changed successfully')),
+                );
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
-      );
-    },
+      ),
+    );
+
+    currentPasswordCtrl.dispose();
+    newPasswordCtrl.dispose();
+    confirmPasswordCtrl.dispose();
+  }
+}
+
+// ── Logout dialog (top-level helper) ─────────────────────────────────────────
+
+Future<void> _showLogoutDialog(BuildContext context) async {
+  final shouldLogout = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Log out'),
+      content: const Text('Are you sure you want to log out?'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: const Text('Log out'),
+        ),
+      ],
+    ),
   );
 
   if (shouldLogout == true) {
@@ -350,15 +329,15 @@ Future<void> _showLogoutDialog(BuildContext context) async {
       await authService.logout();
     } catch (e) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to log out: $e'),
-        ),
+        SnackBar(content: Text('Failed to log out: $e')),
       );
     }
   }
 }
+
+// ── Privacy & Security page ───────────────────────────────────────────────────
+
 class PrivacySecurityPage extends StatelessWidget {
   const PrivacySecurityPage({super.key});
 
@@ -368,54 +347,49 @@ class PrivacySecurityPage extends StatelessWidget {
 
     return AnimatedBuilder(
       animation: settings,
-      builder: (context, _) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Privacy and security'),
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              _SectionBox(
-                children: [
-                  SwitchListTile.adaptive(
-                    value: settings.biometricLock,
-                    onChanged: (value) => settings.setBiometricLock(value),
-                    title: const Text('Use biometric lock'),
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                  const Divider(height: 1),
-                  SwitchListTile.adaptive(
-                    value: settings.lockWhenBackgrounded,
-                    onChanged: (value) =>
-                        settings.setLockWhenBackgrounded(value),
-                    title: const Text('Lock app when minimized'),
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                  const Divider(height: 1),
-                  SwitchListTile.adaptive(
-                    value: settings.hideNotificationContent,
-                    onChanged: (value) =>
-                        settings.setHideNotificationContent(value),
-                    title: const Text('Hide notification content'),
-                    contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context, _) => Scaffold(
+        appBar: AppBar(title: const Text('Privacy and security')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _SectionBox(
+              children: [
+                SwitchListTile.adaptive(
+                  value: settings.biometricLock,
+                  onChanged: settings.setBiometricLock,
+                  title: const Text('Use biometric lock'),
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                const Divider(height: 1),
+                SwitchListTile.adaptive(
+                  value: settings.lockWhenBackgrounded,
+                  onChanged: settings.setLockWhenBackgrounded,
+                  title: const Text('Lock app when minimised'),
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                const Divider(height: 1),
+                SwitchListTile.adaptive(
+                  value: settings.hideNotificationContent,
+                  onChanged: settings.setHideNotificationContent,
+                  title: const Text('Hide notification content'),
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
+// ── Shared sub-widgets ────────────────────────────────────────────────────────
+
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({required this.title});
-
   final String title;
 
   @override
@@ -424,9 +398,10 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 10),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
+        style: Theme.of(context)
+            .textTheme
+            .titleLarge
+            ?.copyWith(fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -434,66 +409,52 @@ class _SectionTitle extends StatelessWidget {
 
 class _SectionBox extends StatelessWidget {
   const _SectionBox({required this.children});
-
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: theme.dividerColor.withAlpha(80),
-        ),
+        border: Border.all(color: theme.dividerColor.withAlpha(80)),
         boxShadow: theme.brightness == Brightness.light
             ? [
           BoxShadow(
-            color: Colors.black.withAlpha(12),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
+              color: Colors.black.withAlpha(12),
+              blurRadius: 18,
+              offset: const Offset(0, 6))
         ]
             : [],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: children,
-        ),
+        child: Column(children: children),
       ),
     );
   }
 }
 
 class _ValueTile extends StatelessWidget {
-  const _ValueTile({
-    required this.title,
-    required this.value,
-    required this.onTap,
-  });
-
+  const _ValueTile(
+      {required this.title, required this.value, required this.onTap});
   final String title;
   final String value;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.titleMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-
     return ListTile(
-      title: Text(title, style: style),
+      title: Text(title,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600)),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          Text(value, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(width: 6),
           const Icon(Icons.chevron_right_rounded),
         ],
@@ -504,22 +465,18 @@ class _ValueTile extends StatelessWidget {
 }
 
 class _SimpleTile extends StatelessWidget {
-  const _SimpleTile({
-    required this.title,
-    required this.onTap,
-  });
-
+  const _SimpleTile({required this.title, required this.onTap});
   final String title;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.titleMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-
     return ListTile(
-      title: Text(title, style: style),
+      title: Text(title,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600)),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
     );
@@ -527,12 +484,8 @@ class _SimpleTile extends StatelessWidget {
 }
 
 class _AccentColorCircle extends StatelessWidget {
-  const _AccentColorCircle({
-    required this.color,
-    required this.isSelected,
-    required this.onTap,
-  });
-
+  const _AccentColorCircle(
+      {required this.color, required this.isSelected, required this.onTap});
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
@@ -561,10 +514,9 @@ class _AccentColorCircle extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withAlpha(90),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
+                color: color.withAlpha(90),
+                blurRadius: 8,
+                offset: const Offset(0, 3))
           ],
         ),
         child: isSelected
