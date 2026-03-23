@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../models/user_stats.dart';
 
 class StatsService {
@@ -62,18 +63,31 @@ class StatsService {
     });
   }
 
+  /// Fetches stats for each member individually.
+  /// If a document can't be read (e.g. permission-denied for another user's
+  /// doc under strict Firestore rules), that member is silently skipped
+  /// instead of crashing the whole leaderboard.
   Future<List<UserStats>> fetchMembersStats(List<String> uids) async {
     if (uids.isEmpty) return [];
-    final futures = uids.map((uid) => _db.collection('users').doc(uid).get()).toList();
-    final docs = await Future.wait(futures);
-    final result = <UserStats>[];
-    for (final doc in docs) {
-      if (doc.exists && doc.data() != null) {
-        result.add(UserStats.fromJson({...doc.data()!, 'uid': doc.id}));
-      }
-    }
-    result.sort((a, b) => b.points.compareTo(a.points));
-    return result;
+
+    final results = await Future.wait(
+      uids.map((uid) async {
+        try {
+          final doc = await _db.collection('users').doc(uid).get();
+          if (!doc.exists || doc.data() == null) return null;
+          return UserStats.fromJson({...doc.data()!, 'uid': doc.id});
+        } catch (e) {
+          // Permission-denied or network error for this specific user —
+          // skip them rather than failing the whole leaderboard.
+          debugPrint('fetchMembersStats: could not load uid=$uid — $e');
+          return null;
+        }
+      }),
+    );
+
+    final stats = results.whereType<UserStats>().toList();
+    stats.sort((a, b) => b.points.compareTo(a.points));
+    return stats;
   }
 }
 

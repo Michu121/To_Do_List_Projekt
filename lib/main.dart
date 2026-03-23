@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:todo_list/l10n/app_localizations.dart';
 import 'package:todo_list/shared/services/auth_service.dart';
 import 'package:todo_list/shared/services/category_services.dart';
-import 'package:todo_list/shared/services/group_services.dart';
+import 'package:todo_list/shared/services/group_task_service.dart';
 import 'package:todo_list/shared/services/task_services.dart';
 import 'package:todo_list/shared/view/mainpage.dart';
 import 'package:todo_list/view/loginpage.dart';
@@ -16,7 +16,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseFirestore.instance.settings = const Settings();
-
   runApp(const MyApp());
 }
 
@@ -56,13 +55,13 @@ class AuthGate extends StatelessWidget {
         if (user != null) {
           taskServices.init(user.uid);
           categoryServices.init(user.uid);
-          groupServices.init(user.uid);
+          groupTaskService.init();
           return const MainPage();
         }
 
         taskServices.clear();
         categoryServices.clear();
-        groupServices.clear();
+        groupTaskService.reset();
         return const LoginPage();
       },
     );

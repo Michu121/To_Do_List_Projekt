@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:todo_list/shared/services/category_services.dart';
 
 import '../../models/category.dart';
-import '../../models/colors.dart'; // Added to support ColorsToPick
+import '../../models/colors.dart';
 import '../../services/color_services.dart';
 import '../pickers/color_picker.dart';
 
@@ -10,7 +10,7 @@ class CategoryOverlay {
   static OverlayEntry? _overlayEntry;
   static AnimationController? _animationController;
 
-  static void show(BuildContext context,{Category? cat}) {
+  static void show(BuildContext context, {Category? cat}) {
     if (_overlayEntry != null) return;
 
     final overlay = Overlay.of(context);
@@ -24,19 +24,18 @@ class CategoryOverlay {
       begin: const Offset(1, 0),
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut),
-    );
+        CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut));
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
         children: [
           GestureDetector(
             onTap: hide,
-            child: Container(color: Colors.black.withOpacity(0.2)),
+            child: Container(color: Colors.black.withValues(alpha: 0.2)),
           ),
           Positioned(
             right: 0,
-            top: MediaQuery.of(context).size.height * 0.15, // Adjusted top offset
+            top: MediaQuery.of(context).size.height * 0.15,
             width: MediaQuery.of(context).size.width * 0.85,
             child: SlideTransition(
               position: slideTransition,
@@ -45,7 +44,7 @@ class CategoryOverlay {
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
-                  bottomLeft: Radius.circular(16), // Added for a cleaner look
+                  bottomLeft: Radius.circular(16),
                 ),
                 child: _CategoryFormContent(cat: cat),
               ),
@@ -69,7 +68,6 @@ class CategoryOverlay {
   }
 }
 
-// Extracted into a StatefulWidget to handle text input and color selection state
 class _CategoryFormContent extends StatefulWidget {
   final Category? cat;
   const _CategoryFormContent({this.cat});
@@ -86,9 +84,21 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
   String? _nameError;
   bool _saving = false;
 
+  bool get _isEditing => widget.cat != null;
+
   @override
   void initState() {
     super.initState();
+    if (_isEditing) {
+      _nameController.text = widget.cat!.name;
+      // orElse prevents "Bad state: No element" when the stored colour doesn't
+      // match any palette entry exactly.
+      final matchedKey = _colorServices.getColors().keys.firstWhere(
+            (key) => _colorServices.getColors()[key]!.color == widget.cat!.color,
+        orElse: () => _colorServices.getColors().keys.first,
+      );
+      _colorServices.updateColor(matchedKey, true);
+    }
     _selectedColor = _colorServices.getColors().values.firstOrNull;
   }
 
@@ -98,9 +108,8 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
     super.dispose();
   }
 
-  Future<void> _handleSave() async {
+  Future<void> _handleSave({bool add = false, bool del = false}) async {
     final name = _nameController.text.trim();
-
     if (name.isEmpty) {
       setState(() => _nameError = 'Name cannot be empty');
       return;
@@ -108,36 +117,33 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
 
     setState(() => _saving = true);
 
-    categoryServices.addCategory(Category(name: name, color: _selectedColor!.color));
+    if (add) {
+      if (_isEditing) {
+        await categoryServices.updateCategory(
+          Category(
+              id: widget.cat!.id, name: name, color: _selectedColor!.color),
+        );
+      } else {
+        await categoryServices
+            .addCategory(Category(name: name, color: _selectedColor!.color));
+      }
+    } else if (_isEditing && del) {
+      // Delete by original name, not the (possibly edited) field value.
+      await categoryServices.deleteCategory(widget.cat!.name);
+    }
 
     setState(() => _saving = false);
-
     CategoryOverlay.hide();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    if (widget.cat != null) {
-      _nameController.text = widget.cat!.name;
-      if (_selectedColor !=  _colorServices.getColors().values.first) {
-        String selectedColorName = _colorServices.getColors().keys.firstWhere((key) => _colorServices.getColors()[key]!.color == widget.cat!.color);
-        _colorServices.updateColor(selectedColorName, true);
-      }
-    } else {
-      _nameController.text = "";
-      _selectedColor = _colorServices.getColors().values.first;
-    }
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        20
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Vital for automatic height
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Center(
@@ -164,10 +170,9 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
             },
           ),
           const SizedBox(height: 10),
-          Text(
-            'Color',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-          ),
+          Text('Color',
+              style:
+              TextStyle(fontSize: 13, color: Colors.grey.shade600)),
           const SizedBox(height: 6),
           ColorPicker(
             colorServices: _colorServices,
@@ -179,61 +184,100 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
               });
             },
           ),
-          // Use a fixed margin instead of Spacer()
           const SizedBox(height: 32),
-          ValueListenableBuilder(
-            valueListenable: _nameController,
-            builder: (context, value, child) {
-              return SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: _selectedColor!.color,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.center,
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(_nameController.text.isEmpty ? "Podgląd": _nameController.text, style: TextStyle(color: _selectedColor!.color.computeLuminance() > 0.5 ? Colors.black : Colors.white, fontSize: 14, fontWeight: FontWeight.w500, overflow: TextOverflow.ellipsis)),
-                      ),
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(3),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: _saving ? null : _handleSave,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.onSecondary,
-                              borderRadius: BorderRadius.circular(12),
+          ListenableBuilder(
+            listenable: _colorServices,
+            builder: (context, _) => ValueListenableBuilder(
+              valueListenable: _nameController,
+              builder: (context, _, __) {
+                final previewColor = _selectedColor?.color ?? Colors.grey;
+                return SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: Row(
+                    children: [
+                      // Live preview chip
+                      Expanded(
+                        child: Container(
+                          margin: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: previewColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            _nameController.text.isEmpty
+                                ? 'Preview'
+                                : _nameController.text,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: previewColor.computeLuminance() > 0.5
+                                  ? Colors.black
+                                  : Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
-                            alignment: Alignment.center,
-                            child: _saving
-                                ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                                : const Text('Add', style: TextStyle(fontSize: 16)),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }
+                      // Save / Update button
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(3),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: _saving
+                                ? null
+                                : () => _handleSave(add: true),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              alignment: Alignment.center,
+                              child: _saving
+                                  ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white),
+                              )
+                                  : Text(
+                                _isEditing ? 'Update' : 'Add',
+                                style: const TextStyle(
+                                    fontSize: 16, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
+          if (_isEditing)
+            Padding(
+              padding: const EdgeInsets.all(3.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _saving ? null : () => _handleSave(del: true),
+                child: Container(
+                  width: double.infinity,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('Delete',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
+                ),
+              ),
+            ),
         ],
       ),
     );

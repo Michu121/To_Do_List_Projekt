@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_list/shared/services/group_task_service.dart';
+import '../widgets/add_forms/add_group_form.dart';
 import '../widgets/add_forms/add_task_form.dart';
 import '../models/pages.dart';
 import '../widgets/app_bars/bottom_app_bar.dart';
 import '../widgets/floating_add_button.dart';
 import '../widgets/app_bars/upper_app_bar.dart';
-
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
 
@@ -66,8 +66,9 @@ class _MainPageState extends State<MainPage> {
           );
         },
         child: _activePage.isFloating
-            ? MyFloatingButton(onPressed: () => AddTaskSheet.show(context))
-            : null,
+            ? _activePage == Pages.home ?MyFloatingButton(onPressed: () => AddTaskSheet.show(context))
+            : _activePage == Pages.groups? MyFloatingButton(onPressed: () => GroupActionsOverlay.show(context))
+            :null : null,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: MyBottomAppBar(

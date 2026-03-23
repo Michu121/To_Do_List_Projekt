@@ -27,7 +27,7 @@ class InfoTile extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.15)),
+            color: theme.colorScheme.outline.withValues(alpha:0.15)),
       ),
       child: Row(
         children: [
@@ -39,7 +39,7 @@ class InfoTile extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha:0.5),
                   letterSpacing: 0.4,
                 ),
               ),

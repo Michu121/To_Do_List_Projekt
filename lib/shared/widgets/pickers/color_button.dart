@@ -27,7 +27,7 @@ class ColorButton extends StatelessWidget {
             width: color.checked ? 2 : 1,
           ),
           boxShadow: color.checked
-              ? [BoxShadow(color: color.color.withOpacity(0.4), blurRadius: 6, spreadRadius: 2)]
+              ? [BoxShadow(color: color.color.withValues(alpha:0.4), blurRadius: 6, spreadRadius: 2)]
               : [],
         ),
         child: color.checked

@@ -5,12 +5,17 @@ import 'task_services.dart';
 import 'group_task_service.dart';
 
 class EveryTaskService extends ChangeNotifier {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
+  // FIX: nullable — never force-unwrap; the service is safe to create even
+  // before the user is confirmed logged in.
+  final String? uid = FirebaseAuth.instance.currentUser?.uid;
 
   bool get loading => groupTaskService.loading;
 
   EveryTaskService() {
-    taskServices.init(uid!);
+    final u = uid;
+    if (u != null) {
+      taskServices.init(u);
+    }
     groupTaskService.init();
     taskServices.addListener(notifyListeners);
     groupTaskService.addListener(notifyListeners);
@@ -23,18 +28,24 @@ class EveryTaskService extends ChangeNotifier {
     super.dispose();
   }
 
-  List<Task>? getTasks() {
-    if (uid == null) return null;
+  /// Returns all non-deleted personal + group tasks, or an empty list when
+  /// the user is not logged in.
+  List<Task> getTasks() {
+    if (uid == null) return [];
     return [...taskServices.getTasks(), ...groupTaskService.tasks];
   }
 
-  /// Soft-deletes the task. The Firestore stream will push the update back,
-  /// removing it from the UI automatically — no local mutation needed.
+  /// Soft-deletes a task from the correct service.
+  ///
+  /// [gid] is task.group?.id — may be null for tasks created before the group
+  /// field was persisted. Falls back to [groupTaskService.groupIdOf] which
+  /// scans the in-memory map so deletion always hits the right collection.
   void removeTask(String? gid, Task task) {
-    if (gid == null) {
-      taskServices.deleteTask(task);
+    final resolvedGid = gid ?? groupTaskService.groupIdOf(task.id);
+    if (resolvedGid != null) {
+      groupTaskService.deleteTask(resolvedGid, task.id);
     } else {
-      groupTaskService.deleteTask(gid, task.id);
+      taskServices.deleteTask(task);
     }
   }
 }

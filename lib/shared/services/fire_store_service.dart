@@ -17,7 +17,6 @@ class FirestoreService {
   Future<void> afterLogin(User user) async {
     final ref = _db.collection('users').doc(user.uid);
     final doc = await ref.get();
-
     if (!doc.exists) {
       final model = UserModel(
         uid: user.uid,
@@ -37,7 +36,6 @@ class FirestoreService {
         .where('email', isEqualTo: email.trim().toLowerCase())
         .limit(1)
         .get();
-
     if (snapshot.docs.isEmpty) return null;
     return UserModel.fromJson(snapshot.docs.first.data());
   }
@@ -66,12 +64,12 @@ class FirestoreService {
 
   // ── Tasks ────────────────────────────────────────────────────────────────────
 
-  /// Streams only non-deleted tasks, ordered by date.
+  // FIX: removed `.where('isDeleted', isEqualTo: false)` — combining a where
+  // filter with orderBy requires a composite Firestore index that may not exist,
+  // causing the stream to fail silently. isDeleted is filtered in TaskServices
+  // in Dart code instead, which requires no index.
   Stream<QuerySnapshot> tasksStream(String uid) =>
-      _tasksRef(uid)
-          .where('isDeleted', isEqualTo: false)
-          .orderBy('date')
-          .snapshots();
+      _tasksRef(uid).orderBy('date').snapshots();
 
   Future<void> setTask(String uid, String id, Map<String, dynamic> data) =>
       _tasksRef(uid).doc(id).set(data);
@@ -79,7 +77,7 @@ class FirestoreService {
   Future<void> updateTask(String uid, String id, Map<String, dynamic> data) =>
       _tasksRef(uid).doc(id).update(data);
 
-  /// Soft-delete: marks the task as deleted instead of removing it.
+  /// Soft-delete: marks the task as deleted instead of removing the document.
   Future<void> deleteTask(String uid, String id) =>
       _tasksRef(uid).doc(id).update({'isDeleted': true});
 

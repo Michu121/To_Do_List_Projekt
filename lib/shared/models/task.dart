@@ -20,7 +20,7 @@ class Task {
   final Color color;
   final TimeOfDay timeStart;
   final TimeOfDay timeEnd;
-  final bool isDeleted; // ← soft-delete flag
+  final bool isDeleted;
 
   Task({
     String? id,

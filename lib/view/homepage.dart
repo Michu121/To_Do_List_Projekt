@@ -14,6 +14,11 @@ import '../shared/widgets/task_tiles/delete_confirmation_dialog.dart';
 import '../shared/widgets/task_tiles/dismissible_remove_background.dart';
 import '../shared/widgets/task_tiles/status_checkbox.dart';
 
+// Stable "All" sentinel — defined here so it never changes identity
+// across rebuilds, which would break category selection logic.
+final _allCategory =
+Category(name: 'All', color: Colors.grey.withValues(alpha: 0.90));
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -25,84 +30,104 @@ class HomePage extends StatelessWidget {
         if (authSnap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        return _TaskFeed();
+        return const _TaskFeed();
       },
     );
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Task feed
+// ═══════════════════════════════════════════════════════════════════════════════
+
 class _TaskFeed extends StatefulWidget {
+  const _TaskFeed();
+
   @override
   State<_TaskFeed> createState() => _TaskFeedState();
 }
 
 class _TaskFeedState extends State<_TaskFeed> {
-  final CategoryOverlay addCategoryForm = CategoryOverlay();
-  late Category selectedCategory;
-  @override
-  void initState() {
-    selectedCategory = categoryServices.getCategories().values.first;
-    super.initState();
+  Category _selectedCategory = _allCategory;
+
+  List<Category> _buildCategoryList() => [
+    _allCategory,
+    ...categoryServices.getCategories().values,
+  ];
+
+  /// If the selected category was deleted, fall back to "All".
+  void _guardSelectedCategory() {
+    if (_selectedCategory.name == 'All') return;
+    final stillExists = categoryServices
+        .getCategories()
+        .values
+        .any((c) => c.id == _selectedCategory.id);
+    if (!stillExists) setState(() => _selectedCategory = _allCategory);
   }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Column(
-      mainAxisSize: MainAxisSize.max,
       children: [
+        // ── Category bar ──────────────────────────────────────────────────
         ListenableBuilder(
-          listenable: everyTaskService,
-          builder: (context, child) => ListenableBuilder(
-            listenable: categoryServices,
-            builder: (context, child) {
-              List<Category> categories = categoryServices
-                  .getCategories()
-                  .values
-                  .toList();
-              categories.insert(0, Category(name: "All", color: Colors.grey.withValues(alpha: 0.90)));
-              return Container(
-                height: 100,
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 10),
-                width: double.infinity,
-                decoration: BoxDecoration(color: theme.appBarTheme.backgroundColor),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          child: Text("Kategorie", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          listenable: categoryServices,
+          builder: (context, _) {
+            _guardSelectedCategory();
+            final categories = _buildCategoryList();
+
+            return Container(
+              height: 100,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                  color: theme.appBarTheme.backgroundColor),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        child: Text(
+                          'Kategorie',
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
                         ),
-                        TextButton(
-                          isSemanticButton: false,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          ),
-                          onPressed: () => CategoryOverlay.show(context), // Simple static call
-                          child: const Text("+Kategoria", style: TextStyle(fontSize: 13)),
+                      ),
+                      TextButton(
+                        isSemanticButton: false,
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
                         ),
-                      ],
-                    ),
-                    _CategoryChoseBar(
-                      categories: categories,
-                      onSelected: (c) => setState(() {
-                        selectedCategory = c;
-                      }),
-                      selectedCategory: selectedCategory,
-                    ),
-                  ],
-                ),
-              );
-            }
-          ),
+                        onPressed: () =>
+                            CategoryOverlay.show(context),
+                        child: const Text('+Kategoria',
+                            style: TextStyle(fontSize: 13)),
+                      ),
+                    ],
+                  ),
+                  _CategoryChoseBar(
+                    categories: categories,
+                    selectedCategory: _selectedCategory,
+                    onSelected: (c) =>
+                        setState(() => _selectedCategory = c),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
+
+        // ── Task list ─────────────────────────────────────────────────────
         Expanded(
           child: ListenableBuilder(
             listenable: everyTaskService,
@@ -111,33 +136,41 @@ class _TaskFeedState extends State<_TaskFeed> {
                 return const Center(child: CircularProgressIndicator());
               }
 
+              // getTasks() always returns List<Task> — no null check needed
               final tasks = everyTaskService.getTasks();
-              final filterTasks = tasks?.where((t) => t.category.id == selectedCategory.id || selectedCategory.name == "All").toList();
+              final filtered = tasks
+                  .where((task) =>
+              _selectedCategory.name == 'All' ||
+                  task.category.id == _selectedCategory.id)
+                  .toList();
 
-
-              if (filterTasks!.isEmpty) {
+              if (filtered.isEmpty) {
                 return Center(
                   child: Text(
                     t.notask,
                     style: TextStyle(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.55),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.55),
                       fontSize: 20,
                     ),
                   ),
                 );
               }
 
-              final sections = _groupByDate(filterTasks);
+              final sections = _groupByDate(filtered);
 
               return ListView.builder(
                 physics: const BouncingScrollPhysics(),
                 itemCount: sections.length + 1,
                 itemBuilder: (context, index) {
-                  if (index == sections.length) return const SizedBox(height: 80);
+                  if (index == sections.length) {
+                    return const SizedBox(height: 80);
+                  }
                   final s = sections[index];
-                  return _DateSection(label: s.label, tasks: s.tasks);
+                  return _DateSection(
+                      label: s.label, tasks: s.tasks);
                 },
               );
             },
@@ -161,9 +194,12 @@ class _TaskFeedState extends State<_TaskFeed> {
 class _Section {
   final String label;
   final List<Task> tasks;
-
   _Section({required this.label, required this.tasks});
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Date section header + tiles
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class _DateSection extends StatelessWidget {
   const _DateSection({required this.label, required this.tasks});
@@ -184,9 +220,10 @@ class _DateSection extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.6,
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.7),
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary
+                  .withValues(alpha: 0.7),
             ),
           ),
         ),
@@ -199,36 +236,26 @@ class _DateSection extends StatelessWidget {
     final parts = isoKey.split('-');
     if (parts.length != 3) return isoKey;
     final date = DateTime(
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-      int.parse(parts[2]),
-    );
+        int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
     if (date == today) return 'TODAY';
     if (date == tomorrow) return 'TOMORROW';
-    final months = [
-      'JAN',
-      'FEB',
-      'MAR',
-      'APR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AUG',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DEC',
+    const months = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Task tile
+// ═══════════════════════════════════════════════════════════════════════════════
+
 class TaskListTile extends StatefulWidget {
   const TaskListTile({super.key, required this.task});
-
   final Task task;
 
   @override
@@ -236,21 +263,17 @@ class TaskListTile extends StatefulWidget {
 }
 
 class _TaskListTileState extends State<TaskListTile> {
-  Status _nextStatus(Status s) {
-    switch (s) {
-      case Status.todo:
-        return Status.inProgress;
-      case Status.inProgress:
-        return Status.done;
-      case Status.done:
-        return Status.todo;
-    }
-  }
+  Status _nextStatus(Status s) => switch (s) {
+    Status.todo => Status.inProgress,
+    Status.inProgress => Status.done,
+    Status.done => Status.todo,
+  };
 
   @override
   Widget build(BuildContext context) {
     final groupId = widget.task.group?.id;
     final isDone = widget.task.status == Status.done;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       decoration: BoxDecoration(
@@ -258,43 +281,39 @@ class _TaskListTileState extends State<TaskListTile> {
         borderRadius: BorderRadius.circular(14),
       ),
       child: Dismissible(
-        key: ValueKey('task_${widget.task.id}_${widget.task.group?.id ?? "no_group"}'),
-        dismissThresholds: const <DismissDirection, double>{
-          DismissDirection.horizontal: 0.3,
-        },
+        key: ValueKey(
+            'task_${widget.task.id}_${widget.task.group?.id ?? "no_group"}'),
+        dismissThresholds: const {DismissDirection.horizontal: 0.3},
         direction: DismissDirection.horizontal,
         background: const DismissibleRemoveBackground(
-          mainAxisAlignment: MainAxisAlignment.start,
-        ),
+            mainAxisAlignment: MainAxisAlignment.start),
         secondaryBackground: const DismissibleRemoveBackground(
-          mainAxisAlignment: MainAxisAlignment.end,
-        ),
-        confirmDismiss: (_) => const DeleteConfirmationDialog().show(context),
-        onDismissed: (_) {
-          setState(() {});
-          everyTaskService.removeTask(groupId, widget.task);
-        },
+            mainAxisAlignment: MainAxisAlignment.end),
+        confirmDismiss: (_) =>
+            const DeleteConfirmationDialog().show(context),
+        onDismissed: (_) =>
+            everyTaskService.removeTask(groupId, widget.task),
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border(left: BorderSide(color: widget.task.color, width: 4)),
+            border: Border(
+                left: BorderSide(
+                    color: widget.task.color, width: 4)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
               StatusCheckbox(
                 status: widget.task.status,
                 onTap: () {
+                  final updated = widget.task.copyWith(
+                      status: _nextStatus(widget.task.status));
                   if (groupId == null) {
-                    taskServices.updateTask(
-                      widget.task.copyWith(status: _nextStatus(widget.task.status)),
-                    );
+                    taskServices.updateTask(updated);
                   } else {
-                    groupTaskService.updateTask(
-                      groupId,
-                      widget.task.copyWith(status: _nextStatus(widget.task.status)),
-                    );
+                    groupTaskService.updateTask(groupId, updated);
                   }
                 },
               ),
@@ -308,30 +327,42 @@ class _TaskListTileState extends State<TaskListTile> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        decoration: isDone ? TextDecoration.lineThrough : null,
+                        decoration: isDone
+                            ? TextDecoration.lineThrough
+                            : null,
                         color: isDone ? Colors.grey : null,
                       ),
                     ),
                     const SizedBox(height: 5),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment:
+                      MainAxisAlignment.spaceBetween,
                       children: [
                         _DifficultyBadge(task: widget.task),
-                        Row(
-                          children: [
-                            _Chip(
-                              label: widget.task.category.name,
-                              color: widget.task.category.color,
-                            ),
-                            if (widget.task.group != null) ...[
-                              const SizedBox(width: 6),
-                              _Chip(
-                                label: widget.task.group!.name,
-                                color: widget.task.group!.color,
-                                icon: Icons.group,
+                        // Flexible prevents RenderFlex overflow with
+                        // long category/group names
+                        Flexible(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: _Chip(
+                                  label: widget.task.category.name,
+                                  color: widget.task.category.color,
+                                ),
                               ),
+                              if (widget.task.group != null) ...[
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: _Chip(
+                                    label: widget.task.group!.name,
+                                    color: widget.task.group!.color,
+                                    icon: Icons.group,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -345,6 +376,97 @@ class _TaskListTileState extends State<TaskListTile> {
     );
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Category bar
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _CategoryChoseBar extends StatelessWidget {
+  const _CategoryChoseBar({
+    required this.categories,
+    required this.onSelected,
+    required this.selectedCategory,
+  });
+
+  final List<Category> categories;
+  final Category selectedCategory;
+  final ValueChanged<Category> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final allTasks = everyTaskService.getTasks();
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: categories
+            .map((cat) => _CategoryChoseButton(
+          cat: cat,
+          tasksInCategory: allTasks
+              .where((t) =>
+          cat.name == 'All' ||
+              t.category.id == cat.id)
+              .length,
+          selectedCategory: selectedCategory,
+          onSelected: onSelected,
+        ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _CategoryChoseButton extends StatelessWidget {
+  const _CategoryChoseButton({
+    required this.cat,
+    required this.onSelected,
+    required this.selectedCategory,
+    required this.tasksInCategory,
+  });
+
+  final Category cat;
+  final int tasksInCategory;
+  final Category selectedCategory;
+  final ValueChanged<Category> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = cat.id == selectedCategory.id;
+    final isAll = cat.name == 'All';
+
+    return InkWell(
+      onTap: () => onSelected(cat),
+      // "All" is not editable — only real categories get long-press
+      onLongPress:
+      isAll ? null : () => CategoryOverlay.show(context, cat: cat),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? cat.color
+              : cat.color.withValues(alpha: 0.13),
+          border: Border.all(
+            color: isSelected
+                ? Theme.of(context).colorScheme.onSurface
+                : cat.color,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 12, vertical: 7),
+        child: Text(
+          '${cat.name} ($tasksInCategory)',
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Supporting widgets
+// ═══════════════════════════════════════════════════════════════════════════════
 
 class _Chip extends StatelessWidget {
   const _Chip({required this.label, required this.color, this.icon});
@@ -374,10 +496,9 @@ class _Chip extends StatelessWidget {
               label,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+                  fontSize: 10,
+                  color: color,
+                  fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -388,7 +509,6 @@ class _Chip extends StatelessWidget {
 
 class _DifficultyBadge extends StatelessWidget {
   final Task task;
-
   const _DifficultyBadge({required this.task});
 
   @override
@@ -402,91 +522,11 @@ class _DifficultyBadge extends StatelessWidget {
         Text(
           '+${d.points}',
           style: TextStyle(
-            fontSize: 11,
-            color: d.color,
-            fontWeight: FontWeight.w600,
-          ),
+              fontSize: 11,
+              color: d.color,
+              fontWeight: FontWeight.w600),
         ),
       ],
-    );
-  }
-}
-
-class _CategoryChoseBar extends StatefulWidget {
-  const _CategoryChoseBar({
-    required this.categories,
-    required this.onSelected,
-    required this.selectedCategory,
-  });
-
-  final List<Category> categories;
-  final Category selectedCategory;
-  final ValueChanged<Category> onSelected;
-
-  @override
-  State<_CategoryChoseBar> createState() => _CategoryChoseBarState();
-}
-
-class _CategoryChoseBarState extends State<_CategoryChoseBar> {
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          ...widget.categories.map(
-            (cat) => _CategoryChoseButton(
-              cat: cat,
-              tasksInCategory: everyTaskService.getTasks()!.where((t) => t.category.id == cat.id || cat.name == "All").length,
-              selectedCategory: widget.selectedCategory,
-              onSelected: widget.onSelected,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CategoryChoseButton extends StatelessWidget {
-  const _CategoryChoseButton({
-    required this.cat,
-    required this.onSelected,
-    required this.selectedCategory,
-    required this.tasksInCategory,
-  });
-
-  final Category cat;
-  final int tasksInCategory;
-  final Category selectedCategory;
-  final ValueChanged<Category> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    bool isSelected = cat.id == selectedCategory.id;
-    print("isSelected: $isSelected");
-    return InkWell(
-      onTap: () => onSelected(cat),
-      onLongPress: () {
-        CategoryOverlay.show(context, cat: cat);
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: BoxDecoration(
-          color: isSelected ? cat.color : cat.color.withValues(alpha: 0.13),
-          border: Border.all(
-            color: isSelected
-                ? Theme.of(context).colorScheme.onSurface
-                : cat.color,
-            width: 1,
-          ),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        child: Text("${cat.name} ($tasksInCategory)", style: TextStyle(color: Colors.white)),
-      ),
     );
   }
 }

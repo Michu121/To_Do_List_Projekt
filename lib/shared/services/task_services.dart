@@ -9,8 +9,7 @@ class TaskServices extends ChangeNotifier {
   List<Task> _tasks = [];
   StreamSubscription<QuerySnapshot>? _subscription;
 
-  /// Returns only non-deleted tasks (the Firestore query already filters,
-  /// but we guard here too for safety).
+  /// Returns only non-deleted tasks (filtered in Dart — no composite index needed).
   List<Task> getTasks() => _tasks.where((t) => !t.isDeleted).toList();
 
   void init(String uid) {
@@ -36,20 +35,63 @@ class TaskServices extends ChangeNotifier {
   Future<void> addTask(Task task) async {
     final uid = _uid;
     if (uid == null) return;
-    await firestoreService.setTask(uid, task.id, task.toJson());
+
+    // 1. Show immediately
+    _tasks = [..._tasks, task];
+    notifyListeners();
+
+    // 2. Persist in background — roll back on failure
+    unawaited(
+      firestoreService.setTask(uid, task.id, task.toJson()).catchError((e) {
+        _tasks = _tasks.where((t) => t.id != task.id).toList();
+        notifyListeners();
+        debugPrint('addTask error: $e');
+      }),
+    );
   }
 
   Future<void> updateTask(Task task) async {
     final uid = _uid;
     if (uid == null) return;
-    await firestoreService.updateTask(uid, task.id, task.toJson());
+
+    final oldIndex = _tasks.indexWhere((t) => t.id == task.id);
+    final oldTask = oldIndex >= 0 ? _tasks[oldIndex] : null;
+
+    // 1. Replace locally right away
+    if (oldIndex >= 0) {
+      _tasks = [..._tasks]..[oldIndex] = task;
+      notifyListeners();
+    }
+
+    // 2. Persist in background — roll back on failure
+    unawaited(
+      firestoreService.updateTask(uid, task.id, task.toJson()).catchError((e) {
+        if (oldTask != null && oldIndex >= 0) {
+          _tasks = [..._tasks]..[oldIndex] = oldTask;
+          notifyListeners();
+        }
+        debugPrint('updateTask error: $e');
+      }),
+    );
   }
 
-  /// Soft-delete: sets isDeleted = true in Firestore.
+  /// Soft-delete: marks isDeleted = true in Firestore.
   Future<void> deleteTask(Task task) async {
     final uid = _uid;
     if (uid == null) return;
-    await firestoreService.deleteTask(uid, task.id);
+
+    // 1. Remove from local list immediately
+    _tasks = _tasks.where((t) => t.id != task.id).toList();
+    notifyListeners();
+
+    // 2. Persist soft-delete in background — roll back on failure
+    unawaited(
+      firestoreService.deleteTask(uid, task.id).catchError((e) {
+        _tasks = [..._tasks, task];
+        notifyListeners();
+        debugPrint('deleteTask error: $e');
+      }),
+    );
   }
 
   @override

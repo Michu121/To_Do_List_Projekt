@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -24,9 +26,7 @@ class AddTaskSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (_) => AddTaskSheet(preselectedGroup: preselectedGroup),
     );
@@ -40,23 +40,24 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
   final _colorServices = ColorServices();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  final List<Group> groups = [Group(name: '🚫None', color: Colors.grey.shade300),...groupTaskService.groups];
+
+  // groups[0] is the "🚫None" sentinel; real groups follow
+  late final List<Group> groups = [
+    Group(name: '🚫None', color: Colors.grey.shade300),
+    ...groupTaskService.groups,
+  ];
 
   Category? _selectedCategory;
-  Difficulty? _selectedDifficulty;
+  Difficulty _selectedDifficulty = Difficulty.easy;
   ColorsToPick? _selectedColor;
   Group? _selectedGroup;
   String? _titleError;
-  bool _saving = false;
-
-  double get size => MediaQuery.of(context).size.width;
 
   @override
   void initState() {
     super.initState();
     _selectedCategory = categoryServices.getCategories().values.firstOrNull;
-    _selectedGroup = widget.preselectedGroup ?? groups.firstOrNull;
-    _selectedDifficulty = Difficulty.easy;
+    _selectedGroup = widget.preselectedGroup ?? groups.first;
     _selectedColor = _colorServices.getColors().values.firstOrNull;
   }
 
@@ -67,20 +68,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     super.dispose();
   }
 
-  Future<void> _handleSave(BuildContext context) async {
+  bool get _isPersonalTask => _selectedGroup == groups.first;
+
+  void _handleSave() {
     final title = _titleController.text.trim();
-    String? tErr;
-
-    if (title.isEmpty) tErr = 'Title cannot be empty';
-
-    if (tErr != null) {
-      setState(() {
-        _titleError = tErr;
-      });
+    if (title.isEmpty) {
+      setState(() => _titleError = 'Title cannot be empty');
       return;
     }
-
-    setState(() => _saving = true);
 
     final task = Task(
       title: title,
@@ -89,20 +84,18 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
       description: _descController.text,
       color: _selectedColor?.color ?? Colors.transparent,
       date: DateTime.now(),
-      group: _selectedGroup == groups.firstOrNull
-          ? null
-          : _selectedGroup,
-      difficulty: _selectedDifficulty!,
+      group: _isPersonalTask ? null : _selectedGroup,
+      difficulty: _selectedDifficulty,
     );
-    if (_selectedGroup == groupTaskService.groups.firstOrNull) {
-      groupTaskService.addTask(_selectedGroup!.id, task);
-    }else{
-      taskServices.addTask(task);
-    }
 
-    setState(() {
-      if (mounted) Navigator.of(context).pop();
-    });
+    // Close the sheet immediately — DB writes happen in the background
+    Navigator.of(context).pop();
+
+    if (_isPersonalTask) {
+      unawaited(taskServices.addTask(task));
+    } else {
+      groupTaskService.addTask(_selectedGroup!.id, task);
+    }
   }
 
   @override
@@ -110,27 +103,24 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     final user = FirebaseAuth.instance.currentUser;
     final theme = Theme.of(context);
 
-
     if (user == null) {
       return const Padding(
         padding: EdgeInsets.all(32),
         child: Center(
-          child: Text('Sign in to add tasks', style: TextStyle(fontSize: 16)),
+          child:
+          Text('Sign in to add tasks', style: TextStyle(fontSize: 16)),
         ),
       );
     }
 
-
     return Container(
       padding: EdgeInsets.fromLTRB(
-        20,
-        20,
-        20,
-        MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
+          20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
       decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        border: Border(top: BorderSide(color: Colors.grey.shade300, width: 2))
+        borderRadius:
+        const BorderRadius.vertical(top: Radius.circular(12)),
+        border:
+        Border(top: BorderSide(color: Colors.grey.shade300, width: 2)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -151,7 +141,11 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             Center(
               child: Text(
                 'New Task',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -164,8 +158,11 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 errorText: _titleError,
               ),
               onChanged: (_) {
-                if (_titleError != null) setState(() => _titleError = null);
+                if (_titleError != null) {
+                  setState(() => _titleError = null);
+                }
               },
+              onSubmitted: (_) => _handleSave(),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -178,12 +175,9 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             ),
             const SizedBox(height: 16),
             _DifficultyPicker(
-              selected: _selectedDifficulty ?? Difficulty.easy,
-              onChanged: (diff) {
-                setState(() => _selectedDifficulty = diff);
-              },
+              selected: _selectedDifficulty,
+              onChanged: (d) => setState(() => _selectedDifficulty = d),
             ),
-            const SizedBox(height: 16),
             const SizedBox(height: 16),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,17 +189,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                 GroupPicker(
                   groups: groups,
                   selected: _selectedGroup,
-                  onChanged: (g) => setState(() {
-                    _selectedGroup = g;
-                  }),
+                  onChanged: (g) => setState(() => _selectedGroup = g),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            Text(
-              'Color',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-            ),
+            Text('Color',
+                style:
+                TextStyle(fontSize: 13, color: Colors.grey.shade600)),
             const SizedBox(height: 6),
             ColorPicker(
               colorServices: _colorServices,
@@ -219,26 +210,16 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             ),
             const SizedBox(height: 20),
             SizedBox(
-              width: size,
+              width: double.infinity,
               height: 48,
               child: FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.blueAccent,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                onPressed: _saving ? null : () => _handleSave(context),
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Save', style: TextStyle(fontSize: 16)),
+                onPressed: _handleSave,
+                child: const Text('Save', style: TextStyle(fontSize: 16)),
               ),
             ),
           ],
@@ -249,7 +230,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
 }
 
 class _DifficultyPicker extends StatelessWidget {
-  const _DifficultyPicker({required this.selected, required this.onChanged});
+  const _DifficultyPicker(
+      {required this.selected, required this.onChanged});
 
   final Difficulty selected;
   final ValueChanged<Difficulty> onChanged;
@@ -259,18 +241,18 @@ class _DifficultyPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Difficulty',
-          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
-        ),
+        Text('Difficulty',
+            style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 6),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             for (final diff in Difficulty.values)
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 6.0),
                   child: GestureDetector(
                     onTap: () => onChanged(diff),
                     child: Container(
@@ -289,10 +271,9 @@ class _DifficultyPicker extends StatelessWidget {
                       child: Column(
                         children: [
                           Icon(diff.icon, color: diff.color),
-                          Text(
-                            "${diff.points} pts",
-                            style: TextStyle(fontSize: 10, color: diff.color),
-                          ),
+                          Text('${diff.points} pts',
+                              style: TextStyle(
+                                  fontSize: 10, color: diff.color)),
                         ],
                       ),
                     ),
