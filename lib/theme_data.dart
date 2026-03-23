@@ -1,0 +1,323 @@
+import 'package:flutter/material.dart';
+
+class AppColor {
+  static const Color scaffoldLightColor = Colors.white;
+  static const Color scaffoldDarkColor = Color(0xFF202057);
+  static const Color appBarDarkColor = Color(0xFF00136C);
+  static const Color appBarLightColor = Colors.blueAccent;
+  static const Color chosenButtonColor = Colors.blue;
+  static const Color unchosenButtonColor = Colors.white24;
+  static const Color defaultAccentColor = Color(0xFF5C6BC0);
+}
+
+class themeColors {
+  static const Color red = Colors.redAccent;
+  static const Color green = Colors.greenAccent;
+  static const Color blue = Colors.blueAccent;
+}
+
+class AppTheme {
+  //==========================
+  // Jasny motyw
+  //==========================
+  static final ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
+    scaffoldBackgroundColor: AppColor.scaffoldLightColor,
+
+    // ColorScheme generowany z głównego koloru
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.blueAccent,
+      brightness: Brightness.light,
+    ),
+
+    // AppBar Theme
+    appBarTheme: const AppBarTheme(
+      elevation: 8,
+      backgroundColor: AppColor.appBarLightColor,
+      foregroundColor: Colors.white,
+    ),
+
+    // FAB Theme
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: Colors.blueAccent,
+      foregroundColor: Colors.white,
+      elevation: 6,
+      highlightElevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50),
+      ),
+    ),
+
+    // BottomAppBar Theme
+    bottomAppBarTheme: const BottomAppBarThemeData(
+      color: AppColor.appBarLightColor,
+      height: 80,
+      elevation: 8,
+    ),
+
+    // Button Theme (TextButton, ElevatedButton, itp.)
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return Colors.grey.shade400;
+          } else if (states.contains(WidgetState.pressed)) {
+            return Colors.blue.shade700;
+          }
+          return Colors.blueAccent;
+        }),
+        foregroundColor: WidgetStateProperty.all(Colors.white),
+      ),
+    ),
+  );
+
+  //==========================
+  // Ciemny motyw
+  //==========================
+  static final ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+    scaffoldBackgroundColor: AppColor.scaffoldDarkColor,
+
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.blueAccent,
+      brightness: Brightness.dark,
+    ),
+
+    appBarTheme: const AppBarTheme(
+      elevation: 8,
+      backgroundColor: AppColor.appBarDarkColor,
+      foregroundColor: Color(0xFF00136C),
+    ),
+
+    floatingActionButtonTheme: FloatingActionButtonThemeData(
+      backgroundColor: Colors.blue.shade900,
+      foregroundColor: Color(0xFF00136C),
+      elevation: 6,
+      highlightElevation: 10,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(50),
+      ),
+    ),
+
+    bottomAppBarTheme: const BottomAppBarThemeData(
+      color: AppColor.appBarDarkColor,
+      elevation: 8,
+    ),
+
+    textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+          if (states.contains(WidgetState.disabled)) {
+            return Colors.grey.shade700;
+          } else if (states.contains(WidgetState.pressed)) {
+            return Colors.blue.shade700;
+          }
+          return Colors.blue.shade900;
+        }),
+        foregroundColor: WidgetStateProperty.all(Color(0xFF00136C)),
+      ),
+    ),
+  );
+
+  static ThemeData buildLightTheme(Color accentColor) {
+    return lightTheme.copyWith(
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: accentColor,
+        brightness: Brightness.light,
+      ),
+      appBarTheme: AppBarTheme(
+        elevation: 8,
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        highlightElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+      bottomAppBarTheme: BottomAppBarThemeData(
+        color: accentColor,
+        elevation: 8,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return Colors.grey.shade400;
+            } else if (states.contains(WidgetState.pressed)) {
+              return _darken(accentColor, 0.12);
+            }
+            return accentColor;
+          }),
+          foregroundColor: WidgetStateProperty.all(Colors.white),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return _withAlpha(accentColor, 0.35);
+          }
+          return null;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+    );
+  }
+
+  static ThemeData buildDarkTheme(Color accentColor) {
+    final bool isDefaultBlue = _isDefaultBlueAccent(accentColor);
+
+    final ColorScheme dynamicColorScheme = ColorScheme.fromSeed(
+      seedColor: accentColor,
+      brightness: Brightness.dark,
+    );
+
+    final Color darkScaffoldColor = isDefaultBlue
+        ? AppColor.scaffoldDarkColor
+        : _buildDarkScaffoldColor(accentColor);
+
+    final Color darkSurfaceColor = isDefaultBlue
+        ? dynamicColorScheme.surface
+        : _buildDarkSurfaceColor(accentColor);
+
+    final Color darkDividerColor = isDefaultBlue
+        ? Colors.white.withAlpha(25)
+        : _mix(darkSurfaceColor, accentColor, 0.22);
+
+    return darkTheme.copyWith(
+      scaffoldBackgroundColor: darkScaffoldColor,
+      canvasColor: darkScaffoldColor,
+      colorScheme: dynamicColorScheme.copyWith(
+        surface: darkSurfaceColor,
+      ),
+      cardColor: darkSurfaceColor,
+      dividerColor: darkDividerColor,
+      appBarTheme: AppBarTheme(
+        elevation: 8,
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        highlightElevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+      bottomAppBarTheme: BottomAppBarThemeData(
+        color: accentColor,
+        elevation: 8,
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+            if (states.contains(WidgetState.disabled)) {
+              return Colors.grey.shade700;
+            } else if (states.contains(WidgetState.pressed)) {
+              return _darken(accentColor, 0.12);
+            }
+            return accentColor;
+          }),
+          foregroundColor: WidgetStateProperty.all(Colors.white),
+        ),
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+        trackColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return _withAlpha(accentColor, 0.45);
+          }
+          return null;
+        }),
+      ),
+      checkboxTheme: CheckboxThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+      radioTheme: RadioThemeData(
+        fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+          if (states.contains(WidgetState.selected)) {
+            return accentColor;
+          }
+          return null;
+        }),
+      ),
+    );
+  }
+
+  static bool _isDefaultBlueAccent(Color color) {
+    return color.toARGB32() == AppColor.defaultAccentColor.toARGB32();
+  }
+
+  static Color _buildDarkScaffoldColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness((hsl.lightness * 0.30).clamp(0.13, 0.19))
+        .withSaturation((hsl.saturation * 0.40).clamp(0.12, 0.55))
+        .toColor();
+  }
+
+  static Color _buildDarkSurfaceColor(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness((hsl.lightness * 0.13).clamp(0.04, 0.08))
+        .withSaturation((hsl.saturation * 0.24).clamp(0.05, 0.35))
+        .toColor();
+  }
+
+  static Color _darken(Color color, double amount) {
+    final hsl = HSLColor.fromColor(color);
+    final darkened = hsl.withLightness(
+      (hsl.lightness - amount).clamp(0.0, 1.0),
+    );
+    return darkened.toColor();
+  }
+
+  static Color _mix(Color a, Color b, double amount) {
+    return Color.lerp(a, b, amount) ?? a;
+  }
+
+  static Color _withAlpha(Color color, double opacity) {
+    return color.withAlpha((255 * opacity).round());
+  }
+}
