@@ -231,7 +231,12 @@ class GroupTaskService extends ChangeNotifier {
           .collection('tasks')
           .doc(task.id)
           .set(task.toJson())
-          .then((_) => statsService.onTaskCreated())
+          .then((_) {
+        statsService.onTaskCreated();
+        
+        // Send notifications to all group members
+        _sendGroupTaskNotification(groupId, task);
+      })
           .catchError((e) {
         _tasksByGroup[groupId]?.removeWhere((t) => t.id == task.id);
         _rebuildTaskList();
@@ -239,6 +244,27 @@ class GroupTaskService extends ChangeNotifier {
         debugPrint('addTask error: $e');
       }),
     );
+  }
+
+  Future<void> _sendGroupTaskNotification(String groupId, Task task) async {
+    try {
+      final groupDoc = await _db.collection('groups').doc(groupId).get();
+      if (!groupDoc.exists) return;
+
+      final members = (groupDoc.data()?['members'] as List<dynamic>?)?.cast<String>() ?? [];
+      final currentUserId = _auth.currentUser?.uid;
+
+      // In a production app, you would use Firebase Cloud Messaging (FCM)
+      // or Cloud Functions to send notifications to all group members.
+      // For now, just log the action.
+      for (final memberId in members) {
+        if (memberId != currentUserId) {
+          debugPrint('Group task added notification for $memberId: ${task.title} in group $groupId');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sending group task notification: $e');
+    }
   }
 
   void updateTask(String groupId, Task newTask) {

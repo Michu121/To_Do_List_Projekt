@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../models/task.dart';
 import '../task_tiles/task_list_tile.dart';
 
@@ -37,7 +38,7 @@ class DateSection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
           child: Text(
-            _formatLabel(label),
+            _formatLabel(label, context),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -55,7 +56,8 @@ class DateSection extends StatelessWidget {
   }
 
   /// Converts "2025-3-8" → "TODAY" / "TOMORROW" / "8 MAR 2025".
-  String _formatLabel(String isoKey) {
+  String _formatLabel(String isoKey, BuildContext context) {
+    final t = AppLocalizations.of(context);
     final parts = isoKey.split('-');
     if (parts.length != 3) return isoKey;
 
@@ -68,12 +70,22 @@ class DateSection extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
 
-    if (date == today) return 'TODAY';
-    if (date == tomorrow) return 'TOMORROW';
+    if (date == today) return t?.today ?? 'TODAY';
+    if (date == tomorrow) return t?.tomorrow ?? 'TOMORROW';
 
-    const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+    final months = [
+      t?.january ?? 'JAN',
+      t?.february ?? 'FEB',
+      t?.march ?? 'MAR',
+      t?.april ?? 'APR',
+      t?.may ?? 'MAY',
+      t?.june ?? 'JUN',
+      t?.july ?? 'JUL',
+      t?.august ?? 'AUG',
+      t?.september ?? 'SEP',
+      t?.october ?? 'OCT',
+      t?.november ?? 'NOV',
+      t?.december ?? 'DEC',
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }

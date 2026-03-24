@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 import '../../models/colors.dart';
 import '../../models/difficulty.dart';
@@ -95,9 +96,10 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
   }
 
   void _save() {
+    final t = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      setState(() => _titleError = 'Title cannot be empty');
+      setState(() => _titleError = t?.titleCannotBeEmpty ?? 'Title cannot be empty');
       return;
     }
     if (_selectedCategory == null) return;
@@ -131,10 +133,11 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     if (FirebaseAuth.instance.currentUser == null) {
-      return const Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(child: Text('Sign in to add tasks')),
+      return Padding(
+        padding: const EdgeInsets.all(32),
+        child: Center(child: Text(t?.signInToUseGroups ?? 'Sign in to add tasks')),
       );
     }
 

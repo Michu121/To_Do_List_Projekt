@@ -51,6 +51,16 @@ class FirestoreService {
     if (!doc.exists) return null;
     return UserModel.fromJson(doc.data()!);
   }
+  Future<bool> checkIfAlreadySeeded(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+    return doc.data()?['hasSeededCategories'] ?? false;
+  }
+
+  Future<void> markAsSeeded(String uid) async {
+    await _db.collection('users').doc(uid).set({
+      'hasSeededCategories': true,
+    }, SetOptions(merge: true));
+  }
 
   // ── Friends & Requests ───────────────────────────────────────────────────────
 

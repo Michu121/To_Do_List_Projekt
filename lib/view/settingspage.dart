@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../app_settings.dart';
+import '../l10n/app_localizations.dart';
 import '../shared/widgets/app_bars/upper_app_bar.dart';
 import '../shared/services/auth_service.dart';
 import '../shared/widgets/in_app_notification.dart';
@@ -23,6 +24,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return AnimatedBuilder(
       animation: _s,
       builder: (context, _) {
@@ -30,38 +32,52 @@ class _SettingsPageState extends State<SettingsPage> {
 
         return Scaffold(
           backgroundColor: theme.scaffoldBackgroundColor,
-          appBar: const MyAppBar(title: 'Settings'),
+          appBar: MyAppBar(title: t?.settings ?? 'Settings'),
           body: SafeArea(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
               children: [
                 // ── Appearance ──────────────────────────────────────
-                _Label('Appearance', Icons.palette_outlined),
+                _Label(t?.appearance ?? 'Appearance', Icons.palette_outlined),
                 const SizedBox(height: 8),
                 _Card(children: [
                   _Tile(
                     icon: Icons.dark_mode_outlined,
                     iconColor: Colors.indigo,
-                    title: 'Theme',
-                    trailing: _ThemeToggle(s: _s),
+                    title: t?.theme ?? 'Theme',
+                    trailing: _ThemePillSelector(s: _s),
                   ),
                   _Div(),
-                  _AccentRow(s: _s),
+                  _AccentRow(s: _s, t: t),
                 ]),
 
                 const SizedBox(height: 22),
+                _Label(t?.language ?? 'Language', Icons.language_outlined),
+                const SizedBox(height: 8),
+                _Card(children: [
+                  _Tile(
+                    icon: Icons.language_outlined,
+                    iconColor: Colors.teal,
+                    title: t?.language ?? 'Language',
+                    trailing: SizedBox(
+                        width: 140,
+                        child: _LanguageDropdown(s: _s)
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 22),
 
                 // ── Notifications ───────────────────────────────────
-                _Label('Notifications', Icons.notifications_outlined),
+                _Label(t?.notifications ?? 'Notifications', Icons.notifications_outlined),
                 const SizedBox(height: 8),
                 _Card(children: [
                   _Tile(
                     icon: Icons.notifications_active_outlined,
                     iconColor: Colors.orange,
-                    title: 'Enable notifications',
+                    title: t?.enableNotifications ?? 'Enable notifications',
                     trailing: Switch.adaptive(
                       value: _s.notificationsEnabled,
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                       onChanged: _s.setNotificationsEnabled,
                     ),
                   ),
@@ -70,71 +86,39 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.alarm_outlined,
                     iconColor:
                     _s.notificationsEnabled ? Colors.amber : Colors.grey,
-                    title: 'Task reminders',
+                    title: t?.taskReminders ?? 'Task reminders',
                     trailing: Switch.adaptive(
                       value: _s.taskReminders,
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                       onChanged: _s.notificationsEnabled
                           ? _s.setTaskReminders
                           : null,
                     ),
                   ),
-                  _Div(),
-                  _Tile(
-                    icon: Icons.schedule_outlined,
-                    iconColor: _s.notificationsEnabled
-                        ? theme.colorScheme.primary
-                        : Colors.grey,
-                    title: 'Remind me',
-                    subtitle: _s.notificationsEnabled
-                        ? null
-                        : 'Enable notifications first',
-                    trailing: _s.notificationsEnabled
-                        ? _TimingDrop(s: _s)
-                        : null,
-                  ),
-                  _Div(),
-                  _Tile(
-                    icon: Icons.person_add_outlined,
-                    iconColor: _s.notificationsEnabled
-                        ? Colors.blueAccent
-                        : Colors.grey,
-                    title: 'Friend invitations',
-                    trailing: Switch.adaptive(
-                      value: _s.invitations,
-                      activeColor: theme.colorScheme.primary,
-                      onChanged:
-                      _s.notificationsEnabled ? _s.setInvitations : null,
-                    ),
-                  ),
-                  _Div(),
-                  _Tile(
-                    icon: Icons.group_add_outlined,
-                    iconColor: _s.notificationsEnabled
-                        ? Colors.purple
-                        : Colors.grey,
-                    title: 'Group invitations',
-                    trailing: Switch.adaptive(
-                      value: _s.groupInvitations,
-                      activeColor: theme.colorScheme.primary,
-                      onChanged: _s.notificationsEnabled
-                          ? _s.setGroupInvitations
+                  if (_s.taskReminders) ...[
+                    _Div(),
+                    _Tile(
+                      icon: Icons.schedule_outlined,
+                      iconColor: theme.colorScheme.primary,
+                      title: t?.remindMe ?? 'Remind me',
+                      trailing: _s.notificationsEnabled
+                          ? _TimingDrop(s: _s)
                           : null,
                     ),
-                  ),
+                  ],
                 ]),
 
                 const SizedBox(height: 22),
 
                 // ── Account ─────────────────────────────────────────
-                _Label('Account', Icons.manage_accounts_outlined),
+                _Label(t?.account ?? 'Account', Icons.manage_accounts_outlined),
                 const SizedBox(height: 8),
                 _Card(children: [
                   if (!_isGoogleUser) ...[
                     _Tile(
                       icon: Icons.lock_outline,
                       iconColor: Colors.green,
-                      title: 'Change password',
+                      title: t?.changePassword ?? 'Change password',
                       showArrow: true,
                       onTap: () => _showChangePwd(context),
                     ),
@@ -143,7 +127,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _Tile(
                     icon: Icons.security_outlined,
                     iconColor: Colors.blue,
-                    title: 'Privacy and security',
+                    title: t?.privacySecurity ?? 'Privacy and security',
                     showArrow: true,
                     onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
@@ -153,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _Tile(
                     icon: Icons.logout_rounded,
                     iconColor: Colors.red,
-                    title: 'Log out',
+                    title: t?.logOut ?? 'Log out',
                     titleColor: Colors.red,
                     onTap: () => _showLogout(context),
                   ),
@@ -166,7 +150,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // ... (reszta metod _showChangePwd i _showLogout pozostaje bez zmian)
   Future<void> _showChangePwd(BuildContext context) async {
+    final t = AppLocalizations.of(context);
     final formKey = GlobalKey<FormState>();
     final curCtrl = TextEditingController();
     final newCtrl = TextEditingController();
@@ -177,37 +163,37 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (ctx) => AlertDialog(
         shape:
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Change password'),
+        title: Text(t?.changePasswordTitle ?? 'Change password'),
         content: Form(
           key: formKey,
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _PwdField(ctrl: curCtrl, label: 'Current password'),
+            _PwdField(ctrl: curCtrl, label: t?.currentPassword ?? 'Current password'),
             const SizedBox(height: 10),
             _PwdField(
                 ctrl: newCtrl,
-                label: 'New password',
+                label: t?.newPassword ?? 'New password',
                 validator: (v) =>
-                (v?.length ?? 0) < 8 ? 'Min 8 characters' : null),
+                (v?.length ?? 0) < 8 ? (t?.minCharacters ?? 'Min 8 characters') : null),
             const SizedBox(height: 10),
             _PwdField(
                 ctrl: confCtrl,
-                label: 'Confirm password',
+                label: t?.confirmPassword ?? 'Confirm password',
                 validator: (v) =>
-                v != newCtrl.text ? 'Passwords do not match' : null),
+                v != newCtrl.text ? (t?.passwordsDoNotMatch ?? 'Passwords do not match') : null),
           ]),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(t?.cancel ?? 'Cancel')),
           FilledButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
                 Navigator.pop(ctx);
-                InAppNotification.success(context, 'Password changed');
+                InAppNotification.success(context, t?.passwordChanged ?? 'Password changed');
               }
             },
-            child: const Text('Save'),
+            child: Text(t?.save ?? 'Save'),
           ),
         ],
       ),
@@ -218,21 +204,22 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showLogout(BuildContext context) async {
+    final t = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape:
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Log out'),
-        content: const Text('Are you sure you want to log out?'),
+        title: Text(t?.logOutTitle ?? 'Log out'),
+        content: Text(t?.areYouSureLogOut ?? 'Are you sure you want to log out?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: Text(t?.cancel ?? 'Cancel')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Log out'),
+            child: Text(t?.logOut ?? 'Log out'),
           ),
         ],
       ),
@@ -242,19 +229,18 @@ class _SettingsPageState extends State<SettingsPage> {
         await authService.logout();
       } catch (e) {
         if (!mounted) return;
-        InAppNotification.error(context, 'Failed to log out: $e');
+        InAppNotification.error(context, '${t?.failedToLogOut ?? "Failed to log out"}: $e');
       }
     }
   }
 }
-
-// ── Privacy page ──────────────────────────────────────────────────────────────
 
 class PrivacySecurityPage extends StatelessWidget {
   const PrivacySecurityPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final s = AppSettings.instance;
     return AnimatedBuilder(
       animation: s,
@@ -262,7 +248,7 @@ class PrivacySecurityPage extends StatelessWidget {
         final theme = Theme.of(context);
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Privacy & Security'),
+            title: Text(t?.privacyAndSecurity ?? 'Privacy & Security'),
             backgroundColor: theme.appBarTheme.backgroundColor,
             foregroundColor: Colors.white,
           ),
@@ -273,31 +259,31 @@ class PrivacySecurityPage extends StatelessWidget {
                 _Tile(
                   icon: Icons.fingerprint,
                   iconColor: Colors.green,
-                  title: 'Biometric lock',
-                  subtitle: 'Fingerprint / Face ID',
+                  title: t?.biometricLock ?? 'Biometric lock',
+                  subtitle: t?.fingerprintFaceId ?? 'Fingerprint / Face ID',
                   trailing: Switch.adaptive(
                       value: s.biometricLock,
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                       onChanged: s.setBiometricLock),
                 ),
                 _Div(),
                 _Tile(
                   icon: Icons.phonelink_lock_outlined,
                   iconColor: Colors.orange,
-                  title: 'Lock when minimised',
+                  title: t?.lockWhenMinimised ?? 'Lock when minimised',
                   trailing: Switch.adaptive(
                       value: s.lockWhenBackgrounded,
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                       onChanged: s.setLockWhenBackgrounded),
                 ),
                 _Div(),
                 _Tile(
                   icon: Icons.visibility_off_outlined,
                   iconColor: Colors.blueGrey,
-                  title: 'Hide notification content',
+                  title: t?.hideNotificationContent ?? 'Hide notification content',
                   trailing: Switch.adaptive(
                       value: s.hideNotificationContent,
-                      activeColor: theme.colorScheme.primary,
+                      activeThumbColor: theme.colorScheme.primary,
                       onChanged: s.setHideNotificationContent),
                 ),
               ]),
@@ -308,8 +294,6 @@ class PrivacySecurityPage extends StatelessWidget {
     );
   }
 }
-
-// ── Shared widgets ────────────────────────────────────────────────────────────
 
 class _Label extends StatelessWidget {
   const _Label(this.text, this.icon);
@@ -429,7 +413,7 @@ class _Tile extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) trailing!,
+            if (trailing != null) trailing!, // POPRAWIONA SKŁADNIA
             if (showArrow && trailing == null)
               Icon(Icons.chevron_right_rounded,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
@@ -440,49 +424,168 @@ class _Tile extends StatelessWidget {
   }
 }
 
-class _ThemeToggle extends StatelessWidget {
-  const _ThemeToggle({required this.s});
+class _ThemePillSelector extends StatelessWidget {
+  const _ThemePillSelector({required this.s});
   final AppSettings s;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = s.themeMode == AppThemeMode.dark;
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () =>
-          s.setThemeMode(isDark ? AppThemeMode.light : AppThemeMode.dark),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: 72,
-        height: 34,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(17),
-          color: isDark
-              ? theme.colorScheme.primary
-              : theme.colorScheme.surfaceContainerHighest,
-        ),
-        child: Stack(children: [
-          AnimatedPositioned(
+
+    // Obliczamy wyrównanie (Alignment) dla suwaka na podstawie wybranego trybu
+    Alignment indicatorAlignment;
+    switch (s.themeMode) {
+      case AppThemeMode.light:
+        indicatorAlignment = Alignment.centerLeft;
+        break;
+      case AppThemeMode.system:
+        indicatorAlignment = Alignment.center;
+        break;
+      case AppThemeMode.dark:
+        indicatorAlignment = Alignment.centerRight;
+        break;
+    }
+
+    return Container(
+      height: 44,
+      width: 135, // Zwiększona lekko szerokość, by 3 ikony miały więcej miejsca
+      padding: const EdgeInsets.all(4), // Padding dla "toru", po którym porusza się suwak
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Stack(
+        children: [
+          // Warstwa spodnia: Animowany suwak (pill)
+          AnimatedAlign(
+            alignment: indicatorAlignment,
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
-            left: isDark ? 40 : 4,
-            top: 4,
-            child: Container(
-              width: 26,
-              height: 26,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withAlpha(30), blurRadius: 4)
-                ],
+            child: FractionallySizedBox(
+              widthFactor: 1 / 3, // Suwak zajmuje 1/3 szerokości
+              child: Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(isDark ? Icons.dark_mode : Icons.light_mode,
-                  size: 14,
-                  color: isDark ? Colors.indigo : Colors.amber),
             ),
           ),
-        ]),
+          // Warstwa wierzchnia: Ikony
+          Row(
+            children: [
+              _buildThemeOption(context, AppThemeMode.light, Icons.light_mode_rounded),
+              _buildThemeOption(context, AppThemeMode.system, Icons.settings_brightness_rounded),
+              _buildThemeOption(context, AppThemeMode.dark, Icons.dark_mode_rounded),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOption(BuildContext context, AppThemeMode mode, IconData icon) {
+    final isSelected = s.themeMode == mode;
+    final theme = Theme.of(context);
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque, // Zapewnia responsywność na całej powierzchni Expanded
+        onTap: () => s.setThemeMode(mode),
+        child: Center(
+          child: AnimatedScale(
+            duration: const Duration(milliseconds: 200),
+            scale: isSelected ? 1.1 : 1.0,
+            child: Icon(
+              icon,
+              size: 20,
+              color: isSelected
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageDropdown extends StatelessWidget {
+  const _LanguageDropdown({required this.s});
+  final AppSettings s;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final String currentLabel = s.locale.languageCode == 'pl' ? '🇵🇱 Polish' : '🇺🇸 English';
+
+    return MenuAnchor(
+      alignmentOffset: const Offset(0,-45),
+      style: MenuStyle(
+        padding: WidgetStateProperty.all(EdgeInsets.zero),
+        shape: WidgetStateProperty.all(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        backgroundColor: WidgetStateProperty.all(theme.colorScheme.surfaceContainerHighest),
+      ),
+      menuChildren: [
+        _buildMenuItem(context, 'pl', '🇵🇱 Polish'),
+        _buildMenuItem(context, 'en', '🇺🇸 English'),
+      ],
+      builder: (context, controller, child) {
+        return GestureDetector(
+          onTap: () => controller.isOpen ? controller.close() : controller.open(),
+          child: Container(
+
+            width: 140,
+            height: 45,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  currentLabel,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                Icon(Icons.keyboard_arrow_down_rounded, color: s.accentColor, size: 20),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMenuItem(BuildContext context, String code, String label) {
+    final isSelected = s.locale.languageCode == code;
+
+    return MenuItemButton(
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(isSelected?null:s.accentColor.withValues(alpha: 0.01)),
+      ),
+      // MenuAnchor automatycznie dopasowuje szerokość przycisków do najszerszego elementu
+      onPressed: () => s.setLocale(code),
+      child: Container(
+        width: 115, // Szerokość dopasowana do wnętrza kontenera
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -513,8 +616,9 @@ class _TimingDrop extends StatelessWidget {
 }
 
 class _AccentRow extends StatelessWidget {
-  const _AccentRow({required this.s});
+  const _AccentRow({required this.s, this.t});
   final AppSettings s;
+  final AppLocalizations? t;
 
   @override
   Widget build(BuildContext context) {
@@ -536,7 +640,7 @@ class _AccentRow extends StatelessWidget {
                     size: 20, color: s.accentColor),
               ),
               const SizedBox(width: 14),
-              Text('Accent color',
+              Text(t?.accentColor ?? 'Accent color',
                   style: theme.textTheme.bodyLarge
                       ?.copyWith(fontWeight: FontWeight.w600)),
             ],
@@ -568,7 +672,6 @@ class _AccentDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Readable check icon regardless of accent luminance
     final fg = color.computeLuminance() > 0.4 ? Colors.black87 : Colors.white;
     return GestureDetector(
       onTap: onTap,
@@ -608,6 +711,7 @@ class _PwdField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return TextFormField(
       controller: ctrl,
       obscureText: true,
@@ -618,7 +722,7 @@ class _PwdField extends StatelessWidget {
         OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       validator: validator ??
-              (v) => (v?.trim().isEmpty ?? true) ? 'Required' : null,
+              (v) => (v?.trim().isEmpty ?? true) ? (t?.fieldRequired ?? 'Required') : null,
     );
   }
 }

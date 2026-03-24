@@ -11,20 +11,20 @@ enum Pages{
   calendar(isFloating: false, icon: Icons.calendar_month, value: "Calendar", pageWidget: CalendarPage());
 
   String getTransLabel(BuildContext context) {
-    final t = AppLocalizations.of(context)!;
+    final t = AppLocalizations.of(context);
     switch (this) {
       case Pages.home:
-        return t.home;
+        return t!.home;
       case Pages.profile:
-        return t.profile;
+        return t!.profile;
       case Pages.groups:
-        return t.group;
+        return t!.group;
       case Pages.friends:
-        return t.friend;
+        return t!.friend;
       case Pages.settings:
-        return t.settings;
+        return t!.settings;
       case Pages.calendar:
-        return t.calendar;
+        return t!.calendar;
     }
   }
   final bool isFloating;

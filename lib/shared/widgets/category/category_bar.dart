@@ -4,7 +4,7 @@ import '../../models/task.dart';
 import '../add_forms/add_category_form.dart';
 
 /// Built-in category names — long-press edit is disabled for these.
-const _kDefaultNames = {'All', 'Default'};
+const _kDefaultNames = {'All',"Wszystkie", 'Default',"Domyślna"};
 
 class CategoryBar extends StatelessWidget {
   const CategoryBar({
@@ -30,7 +30,7 @@ class CategoryBar extends StatelessWidget {
           cat: cat,
           // Count by name so DB tasks (which may have different UUIDs)
           // are included in the count correctly.
-          tasksInCategory: cat.name == 'All'
+          tasksInCategory: cat.name == 'All'|| cat.name == 'Wszystkie'
               ? allTasks.length
               : allTasks
               .where((t) => t.category.name == cat.name)

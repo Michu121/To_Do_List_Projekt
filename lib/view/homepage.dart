@@ -9,39 +9,43 @@ import '../shared/widgets/add_forms/add_category_form.dart';
 import '../shared/widgets/category/category_bar.dart';
 import '../shared/widgets/category/date_section.dart';
 
-// Stable "All" sentinel — fixed id so comparison is consistent
-final _allCategory = Category(
-    id: '__all__', name: 'All', color: Colors.grey.withValues(alpha: 0.85));
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final allCategory = Category(
+        id: '__all__',
+        name: t?.allCategory ?? 'All', // Używamy klucza z Twojego pliku .arb
+        color: Colors.grey.withValues(alpha: 0.85)
+    );
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        return const _TaskFeed();
+        return _TaskFeed(allCategory: allCategory,);
       },
     );
   }
 }
 
 class _TaskFeed extends StatefulWidget {
-  const _TaskFeed();
+  final Category allCategory;
+  const _TaskFeed({required this.allCategory});
 
   @override
   State<_TaskFeed> createState() => _TaskFeedState();
 }
 
 class _TaskFeedState extends State<_TaskFeed> {
-  Category _selectedCategory = _allCategory;
+  late Category _selectedCategory = widget.allCategory;
 
   List<Category> _buildList() => [
-    _allCategory,
+    widget.allCategory,
     ...categoryServices.getCategories().values,
   ];
 
@@ -51,12 +55,12 @@ class _TaskFeedState extends State<_TaskFeed> {
         .getCategories()
         .values
         .any((c) => c.name == _selectedCategory.name);
-    if (!exists) setState(() => _selectedCategory = _allCategory);
+    if (!exists) setState(() => _selectedCategory = widget.allCategory);
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context)!;
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final onAccent =
@@ -84,7 +88,7 @@ class _TaskFeedState extends State<_TaskFeed> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 4),
                         child: Text(
-                          'Categories',
+                          t?.categories ?? 'Categories',
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
@@ -94,16 +98,16 @@ class _TaskFeedState extends State<_TaskFeed> {
                       TextButton.icon(
                         style: TextButton.styleFrom(
                           foregroundColor: onAccent,
-                          backgroundColor: onAccent.withValues(alpha: 0.15),
+                          backgroundColor: onAccent.withValues(alpha: 0.1),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                              horizontal: 12, vertical: 6),
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
+                              borderRadius: BorderRadius.circular(8)),
                         ),
                         onPressed: () => CategoryOverlay.show(context),
-                        icon: const Icon(Icons.add, size: 16),
-                        label: const Text('Add',
-                            style: TextStyle(fontSize: 13)),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(t?.add ?? 'Add',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -131,9 +135,6 @@ class _TaskFeedState extends State<_TaskFeed> {
 
               final tasks = everyTaskService.getTasks();
 
-              // ⚡ Filter by category NAME, not id — ensures tasks loaded
-              // from Firestore (with embedded category ids that may differ
-              // from the current session's default category ids) still match.
               final filtered = _selectedCategory.id == '__all__'
                   ? tasks
                   : tasks
@@ -152,7 +153,7 @@ class _TaskFeedState extends State<_TaskFeed> {
                               .withValues(alpha: 0.15)),
                       const SizedBox(height: 16),
                       Text(
-                        t.notask,
+                        t?.notask ?? 'No Task, Now you can rest',
                         style: TextStyle(
                           color: theme.colorScheme.onSurface
                               .withValues(alpha: 0.45),

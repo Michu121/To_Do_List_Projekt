@@ -2,29 +2,41 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../models/category.dart';
 import 'fire_store_service.dart';
 
 class CategoryServices extends ChangeNotifier {
-  // TYLKO ta kategoria jest zablokowana do edycji i nieusuwalna
-  static final Map<String, Category> _defaults = {
-    'Default': Category(id: 'default', name: 'Default', color: Colors.grey),
-  };
-
-  Map<String, Category> _categories = Map.of(_defaults);
+  Map<String, Category> _categories = {};
   StreamSubscription<QuerySnapshot>? _subscription;
+  bool _isSeedingTriggered = false; // Flaga w pamięci, by nie siać kilka razy w jednej sesji
 
   Map<String, Category> getCategories() => _categories;
 
-  void init(String uid) {
-    _subscription?.cancel();
-    _subscription = firestoreService.categoriesStream(uid).listen((snapshot) {
+  void init(String uid, BuildContext context) {
+    final defaultName = AppLocalizations.of(context)?.defaultCategory ?? 'Default';
 
-      // Jeśli użytkownik nie ma żadnych kategorii w Firestore (nowy user)
-      // tworzymy Work i Personal w bazie.
-      if (snapshot.docs.isEmpty) {
-        _seedInitialCategories(uid);
-        return;
+    final defaultCategory = Category(
+        id: 'default',
+        name: defaultName,
+        color: Colors.grey
+    );
+
+    _subscription?.cancel();
+    _subscription = firestoreService.categoriesStream(uid).listen((snapshot) async {
+
+      // LOGIKA "RAZ NA ZAWSZE":
+      // Sprawdzamy, czy użytkownik ma w ogóle dokument "meta" lub czy kolekcja jest pusta
+      // ALBO (uproszczone): używamy SharedPreferences, by zapisać, że już raz dodaliśmy.
+
+      if (snapshot.docs.isEmpty && !_isSeedingTriggered) {
+        // Sprawdzamy w Firestore, czy użytkownik już kiedykolwiek miał robiony seed
+        final hasSeeded = await firestoreService.checkIfAlreadySeeded(uid);
+        if (!hasSeeded) {
+          _isSeedingTriggered = true;
+          await _seedInitialCategories(context, uid);
+          return;
+        }
       }
 
       final fromFirestore = {
@@ -33,92 +45,89 @@ class CategoryServices extends ChangeNotifier {
           Category.fromJson(doc.data() as Map<String, dynamic>),
       };
 
-      // Łączymy: Default (z kodu) + wszystko co w bazie (Work, Personal, inne)
-      _categories = {..._defaults, ...fromFirestore};
+      _categories = {
+        defaultName: defaultCategory,
+        ...fromFirestore,
+      };
       notifyListeners();
     });
   }
 
-  Future<void> _seedInitialCategories(String uid) async {
+  Future<void> _seedInitialCategories(BuildContext context, String uid) async {
+    final t = AppLocalizations.of(context);
+
     final starter = [
-      Category(name: 'Work', color: Colors.blue),
-      Category(name: 'Personal', color: Colors.green),
+      Category(id: 'work', name: t?.workCategory ?? 'Work', color: Colors.blue),
+      Category(id: 'personal', name: t?.personalCategory ?? 'Personal', color: Colors.green),
     ];
 
     for (var cat in starter) {
       await firestoreService.setCategory(uid, cat.id, cat.toJson());
     }
+
+    // 2. KLUCZOWE: Zapisujemy w profilu użytkownika, że seed został wykonany
+    await firestoreService.markAsSeeded(uid);
   }
 
-  void clear() {
+  void clear(BuildContext context) {
     _subscription?.cancel();
     _subscription = null;
-    _categories = Map.of(_defaults);
+    final defaultName = AppLocalizations.of(context)?.defaultCategory ?? 'Default';
+    _categories = {
+      defaultName: Category(id: 'default', name: defaultName, color: Colors.grey)
+    };
     notifyListeners();
   }
 
   String? get _uid => FirebaseAuth.instance.currentUser?.uid;
 
-  // ── DODAWANIE ──────────────────────────────────────────────────────────────
-
   Future<void> addCategory(Category category) async {
     final uid = _uid;
     if (uid == null || _categories.containsKey(category.name)) return;
 
-    _categories = {..._categories, category.name: category};
+    final oldState = Map<String, Category>.from(_categories);
+    _categories[category.name] = category;
     notifyListeners();
 
-    unawaited(
-      firestoreService.setCategory(uid, category.id, category.toJson()).catchError((e) {
-        _categories.remove(category.name);
-        notifyListeners();
-      }),
-    );
+    try {
+      await firestoreService.setCategory(uid, category.id, category.toJson());
+    } catch (e) {
+      _categories = oldState;
+      notifyListeners();
+    }
   }
-
-  // ── AKTUALIZACJA (Teraz pozwoli edytować Work/Personal) ────────────────────
 
   Future<void> updateCategory(Category category) async {
     final uid = _uid;
     if (uid == null) return;
 
-    // Szukamy po ID, żeby móc zmienić nazwę
     final oldEntry = _categories.entries.firstWhere(
           (e) => e.value.id == category.id,
       orElse: () => MapEntry(category.name, category),
     );
 
-    // Blokada TYLKO dla systemowego Default
     if (oldEntry.value.id == 'default') return;
 
     final oldName = oldEntry.key;
-    final oldCategory = oldEntry.value;
+    final oldState = Map<String, Category>.from(_categories);
 
-    _categories = {
-      for (final e in _categories.entries)
-        if (e.key == oldName) category.name: category else e.key: e.value,
-    };
+    _categories.remove(oldName);
+    _categories[category.name] = category;
     notifyListeners();
 
-    unawaited(
-      firestoreService.setCategory(uid, category.id, category.toJson()).catchError((e) {
-        _categories = {
-          for (final entry in _categories.entries)
-            if (entry.key == category.name) oldName: oldCategory else entry.key: entry.value,
-        };
-        notifyListeners();
-      }),
-    );
+    try {
+      await firestoreService.setCategory(uid, category.id, category.toJson());
+    } catch (e) {
+      _categories = oldState;
+      notifyListeners();
+    }
   }
-
-  // ── USUWANIE ───────────────────────────────────────────────────────────────
 
   Future<void> deleteCategory(String name) async {
     final uid = _uid;
-    if (uid == null || name == 'Default') return;
-
     final cat = _categories[name];
-    if (cat == null) return;
+
+    if (uid == null || cat == null || cat.id == 'default') return;
 
     final backup = Map<String, Category>.from(_categories);
     _categories.remove(name);

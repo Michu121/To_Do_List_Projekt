@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../shared/models/group.dart';
 import '../shared/models/league.dart';
 import '../shared/models/user_model.dart';
@@ -10,6 +11,7 @@ import '../shared/services/stats_service.dart';
 import '../shared/services/task_services.dart';
 import '../shared/services/user_stats_service.dart';
 import '../shared/widgets/task_tiles/task_list_tile.dart';
+import 'groupspage.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -26,6 +28,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showCompletedTasks(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final completed = taskServices.getCompletedTasks()
       ..sort((a, b) => b.date.compareTo(a.date));
 
@@ -62,13 +65,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: Colors.green),
                         const SizedBox(width: 8),
                         Text(
-                          'Completed Tasks (${completed.length})',
+                          '${t?.completedTasks ?? "Completed Tasks"} (${completed.length})',
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
                         Text(
-                          'incl. archived',
+                          t?.incl_archived ?? 'incl. archived',
                           style: TextStyle(
                               fontSize: 11, color: Colors.grey.shade500),
                         ),
@@ -89,7 +92,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           size: 60,
                           color: Colors.grey.shade300),
                       const SizedBox(height: 12),
-                      Text('No completed tasks yet',
+                      Text(t?.empty ?? 'No completed tasks yet',
                           style: TextStyle(
                               color: Colors.grey.shade500)),
                     ],
@@ -137,6 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final firebaseUser = FirebaseAuth.instance.currentUser;
     final currentUser = UserModel(
       uid: firebaseUser?.uid ?? '',
@@ -155,7 +159,6 @@ class _ProfilePageState extends State<ProfilePage> {
               [userStatsService, groupTaskService, friendServices]),
           builder: (context, _) {
             final groups = groupTaskService.groups;
-            final friends = friendServices.getFriends();
             final streak = userStatsService.streakDays;
 
             final points = fsStats?.points ?? userStatsService.totalPoints;
@@ -177,14 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         _LeagueCard(league: league, points: points),
                         const SizedBox(height: 20),
-                        _SectionHeader(
-                            title: 'Friends',
-                            trailing:
-                            '${friends.length} friends'),
-                        const SizedBox(height: 10),
-                        _FriendsList(friends: friends),
-                        const SizedBox(height: 20),
-                        const _SectionHeader(title: 'Stats'),
+                        _SectionHeader(title: t?.stats ?? 'Stats'),
                         const SizedBox(height: 10),
                         _StatsGrid(
                           tasksCompleted: completed,
@@ -195,7 +191,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               _showCompletedTasks(context),
                         ),
                         const SizedBox(height: 20),
-                        const _SectionHeader(title: 'Groups'),
+                        _SectionHeader(title: t?.group ?? 'Groups'),
                         const SizedBox(height: 10),
                         _GroupsRow(groups: groups),
                         const SizedBox(height: 30),
@@ -222,7 +218,6 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
-    // Ensure readable text colour on top of accent
     final onAccent = accent.computeLuminance() > 0.4
         ? Colors.black87
         : Colors.white;
@@ -239,28 +234,51 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
       child: Column(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                  color: onAccent.withValues(alpha: 0.4), width: 3),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4))
-              ],
-            ),
-            child: CircleAvatar(
-              radius: 48,
-              backgroundColor: onAccent.withValues(alpha: 0.2),
-              backgroundImage: user.photo != null
-                  ? NetworkImage(user.photo!)
-                  : null,
-              child: user.photo == null
-                  ? Icon(Icons.person, size: 52, color: onAccent)
-                  : null,
-            ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      onAccent.withValues(alpha: 0.15),
+                      onAccent.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: onAccent.withValues(alpha: 0.4),
+                    width: 3,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 48,
+                  backgroundColor: onAccent.withValues(alpha: 0.2),
+                  backgroundImage: user.photo != null
+                      ? NetworkImage(user.photo!)
+                      : null,
+                  child: user.photo == null
+                      ? Icon(Icons.person, size: 52, color: onAccent)
+                      : null,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Text(
@@ -291,6 +309,7 @@ class _LeagueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final progress = league.progressIn(points);
     final toNext = league.pointsToNext(points);
@@ -339,7 +358,7 @@ class _LeagueCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Current League',
+                  Text(t?.currentLeague ?? 'Current League',
                       style: TextStyle(
                           color: Colors.grey.shade500, fontSize: 12)),
                   Text(league.label,
@@ -353,7 +372,7 @@ class _LeagueCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Points',
+                  Text(t?.points ?? 'Points',
                       style: TextStyle(
                           color: Colors.grey.shade500, fontSize: 12)),
                   Text('$points ✦',
@@ -410,6 +429,7 @@ class _LeagueCard extends StatelessWidget {
 class _PointsLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -421,10 +441,10 @@ class _PointsLegend extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _Hint(Icons.add_task, 'Create task', '+5'),
-          _Hint(Icons.check_circle, 'Complete', '+10~50'),
-          _Hint(Icons.group_add, 'Join group', '+10'),
-          _Hint(Icons.create_new_folder, 'New group', '+15'),
+          _Hint(Icons.add_task, t?.addTask ?? 'Create task', '+5'),
+          _Hint(Icons.check_circle, t?.complete ?? 'Complete', '+10~50'),
+          _Hint(Icons.group_add, t?.joinGroup ?? 'Join group', '+10'),
+          _Hint(Icons.create_new_folder, t?.createGroup ?? 'New group', '+15'),
         ],
       ),
     );
@@ -488,82 +508,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ── Friends ───────────────────────────────────────────────────────────────────
-
-class _FriendsList extends StatelessWidget {
-  final List<UserModel> friends;
-  const _FriendsList({required this.friends});
-
-  @override
-  Widget build(BuildContext context) {
-    if (friends.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text('No friends yet.',
-            style: TextStyle(color: Colors.grey.shade500)),
-      );
-    }
-    return Column(
-        children: friends.map((f) => _FriendTile(friend: f)).toList());
-  }
-}
-
-class _FriendTile extends StatelessWidget {
-  final UserModel friend;
-  const _FriendTile({required this.friend});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final initials = friend.name.isNotEmpty
-        ? friend.name
-        .trim()
-        .split(' ')
-        .map((p) => p[0])
-        .take(2)
-        .join()
-        .toUpperCase()
-        : friend.email.isNotEmpty
-        ? friend.email[0].toUpperCase()
-        : '?';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: ListTile(
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: CircleAvatar(
-          radius: 24,
-          backgroundImage: friend.photo != null
-              ? NetworkImage(friend.photo!)
-              : null,
-          backgroundColor: theme.colorScheme.primaryContainer,
-          child: friend.photo == null
-              ? Text(initials,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onPrimaryContainer))
-              : null,
-        ),
-        title: Text(
-            friend.name.isNotEmpty ? friend.name : friend.email,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: friend.name.isNotEmpty ? Text(friend.email) : null,
-      ),
-    );
-  }
-}
-
 // ── Stats Grid ────────────────────────────────────────────────────────────────
 
 class _StatsGrid extends StatelessWidget {
@@ -583,6 +527,7 @@ class _StatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Column(
       children: [
         Row(
@@ -590,18 +535,18 @@ class _StatsGrid extends StatelessWidget {
             Expanded(
               child: _StatBox(
                 value: '$tasksCompleted',
-                label: 'Completed',
+                label: t?.tasksCompleted ?? 'Completed',
                 icon: Icons.check_circle_outline,
                 iconColor: Colors.green,
                 onTap: onCompletedTap,
-                tapHint: 'View all',
+                tapHint: t?.viewAll ?? 'View all',
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _StatBox(
                 value: '$tasksCreated',
-                label: 'Created',
+                label: t?.tasksCreated ?? 'Created',
                 icon: Icons.add_task,
                 iconColor: Colors.blueAccent,
               ),
@@ -609,26 +554,20 @@ class _StatsGrid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _StatBox(
-                value: '$streakDays',
-                label: 'Day streak',
-                icon: Icons.local_fire_department,
-                iconColor: Colors.deepOrange,
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _StatBox(
-                value: '$groupsJoined',
-                label: 'Groups joined',
-                icon: Icons.groups_rounded,
-                iconColor: Colors.purple,
-              ),
-            ),
-          ],
+        _StatBox(
+          value: '$streakDays',
+          label: t?.dayStreak ?? 'Day streak',
+          icon: Icons.local_fire_department,
+          iconColor: Colors.deepOrange,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          t?.pointsHistory ?? 'Points history',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey.shade500,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -716,7 +655,7 @@ class _StatBox extends StatelessWidget {
   }
 }
 
-// ── Groups Row ────────────────────────────────────────────────────────────────
+// ── Groups Grid ───────────────────────────────────────────────────────────────
 
 class _GroupsRow extends StatelessWidget {
   final List<Group> groups;
@@ -724,61 +663,148 @@ class _GroupsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     if (groups.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text('No groups yet.',
-            style: TextStyle(color: Colors.grey.shade500)),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            children: [
+              Icon(Icons.group_off, size: 48, color: Colors.grey.shade300),
+              const SizedBox(height: 8),
+              Text(t?.noGroups ?? 'No groups yet.',
+                  style: TextStyle(color: Colors.grey.shade500)),
+            ],
+          ),
+        ),
       );
     }
-    return SizedBox(
-      height: 80,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        children: groups.map((g) => _GroupCircle(group: g)).toList(),
+    return Column(
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            ...groups.map((g) => _GroupTile(group: g)),
+            const _AddGroupButton(),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _GroupTile extends StatelessWidget {
+  final Group group;
+  const _GroupTile({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => GroupDetailPage(group: group),
+          ),
+        );
+      },
+      child: Container(
+        width: 90,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: group.color.withValues(alpha: 0.1),
+          border: Border.all(
+            color: group.color.withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: group.color,
+              child: Text(
+                group.name.isNotEmpty ? group.name[0].toUpperCase() : '?',
+                style: TextStyle(
+                  color: group.color.computeLuminance() > 0.4
+                      ? Colors.black87
+                      : Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              group.name,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _GroupCircle extends StatelessWidget {
-  final Group group;
-  const _GroupCircle({required this.group});
+class _AddGroupButton extends StatelessWidget {
+  const _AddGroupButton();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: group.color,
-            child: Text(
-              group.name.isNotEmpty
-                  ? group.name[0].toUpperCase()
-                  : '?',
-              style: TextStyle(
-                  color: group.color.computeLuminance() > 0.4
-                      ? Colors.black87
-                      : Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20),
-            ),
+    final t = AppLocalizations.of(context);
+    return GestureDetector(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Add group feature coming soon')),
+        );
+      },
+      child: Container(
+        width: 90,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.withValues(alpha: 0.1),
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.3),
+            width: 1.5,
           ),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 62,
-            child: Text(
-              group.name,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey.withValues(alpha: 0.15),
+              ),
+              child: Icon(
+                Icons.add,
+                size: 24,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              t?.addGroup ?? 'Add Group',
               style: TextStyle(
-                  fontSize: 10, color: Colors.grey.shade600),
-              overflow: TextOverflow.ellipsis,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
               textAlign: TextAlign.center,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../shared/services/auth_service.dart';
 import '../shared/services/fire_store_service.dart';
 import '../shared/services/group_task_service.dart';
@@ -129,6 +130,7 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final isDark = theme.brightness == Brightness.dark;
@@ -185,7 +187,7 @@ class _LoginPageState extends State<LoginPage>
                         const SizedBox(height: 24),
 
                         Text(
-                          _isLogin ? 'Welcome back' : 'Create account',
+                          _isLogin ? (t?.welcomeBack ?? 'Welcome back') : (t?.createAccount ?? 'Create account'),
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -222,19 +224,19 @@ class _LoginPageState extends State<LoginPage>
                                 if (!_isLogin) ...[
                                   _Field(
                                     controller: _nameController,
-                                    label: 'Full name',
+                                    label: t?.username ?? 'Full name',
                                     icon: Icons.person_outline,
                                     accent: accent,
                                     action: TextInputAction.next,
                                     validator: (v) => (v?.trim().isEmpty ?? true)
-                                        ? 'Enter your name'
+                                        ? (t?.fieldRequired ?? 'Enter your name')
                                         : null,
                                   ),
                                   const SizedBox(height: 14),
                                 ],
                                 _Field(
                                   controller: _emailController,
-                                  label: 'Email',
+                                  label: t?.email ?? 'Email',
                                   icon: Icons.email_outlined,
                                   accent: accent,
                                   keyboard: TextInputType.emailAddress,
@@ -242,12 +244,12 @@ class _LoginPageState extends State<LoginPage>
                                   validator: (v) =>
                                   (v?.contains('@') ?? false)
                                       ? null
-                                      : 'Enter a valid email',
+                                      : (t?.invalidEmail ?? 'Enter a valid email'),
                                 ),
                                 const SizedBox(height: 14),
                                 _Field(
                                   controller: _passwordController,
-                                  label: 'Password',
+                                  label: t?.password ?? 'Password',
                                   icon: Icons.lock_outline,
                                   accent: accent,
                                   obscure: _obscurePassword,
@@ -266,7 +268,7 @@ class _LoginPageState extends State<LoginPage>
                                   validator: (v) =>
                                   (v?.length ?? 0) >= 6
                                       ? null
-                                      : 'At least 6 characters',
+                                      : (t?.minCharacters ?? 'At least 6 characters'),
                                   onFieldSubmitted: (_) => _submit(),
                                 ),
 
@@ -325,8 +327,8 @@ class _LoginPageState extends State<LoginPage>
                                     )
                                         : Text(
                                       _isLogin
-                                          ? 'Sign In'
-                                          : 'Create Account',
+                                          ? (t?.signIn ?? 'Sign In')
+                                          : (t?.signUp ?? 'Create Account'),
                                       style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600),
@@ -378,7 +380,6 @@ class _LoginPageState extends State<LoginPage>
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Simple coloured G icon
                                 Text(
                                   'G',
                                   style: TextStyle(
@@ -402,17 +403,18 @@ class _LoginPageState extends State<LoginPage>
                           children: [
                             Text(
                               _isLogin
-                                  ? "Don't have an account? "
-                                  : 'Already have an account? ',
+                                  ? (t?.noAccount ?? "Don't have an account? ")
+                                  : (t?.haveAccount ?? 'Already have an account? '),
                               style: TextStyle(
                                   color: theme.colorScheme.onSurface
                                       .withValues(alpha: 0.55),
                                   fontSize: 14),
                             ),
+                            const SizedBox(width: 4),
                             GestureDetector(
                               onTap: _toggleMode,
                               child: Text(
-                                _isLogin ? 'Register' : 'Sign In',
+                                _isLogin ? (t?.signUp ?? 'Register') : (t?.signIn ?? 'Sign In'),
                                 style: TextStyle(
                                     color: accent,
                                     fontWeight: FontWeight.w700,

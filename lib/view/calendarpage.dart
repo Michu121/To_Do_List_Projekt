@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 import '../shared/models/group.dart';
 import '../shared/models/task.dart';
@@ -48,6 +49,7 @@ class _CalendarPageState extends State<CalendarPage>
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final onAccent = accent.computeLuminance() > 0.4
@@ -70,10 +72,11 @@ class _CalendarPageState extends State<CalendarPage>
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
-            tabs: const [
-              Tab(text: 'AGENDA', icon: Icon(Icons.list_alt, size: 16)),
-              Tab(text: 'CALENDAR', icon: Icon(Icons.calendar_month, size: 16)),
-              Tab(text: 'GROUPS', icon: Icon(Icons.group, size: 16)),
+            // Tłumaczenia menu głównego
+            tabs: [
+              const Tab(text: 'AGENDA', icon: Icon(Icons.list_alt, size: 16)), // Brak w ARB
+              Tab(text: t?.calendar?.toUpperCase() ?? 'CALENDAR', icon: const Icon(Icons.calendar_month, size: 16)),
+              Tab(text: t?.group?.toUpperCase() ?? 'GROUPS', icon: const Icon(Icons.group, size: 16)),
             ],
           ),
         ),
@@ -97,6 +100,7 @@ class _AgendaTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: everyTaskService,
       builder: (_, __) {
@@ -106,7 +110,7 @@ class _AgendaTab extends StatelessWidget {
         if (tasks.isEmpty) {
           return _EmptyHint(
             icon: Icons.event_note,
-            message: 'No upcoming tasks',
+            message: t?.noUpcomingTasks ?? 'No upcoming tasks',
           );
         }
 
@@ -159,6 +163,7 @@ class _CalendarTabState extends State<_CalendarTab> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: everyTaskService,
       builder: (_, _) {
@@ -168,7 +173,7 @@ class _CalendarTabState extends State<_CalendarTab> {
 
         return Stack(
           children: [
-            Column( // Zamiast SingleChildScrollView
+            Column( // Zamiast SingleChildScrollView (zgodnie z instrukcją)
               children: [
                 // ── Sekcja Kalendarza (Stała wysokość lub AspectRatio) ──
                 _CompactMonthHeader(
@@ -180,7 +185,7 @@ class _CalendarTabState extends State<_CalendarTab> {
 
                 // Nadajemy siatce stałą wysokość, aby się wyświetliła
                 SizedBox(
-                  height: 260, // Możesz dostosować tę wysokość
+                  height: 260, // Dostosowana wysokość
                   child: _Grid(
                     month: _month,
                     selected: _day,
@@ -198,15 +203,14 @@ class _CalendarTabState extends State<_CalendarTab> {
               ],
             ),
 
-            // FAB pozostaje bez zmian
+            // FAB zgodnie z instrukcją
             Positioned(
               bottom: 16,
               right: 16,
-              child: FloatingActionButton.extended(
+              child: FloatingActionButton(
                 heroTag: 'cal_fab',
                 onPressed: () => AddTaskSheet.show(context, preselectedDate: _day),
-                icon: const Icon(Icons.add),
-                label: const Text('Add task'),
+                child: const Icon(Icons.add),
               ),
             ),
           ],
@@ -229,25 +233,26 @@ class _CompactMonthHeader extends StatelessWidget {
   final DateTime day;
   final ValueChanged<DateTime> onChange;
 
-  static const _m = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
+
+    final List<String> monthsList = [
+      t?.january(0) ?? 'January',
+      t?.february(0) ?? 'February',
+      t?.march(0) ?? 'March',
+      t?.april(0) ?? 'April',
+      t?.may(0) ?? 'May',
+      t?.june(0) ?? 'June',
+      t?.july(0) ?? 'July',
+      t?.august(0) ?? 'August',
+      t?.september(0) ?? 'September',
+      t?.october(0) ?? 'October',
+      t?.november(0) ?? 'November',
+      t?.december(0) ?? 'December',
+    ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -264,7 +269,7 @@ class _CompactMonthHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${_m[month.month - 1]} ${month.year}',
+                  '${monthsList[month.month - 1]} ${month.year}',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -273,7 +278,7 @@ class _CompactMonthHeader extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 Text(
-                  '${day.day} ${_m[day.month - 1]}',
+                  '${day.day} ${monthsList[day.month - 1]}',
                   style: TextStyle(
                     fontSize: 11,
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
@@ -301,25 +306,26 @@ class _WeekdayRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+        children: [t?.monday(0)??"Mo", t?.tuesday(0)??"Tu", t?.wednesday(0)??"We", t?.thursday(0)??"Th", t?.friday(0)??"Fr", t?.saturday(0)??"Sa", t?.sunday(0)??"Su"]
             .map(
               (d) => SizedBox(
-                width: 36,
-                child: Text(
-                  d,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: accent,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
+            width: 36,
+            child: Text(
+              d,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: accent,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
               ),
-            )
+            ),
+          ),
+        )
             .toList(),
       ),
     );
@@ -400,13 +406,12 @@ class _DayCell extends StatelessWidget {
         ? theme.colorScheme.onSurface.withValues(alpha: 0.2)
         : theme.colorScheme.onSurface.withValues(alpha: 0.85);
 
-    // Deduplicated dots (max 3)
     final dots = tasks
         .map((t) {
-          if (t.status.index == 2) return Colors.green;
-          if (t.status.index == 1) return Colors.blueAccent;
-          return theme.colorScheme.onSurface.withValues(alpha: 0.4);
-        })
+      if (t.status.index == 2) return Colors.green;
+      if (t.status.index == 1) return Colors.blueAccent;
+      return theme.colorScheme.onSurface.withValues(alpha: 0.4);
+    })
         .toSet()
         .take(3)
         .toList();
@@ -441,15 +446,15 @@ class _DayCell extends StatelessWidget {
                 children: dots
                     .map(
                       (c) => Container(
-                        width: 4,
-                        height: 4,
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        decoration: BoxDecoration(
-                          color: selected ? fg.withValues(alpha: 0.75) : c,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 1),
+                    decoration: BoxDecoration(
+                      color: selected ? fg.withValues(alpha: 0.75) : c,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                )
                     .toList(),
               )
             else
@@ -471,6 +476,7 @@ class _DayList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
 
@@ -486,7 +492,7 @@ class _DayList extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'No tasks on this day',
+              t?.noUpcomingTasks ?? 'No tasks on this day',
               style: TextStyle(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
@@ -502,7 +508,7 @@ class _DayList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
           child: Text(
-            '${tasks.length} task${tasks.length != 1 ? 's' : ''}',
+            '${tasks.length} ${t?.tasks ?? 'tasks'}',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
@@ -532,14 +538,15 @@ class _GroupsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: groupTaskService,
       builder: (_, __) {
         final groups = groupTaskService.groups;
         if (groups.isEmpty) {
-          return const _EmptyHint(
+          return _EmptyHint(
             icon: Icons.group_off,
-            message: 'No groups yet.\nCreate or join one!',
+            message: '${t?.noGroups ?? "No groups yet."}\n${t?.createOrJoinGroup ?? "Create or join one!"}',
           );
         }
 
@@ -568,6 +575,7 @@ class _GroupSectionState extends State<_GroupSection> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final tasks = groupTaskService.tasksForGroup(widget.group.id).toList()
       ..sort((a, b) => a.date.compareTo(b.date));
@@ -618,7 +626,7 @@ class _GroupSectionState extends State<_GroupSection> {
                         ),
                       ),
                       Text(
-                        '${tasks.length} task${tasks.length != 1 ? 's' : ''}',
+                        '${tasks.length} ${t?.tasks ?? 'tasks'}',
                         style: TextStyle(
                           fontSize: 11,
                           color: theme.colorScheme.onSurface.withValues(
@@ -645,22 +653,22 @@ class _GroupSectionState extends State<_GroupSection> {
               : CrossFadeState.showSecond,
           firstChild: tasks.isEmpty
               ? Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 8,
-                  ),
-                  child: Text(
-                    'No tasks in this group',
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                  ),
-                )
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+              vertical: 8,
+            ),
+            child: Text(
+              t?.noGroupTasks ?? 'No tasks in this group',
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          )
               : Column(
-                  children: tasks
-                      .map((t) => TaskListTile(task: t, showGroup: false))
-                      .toList(),
-                ),
+            children: tasks
+                .map((t) => TaskListTile(task: t, showGroup: false))
+                .toList(),
+          ),
           secondChild: const SizedBox.shrink(),
         ),
       ],

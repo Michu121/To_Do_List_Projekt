@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 import '../../models/category.dart';
 import '../../models/colors.dart';
@@ -8,6 +9,7 @@ import '../../models/difficulty.dart';
 import '../../models/group.dart';
 import '../../models/status.dart';
 import '../../models/task.dart';
+import '../../services/category_services.dart';
 import '../../services/color_services.dart';
 import '../../services/group_task_service.dart';
 import '../../services/notification_service.dart';
@@ -65,7 +67,6 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   late TimeOfDay? _timeStart;
   late TimeOfDay? _timeEnd;
   late Status _selectedStatus;
-  bool _enableNotification = false;
 
   @override
   void initState() {
@@ -181,8 +182,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
 
     // Re-schedule notification
     notificationService.cancelNotification(updated.id);
-    if (_enableNotification &&
-        AppSettings.instance.notificationsEnabled &&
+    if (AppSettings.instance.notificationsEnabled &&
         _timeStart != null) {
       final taskDateTime = DateTime(
         _selectedDate.year,
@@ -210,6 +210,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
+    final t = AppLocalizations.of(context);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -239,7 +240,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             Row(
               children: [
                 Expanded(
-                  child: Text('Edit Task',
+                  child: Text(t?.editTask ?? 'Edit Task',
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -259,7 +260,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
               controller: _titleController,
               autofocus: false,
               decoration: InputDecoration(
-                labelText: 'Title',
+                labelText: t?.title ?? 'Title',
                 prefixIcon: const Icon(Icons.title),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -273,7 +274,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
               controller: _descController,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Description',
+                labelText: t?.description ?? 'Description',
                 prefixIcon: const Icon(Icons.notes),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -298,7 +299,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                     icon: Icons.access_time,
                     label: _timeStart != null
                         ? _formatTime(_timeStart!)
-                        : 'Start time',
+                        : (t?.startTime ?? 'Start time'),
                     onTap: () => _pickTime(isStart: true),
                     accent: accent,
                     faded: _timeStart == null,
@@ -310,66 +311,13 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                     icon: Icons.timer_outlined,
                     label: _timeEnd != null
                         ? _formatTime(_timeEnd!)
-                        : 'End time',
+                        : (t?.endTime ?? 'End time'),
                     onTap: () => _pickTime(isStart: false),
                     accent: accent,
                     faded: _timeEnd == null,
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-
-            // ── Notification ────────────────────────────────────────
-            Container(
-              decoration: BoxDecoration(
-                color: _enableNotification
-                    ? accent.withValues(alpha: 0.08)
-                    : theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _enableNotification
-                      ? accent.withValues(alpha: 0.4)
-                      : Colors.transparent,
-                ),
-              ),
-              child: SwitchListTile.adaptive(
-                dense: true,
-                value: _enableNotification,
-                onChanged: (v) {
-                  if (!AppSettings.instance.notificationsEnabled) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text(
-                              'Enable notifications in Settings first')),
-                    );
-                    return;
-                  }
-                  if (_timeStart == null && v) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Set a start time first')),
-                    );
-                    return;
-                  }
-                  setState(() => _enableNotification = v);
-                },
-                title: Text('Remind me',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _enableNotification ? accent : null)),
-                subtitle: Text(
-                  _enableNotification
-                      ? AppSettings.timingLabel(
-                      AppSettings.instance.notificationMinutesBefore)
-                      : 'Tap to set a reminder',
-                  style: TextStyle(fontSize: 12),
-                ),
-                secondary:
-                Icon(Icons.notifications_outlined, color: _enableNotification ? accent : null),
-                activeColor: accent,
-              ),
             ),
             const SizedBox(height: 14),
 
@@ -381,23 +329,26 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             const SizedBox(height: 14),
 
             // ── Category + Group ────────────────────────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CategoryPicker(
-                  selectedCategory: _selectedCategory,
-                  onChanged: (c) =>
-                      setState(() => _selectedCategory = c),
-                ),
-                if (widget.showGroupPicker)
-                  GroupPicker(
-                    groups: _groups,
-                    selected: _selectedGroup,
-                    onChanged: (g) =>
-                        setState(() => _selectedGroup = g),
-                  ),
-              ],
+            _SectionLabel(t?.category ?? 'Category', accent),
+            const SizedBox(height: 8),
+            ListenableBuilder(
+              listenable: categoryServices,
+              builder: (context, _) {
+                final cats = categoryServices.getCategories().values.toList();
+                return _ChipRow(
+                  children: cats.map((cat) {
+                    final sel = _selectedCategory?.name == cat.name;
+                    return _InlineChip(
+                      label: cat.name,
+                      color: cat.color,
+                      selected: sel,
+                      onTap: () => setState(() => _selectedCategory = cat),
+                    );
+                  }).toList(),
+                );
+              },
             ),
+            const SizedBox(height: 16),
             const SizedBox(height: 14),
 
             // ── Color ───────────────────────────────────────────────
@@ -439,7 +390,115 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
     );
   }
 }
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text, this.accent);
+  final String text;
+  final Color accent;
 
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+              color: accent, borderRadius: BorderRadius.circular(2)),
+        ),
+        const SizedBox(width: 6),
+        Text(text,
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.65))),
+      ],
+    );
+  }
+}
+
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: children.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => children[i],
+      ),
+    );
+  }
+}
+
+class _InlineChip extends StatelessWidget {
+  const _InlineChip({
+    required this.label,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+  });
+  final String label;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = selected
+        ? (color.computeLuminance() > 0.45 ? Colors.black87 : Colors.white)
+        : color;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? color : color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? color : color.withValues(alpha: 0.4),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 12, color: fg),
+              const SizedBox(width: 4),
+            ] else ...[
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: selected ? fg.withValues(alpha: 0.8) : color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 5),
+            ],
+            Text(label,
+                style: TextStyle(
+                    color: fg,
+                    fontSize: 13,
+                    fontWeight:
+                    selected ? FontWeight.w700 : FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+}
 // ── Status chip ───────────────────────────────────────────────────────────────
 
 class _StatusChip extends StatelessWidget {
@@ -458,7 +517,8 @@ class _StatusChip extends StatelessWidget {
     return GestureDetector(
       onTap: () => onChanged(_next),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        width: 120,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: status.color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
@@ -467,13 +527,21 @@ class _StatusChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(status.icon, size: 14, color: status.color),
+            Icon(status.icon, size: 16, color: status.color),
             const SizedBox(width: 4),
-            Text(status.label,
-                style: TextStyle(
-                    fontSize: 12,
-                    color: status.color,
-                    fontWeight: FontWeight.w600)),
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(status.label,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: status.color,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
           ],
         ),
       ),
