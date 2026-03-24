@@ -34,6 +34,7 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         final settings = AppSettings.instance;
         return MaterialApp(
+          locale: settings.locale, // DODAJ TĘ LINIĘ
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           debugShowCheckedModeBanner: false,
@@ -67,13 +68,13 @@ class AuthGate extends StatelessWidget {
 
         if (user != null) {
           taskServices.init(user.uid);
-          categoryServices.init(user.uid);
+          categoryServices.init(user.uid,context);
           // groupTaskService is initialised inside MainPage (mainpage.dart)
           return const MainPage();
         }
 
         taskServices.clear();
-        categoryServices.clear();
+        categoryServices.clear(context);
         return const LoginPage();
       },
     );

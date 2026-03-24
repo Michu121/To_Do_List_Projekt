@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AppThemeMode { light, dark }
+enum AppThemeMode { system, light, dark }
 
 class AppSettings extends ChangeNotifier {
   AppSettings._();
@@ -28,9 +28,11 @@ class AppSettings extends ChangeNotifier {
 
   late SharedPreferences _prefs;
 
-  AppThemeMode _themeMode = AppThemeMode.light;
+  AppThemeMode _themeMode = AppThemeMode.system;
   Color _accentColor = availableAccentColors.first;
   String _language = 'English';
+  Locale _locale = const Locale('en');
+
 
   bool _notificationsEnabled = false;
   bool _taskReminders = false;
@@ -43,12 +45,20 @@ class AppSettings extends ChangeNotifier {
   bool _hideNotificationContent = false;
 
   AppThemeMode get themeMode => _themeMode;
-  ThemeMode get materialThemeMode =>
-      _themeMode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light;
-  String get themeLabel =>
-      _themeMode == AppThemeMode.dark ? 'Dark' : 'Light';
+  ThemeMode get materialThemeMode {
+    switch (_themeMode) {
+      case AppThemeMode.system:
+        return ThemeMode.system;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.light:
+        return ThemeMode.light;
+    }
+  }
+  String get themeLabel => _themeMode.name[0].toUpperCase() + _themeMode.name.substring(1);
   Color get accentColor => _accentColor;
   String get language => _language;
+  Locale get locale => _locale;
 
   bool get notificationsEnabled => _notificationsEnabled;
   bool get taskReminders => _taskReminders;
@@ -64,15 +74,21 @@ class AppSettings extends ChangeNotifier {
     _prefs = await SharedPreferences.getInstance();
 
     final savedTheme = _prefs.getString('theme_mode');
-    _themeMode =
-    savedTheme == 'dark' ? AppThemeMode.dark : AppThemeMode.light;
+    if (savedTheme == 'dark') {
+      _themeMode = AppThemeMode.dark;
+    } else if (savedTheme == 'light') {
+      _themeMode = AppThemeMode.light;
+    } else {
+      _themeMode = AppThemeMode.system; // Default to system
+    }
 
     _accentColor = Color(
       _prefs.getInt('accent_color') ??
           availableAccentColors.first.toARGB32(),
     );
 
-    _language = 'English';
+    _language = _prefs.getString('language') ?? 'English';
+    _locale = Locale(_prefs.getString('locale') ?? 'en');
 
     _notificationsEnabled =
         _prefs.getBool('notifications_enabled') ?? false;
@@ -94,6 +110,14 @@ class AppSettings extends ChangeNotifier {
     await _prefs.setString('theme_mode', mode.name);
     notifyListeners();
   }
+  Future<void> setLocale(String value) async {
+    _language = value == "pl" ? "Polski" : "English";
+    _locale = Locale(value);
+    await _prefs.setString('language', _language);
+    await _prefs.setString('locale', value);
+    notifyListeners();
+  }
+
 
   Future<void> setAccentColor(Color color) async {
     _accentColor = color;

@@ -1,135 +1,111 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
-
-class RegisterPage extends StatefulWidget{
+class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage>{
+class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Register',
-            style: TextStyle(
-                fontSize: 35,
-                color: Colors.blueAccent,
-                fontWeight: FontWeight.bold
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30),
-            child: Form(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 35),
-                    child: TextFormField(
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (String value) {
+    final t = AppLocalizations.of(context);
+    final theme = Theme.of(context);
 
-                        },
-                        validator: (value) {
-                          return value!.isEmpty ? 'Podaj adres email' : null;
-                        }
-                    ),
-                  ),
-
-                  SizedBox(height:30,),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 35),
-                    child: TextFormField(
-                        keyboardType: TextInputType.visiblePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: Icon(Icons.password),
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (String value) {},
-                        validator: (value) {
-                          return value!.isEmpty ? 'Podaj hasło' : null;
-                        }
-                    ),
-                  ),
-
-                  SizedBox(height: 30,),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 35),
-                    child: TextFormField(
-                        keyboardType: TextInputType.visiblePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Confirm your password',
-                          prefixIcon: Icon(Icons.password),
-                          border: OutlineInputBorder(),
-                        ),
-                        onChanged: (String value) {
-
-                        },
-                        validator: (value) {
-                          return value!.isEmpty ? 'Hasła się nie zgadzają' : null;
-                        }
-                    ),
-                  ),
-
-                  SizedBox(height: 30,),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 35),
-                    child: MaterialButton(
-                      minWidth: double.infinity,
-                      onPressed: () {},
-                      color: Colors.blueAccent,
-                      textColor: Colors.white,
-                      child: Text('Register'),
-                    ),
-                  ),
-                  SizedBox(height: 12.5,),
-                  Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 35),
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          text: 'By tapping Register you agree to our\n',
-                          style: TextStyle(
-                            fontSize: 17.5,
-                            color: Colors.blueAccent,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                                text: 'Terms of Service.',
-                                recognizer: TapGestureRecognizer()..onTap = () {
-                                  // Single tapped.
-                                },
-                                style: const TextStyle(
-                                  color: Colors.blue,
-                                  decoration: TextDecoration.underline,
-                                  fontWeight: FontWeight.bold,
-                                )
-                            ),
-                          ],
-                        ),
-                      )
-                  ),
-                ],
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                t?.createAccount ?? 'Create Account',
+                style: TextStyle(
+                    fontSize: 32,
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold),
               ),
-            ),
-          )
-        ],
+              const SizedBox(height: 40),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: t?.username ?? 'Username',
+                        prefixIcon: const Icon(Icons.person),
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (v) => (v == null || v.isEmpty) ? (t?.fieldRequired ?? 'Required') : null,
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        labelText: t?.email ?? 'Email',
+                        prefixIcon: const Icon(Icons.email),
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (v) => (v == null || !v.contains('@')) ? (t?.invalidEmail ?? 'Invalid') : null,
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: t?.password ?? 'Password',
+                        prefixIcon: const Icon(Icons.lock),
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (v) => (v == null || v.length < 8) ? (t?.minCharacters ?? 'Min 8') : null,
+                    ),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            // Rejestracja
+                          }
+                        },
+                        child: Text(t?.signUp ?? 'Sign Up'),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        text: '${t?.noAccount ?? "Don't have an account?"} ',
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                        children: [
+                          TextSpan(
+                            text: t?.signIn ?? 'Sign In',
+                            recognizer: TapGestureRecognizer()..onTap = () => Navigator.pop(context),
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

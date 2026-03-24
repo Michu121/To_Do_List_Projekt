@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../shared/services/friend_services.dart';
 import '../shared/models/user_model.dart';
 import '../shared/widgets/in_app_notification.dart';
@@ -44,6 +45,7 @@ class _FriendsPageState extends State<FriendsPage> {
   }
 
   void _addFriendDialog() {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final emailCtrl = TextEditingController();
 
@@ -55,7 +57,7 @@ class _FriendsPageState extends State<FriendsPage> {
           children: [
             Icon(Icons.person_add, color: theme.colorScheme.primary),
             const SizedBox(width: 8),
-            const Text('Add friend'),
+            Text(t?.add ?? 'Add friend'),
           ],
         ),
         content: Column(
@@ -72,7 +74,7 @@ class _FriendsPageState extends State<FriendsPage> {
               autofocus: true,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: t?.email ?? 'Email',
                 prefixIcon: const Icon(Icons.email_outlined),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -83,7 +85,7 @@ class _FriendsPageState extends State<FriendsPage> {
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              child: Text(t?.cancel ?? 'Cancel')),
           FilledButton(
             onPressed: () async {
               final email = emailCtrl.text.trim();
@@ -96,7 +98,7 @@ class _FriendsPageState extends State<FriendsPage> {
                 InAppNotification.error(context, error);
               } else {
                 InAppNotification.success(
-                    context, 'Friend request sent!');
+                    context, t?.success ?? 'Friend request sent!');
               }
             },
             child: const Text('Send'),
@@ -108,6 +110,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
     final onAccent =
@@ -138,7 +141,7 @@ class _FriendsPageState extends State<FriendsPage> {
                       controller: _searchCtrl,
                       style: TextStyle(color: onAccent),
                       decoration: InputDecoration(
-                        hintText: 'Search friends…',
+                        hintText: t?.searchTasks ?? 'Search friends…',
                         hintStyle: TextStyle(
                             color: onAccent.withValues(alpha: 0.5)),
                         prefixIcon: Icon(Icons.search,
@@ -165,7 +168,7 @@ class _FriendsPageState extends State<FriendsPage> {
                         child: IconButton(
                           icon: Icon(Icons.person_add, color: onAccent),
                           onPressed: _addFriendDialog,
-                          tooltip: 'Add friend',
+                          tooltip: t?.add ?? 'Add friend',
                         ),
                       ),
                       _StatusBadge(count: requests.length),
@@ -182,7 +185,7 @@ class _FriendsPageState extends State<FriendsPage> {
                   // ── Pending requests ─────────────────────────
                   if (requests.isNotEmpty) ...[
                     _SectionHeader(
-                        label: 'Pending requests (${requests.length})',
+                        label: '${t?.friendInvitations ?? "Pending requests"} (${requests.length})',
                         color: Colors.orange),
                     const SizedBox(height: 6),
                     ...requests.map((r) => _RequestCard(
@@ -197,7 +200,7 @@ class _FriendsPageState extends State<FriendsPage> {
 
                   // ── Friends ────────────────────────────────
                   _SectionHeader(
-                      label: 'Your friends (${all.length})',
+                      label: '${t?.friend ?? "Your friends"} (${all.length})',
                       color: accent),
                   const SizedBox(height: 6),
 
@@ -213,7 +216,7 @@ class _FriendsPageState extends State<FriendsPage> {
                           const SizedBox(height: 12),
                           Text(
                             all.isEmpty
-                                ? 'No friends yet. Add someone!'
+                                ? (t?.noFriendsYet ?? 'No friends yet. Add someone!')
                                 : 'No friends match your search.',
                             style: TextStyle(
                                 color: theme.colorScheme.onSurface
