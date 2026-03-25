@@ -206,9 +206,10 @@ Widget build(BuildContext context) {
         // Prawa strona (Calendar + More/Inne)
         Row(children: [
           ...(widget.isFloating ? [_buildNavButton(_pages[2], context)] : _pages
-              .sublist(2, 4)
+              .sublist(2, 5)
               .map((page) => _buildNavButton(page, context))
               .toList()),
+          if (widget.isFloating) ...[
           GestureDetector(
             key: _moreKey,
             onTap: () async {
@@ -237,7 +238,7 @@ Widget build(BuildContext context) {
               ),
             ),
           )
-        ]),
+        ]]),
       ],
     ),
   );
