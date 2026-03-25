@@ -6,7 +6,6 @@ enum Pages{
   home(isFloating: true, icon: Icons.home, value: "Home", pageWidget: HomePage()),
   profile(isFloating: false, icon: Icons.account_circle, value: "Profile", pageWidget: ProfilePage()),
   groups(isFloating: true, icon: Icons.group, value: "Groups", pageWidget: GroupsPage()),
-  friends(isFloating: false, icon: Icons.person_add, value: "Friends", pageWidget: FriendsPage()),
   settings(isFloating: false, icon: Icons.settings, value: "Settings", pageWidget: SettingsPage()),
   calendar(isFloating: false, icon: Icons.calendar_month, value: "Calendar", pageWidget: CalendarPage());
 
@@ -19,8 +18,6 @@ enum Pages{
         return t!.profile;
       case Pages.groups:
         return t!.group;
-      case Pages.friends:
-        return t!.friend;
       case Pages.settings:
         return t!.settings;
       case Pages.calendar:

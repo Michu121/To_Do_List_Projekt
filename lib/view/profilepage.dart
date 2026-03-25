@@ -6,7 +6,6 @@ import '../shared/models/group.dart';
 import '../shared/models/league.dart';
 import '../shared/models/user_model.dart';
 import '../shared/models/user_stats.dart';
-import '../shared/services/friend_services.dart';
 import '../shared/services/group_task_service.dart';
 import '../shared/services/stats_service.dart';
 import '../shared/services/task_services.dart';
@@ -23,10 +22,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   @override
-  void initState() {
-    super.initState();
-    friendServices.init();
-  }
+  void initState() {super.initState();}
 
   void _showCompletedTasks(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -147,7 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
         return ListenableBuilder(
           listenable: Listenable.merge(
-              [userStatsService, groupTaskService, friendServices]),
+              [userStatsService, groupTaskService]),
           builder: (context, _) {
             final groups = groupTaskService.groups;
             final streak = userStatsService.streakDays;

@@ -35,7 +35,6 @@ class _MyBottomAppBarState extends State<MyBottomAppBar> with SingleTickerProvid
     Pages.groups,
     Pages.calendar,
     Pages.profile,
-    Pages.friends,
     Pages.settings
   ];
 
