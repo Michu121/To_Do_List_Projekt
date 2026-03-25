@@ -75,8 +75,8 @@ class _CalendarPageState extends State<CalendarPage>
             // Tłumaczenia menu głównego
             tabs: [
               const Tab(text: 'AGENDA', icon: Icon(Icons.list_alt, size: 16)), // Brak w ARB
-              Tab(text: t?.calendar?.toUpperCase() ?? 'CALENDAR', icon: const Icon(Icons.calendar_month, size: 16)),
-              Tab(text: t?.group?.toUpperCase() ?? 'GROUPS', icon: const Icon(Icons.group, size: 16)),
+              Tab(text: t?.calendar.toUpperCase() ?? 'CALENDAR', icon: const Icon(Icons.calendar_month, size: 16)),
+              Tab(text: t?.group.toUpperCase() ?? 'GROUPS', icon: const Icon(Icons.group, size: 16)),
             ],
           ),
         ),

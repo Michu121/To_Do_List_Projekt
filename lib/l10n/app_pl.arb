@@ -126,19 +126,15 @@
   "myGroups": "Moje grupy",
   "groupMembers": "Członkowie",
   "memberCount": "{count, plural, =0{Brak członków} one{1 członek} few{{count} członków} many{{count} członków} other{{count} członków}}",
-  "taskCount": "{count, plural, =0{Brak zadań} one{1 zadanie} few{{count} zadania} many{{count} zadań} other{{count} zadań}}",
   "@memberCount": {
     "placeholders": {
-      "count": {
-        "type": "num"
-      }
+      "count": { "type": "num" }
     }
   },
+  "taskCount": "{count, plural, =0{Brak zadań} one{1 zadanie} few{{count} zadania} many{{count} zadań} other{{count} zadań}}",
   "@taskCount": {
     "placeholders": {
-      "count": {
-        "type": "num"
-      }
+      "count": { "type": "num" }
     }
   },
   "noGroupMembers": "Brak członków",
@@ -188,7 +184,6 @@
   "@saturday": { "placeholders": { "count": { "type": "num" } } },
   "sunday": "{count, plural, one{Niedziela} other{Nd}}",
   "@sunday": { "placeholders": { "count": { "type": "num" } } },
-
   "january": "{count, plural, one{Styczeń} other{Sty}}",
   "@january": { "placeholders": { "count": { "type": "num" } } },
   "february": "{count, plural, one{Luty} other{Lut}}",
@@ -216,5 +211,23 @@
   "defaultCategory": "Domyślna",
   "workCategory": "Praca",
   "personalCategory": "Osobiste",
-  "allCategory": "Wszystkie"
+  "allCategory": "Wszystkie",
+  "saveChanges": "Zapisz zmiany",
+  "no": "Nie",
+  "yes": "Tak",
+  "manageGroup": "Zarządzanie grupą",
+  "create": "Utwórz",
+  "joinAction": "Dołącz",
+  "newGroup": "Nowa Grupa",
+  "groupColor": "Kolor grupy",
+  "preview": "Podgląd",
+  "newTask": "Nowe Zadanie",
+  "saveTask": "Zapisz Zadanie",
+  "taskColor": "Kolor zadania",
+  "descriptionOptional": "Opis (opcjonalny)",
+  "taskTitleLabel": "Tytuł zadania",
+  "startLabel": "Start",
+  "endLabel": "Koniec",
+  "dateAndTime": "Data i czas",
+  "archived": "Zarichiwizowany"
 }

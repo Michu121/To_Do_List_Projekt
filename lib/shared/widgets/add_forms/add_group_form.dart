@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../services/group_task_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -70,9 +71,8 @@ class _OverlayWidgetState extends State<_OverlayWidget>
     _opacityAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeOut));
     _slideAnim =
-        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
-            .animate(CurvedAnimation(
-            parent: _controller, curve: Curves.easeOutCubic));
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward();
   }
 
@@ -89,10 +89,8 @@ class _OverlayWidgetState extends State<_OverlayWidget>
 
   @override
   Widget build(BuildContext context) {
-    final double keyboardHeight =
-        MediaQuery.of(context).viewInsets.bottom;
-    final double bottomPadding =
-    keyboardHeight > 0 ? keyboardHeight + 20 : 90;
+    final double keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final double bottomPadding = keyboardHeight > 0 ? keyboardHeight + 20 : 90;
 
     return Material(
       color: Colors.transparent,
@@ -102,8 +100,7 @@ class _OverlayWidgetState extends State<_OverlayWidget>
             onTap: _safeHide,
             child: FadeTransition(
               opacity: _opacityAnim,
-              child: Container(
-                  color: Colors.black.withValues(alpha: 0.5)),
+              child: Container(color: Colors.black.withValues(alpha: 0.5)),
             ),
           ),
           AnimatedPadding(
@@ -113,14 +110,12 @@ class _OverlayWidgetState extends State<_OverlayWidget>
             child: Align(
               alignment: Alignment.bottomCenter,
               child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: FadeTransition(
                   opacity: _opacityAnim,
                   child: SlideTransition(
                     position: _slideAnim,
-                    child: _GroupActionsPanel(
-                        initialStep: widget.initialStep),
+                    child: _GroupActionsPanel(initialStep: widget.initialStep),
                   ),
                 ),
               ),
@@ -161,8 +156,8 @@ class _GroupActionsPanelState extends State<_GroupActionsPanel> {
       child: Card(
         elevation: 24,
         shadowColor: Colors.black54,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(32)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
         clipBehavior: Clip.antiAlias,
         child: AnimatedSize(
           duration: const Duration(milliseconds: 250),
@@ -188,16 +183,13 @@ class _GroupActionsPanelState extends State<_GroupActionsPanel> {
       case GroupOverlayStep.selection:
         return _SelectionView(
           key: const ValueKey('selection'),
-          onCreate: () =>
-              setState(() => _step = GroupOverlayStep.create),
-          onJoin: () =>
-              setState(() => _step = GroupOverlayStep.join),
+          onCreate: () => setState(() => _step = GroupOverlayStep.create),
+          onJoin: () => setState(() => _step = GroupOverlayStep.join),
         );
       case GroupOverlayStep.create:
         return _CreateView(
           key: const ValueKey('create'),
-          onBack: () =>
-              setState(() => _step = GroupOverlayStep.selection),
+          onBack: () => setState(() => _step = GroupOverlayStep.selection),
         );
       case GroupOverlayStep.join:
         return _JoinView(
@@ -207,7 +199,6 @@ class _GroupActionsPanelState extends State<_GroupActionsPanel> {
             _step = GroupOverlayStep.selection;
             _scannedId = null;
           }),
-          // Push the scanner on top; overlay stays alive underneath.
           onScanRequest: () async {
             final id = await Navigator.of(context).push<String>(
               MaterialPageRoute(
@@ -238,6 +229,7 @@ class _SelectionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -251,18 +243,18 @@ class _SelectionView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2)),
           ),
           const SizedBox(height: 24),
-          const Text('Zarządzanie grupą',
-              style:
-              TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(
+            t?.manageGroup ?? 'Manage Group',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 24),
           Row(
             children: [
               Expanded(
                 child: _MenuTile(
                   icon: Icons.group_add_rounded,
-                  label: 'Stwórz',
-                  color:
-                  Theme.of(context).colorScheme.primaryContainer,
+                  label: t?.create ?? 'Create',
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   onTap: onCreate,
                 ),
               ),
@@ -270,10 +262,8 @@ class _SelectionView extends StatelessWidget {
               Expanded(
                 child: _MenuTile(
                   icon: Icons.qr_code_scanner_rounded,
-                  label: 'Dołącz',
-                  color: Theme.of(context)
-                      .colorScheme
-                      .secondaryContainer,
+                  label: t?.joinAction ?? 'Join',
+                  color: Theme.of(context).colorScheme.secondaryContainer,
                   onTap: onJoin,
                 ),
               ),
@@ -303,21 +293,10 @@ class _CreateViewState extends State<_CreateView> {
   Color _selectedColor = Colors.blueAccent;
 
   static const List<Color> _palette = [
-    Colors.blueAccent,
-    Colors.lightBlue,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.brown,
-    Colors.blueGrey,
+    Colors.blueAccent, Colors.lightBlue, Colors.teal, Colors.green,
+    Colors.lightGreen, Colors.amber, Colors.orange, Colors.deepOrange,
+    Colors.red, Colors.pink, Colors.purple, Colors.deepPurple,
+    Colors.indigo, Colors.brown, Colors.blueGrey,
   ];
 
   @override
@@ -326,28 +305,31 @@ class _CreateViewState extends State<_CreateView> {
     super.dispose();
   }
 
-  /// Synchronous — closes overlay immediately, DB write happens in background.
   void _create() {
+    final t = AppLocalizations.of(context);
     final name = _nameCtrl.text.trim();
     if (name.isEmpty) {
-      setState(() => _nameError = 'Nazwa nie może być pusta');
+      setState(() => _nameError = t?.titleCannotBeEmpty ?? 'Name cannot be empty');
       return;
     }
 
-    // Hide first — createGroup is fully optimistic (local update + background write)
     GroupActionsOverlay.hide();
     groupTaskService.createGroup(name, _selectedColor.toARGB32());
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StepHeader(title: 'Nowa grupa', onBack: widget.onBack),
+          _StepHeader(
+            title: t?.newGroup ?? 'New Group',
+            onBack: widget.onBack,
+          ),
           const SizedBox(height: 20),
           TextField(
             controller: _nameCtrl,
@@ -357,25 +339,24 @@ class _CreateViewState extends State<_CreateView> {
             },
             onSubmitted: (_) => _create(),
             decoration: InputDecoration(
-              labelText: 'Nazwa grupy',
+              labelText: t?.groupName ?? 'Group name',
               errorText: _nameError,
-              prefixIcon: const Icon(
-                  Icons.drive_file_rename_outline_rounded),
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16)),
+              prefixIcon: const Icon(Icons.drive_file_rename_outline_rounded),
+              border:
+              OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide:
-                BorderSide(color: _selectedColor, width: 2),
+                borderSide: BorderSide(color: _selectedColor, width: 2),
               ),
               filled: true,
               fillColor: Colors.grey.withValues(alpha: 0.05),
             ),
           ),
           const SizedBox(height: 20),
-          Text('Kolor grupy',
-              style: TextStyle(
-                  fontSize: 13, color: Colors.grey.shade600)),
+          Text(
+            t?.groupColor ?? 'Group color',
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
           const SizedBox(height: 10),
           Wrap(
             spacing: 8,
@@ -392,9 +373,7 @@ class _CreateViewState extends State<_CreateView> {
                     color: c,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: selected
-                          ? Colors.white
-                          : Colors.transparent,
+                      color: selected ? Colors.white : Colors.transparent,
                       width: 3,
                     ),
                     boxShadow: selected
@@ -407,8 +386,7 @@ class _CreateViewState extends State<_CreateView> {
                         : [],
                   ),
                   child: selected
-                      ? const Icon(Icons.check,
-                      color: Colors.white, size: 20)
+                      ? const Icon(Icons.check, color: Colors.white, size: 20)
                       : null,
                 ),
               );
@@ -419,8 +397,8 @@ class _CreateViewState extends State<_CreateView> {
           Center(
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: _selectedColor,
                 borderRadius: BorderRadius.circular(20),
@@ -430,13 +408,12 @@ class _CreateViewState extends State<_CreateView> {
                 builder: (_, _, _) => Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.group,
-                        color: Colors.white, size: 16),
+                    const Icon(Icons.group, color: Colors.white, size: 16),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         _nameCtrl.text.isEmpty
-                            ? 'Podgląd'
+                            ? (t?.preview ?? 'Preview')
                             : _nameCtrl.text,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -451,7 +428,7 @@ class _CreateViewState extends State<_CreateView> {
           ),
           const SizedBox(height: 24),
           _ActionButton(
-            label: 'Utwórz grupę',
+            label: t?.createGroup ?? 'Create Group',
             icon: Icons.check_circle_outline_rounded,
             color: _selectedColor,
             onPressed: _create,
@@ -491,7 +468,6 @@ class _JoinViewState extends State<_JoinView> {
   void initState() {
     super.initState();
     _codeCtrl = TextEditingController(text: widget.prefillId ?? '');
-    // Auto-join when opened with a pre-scanned id
     if (widget.prefillId != null && widget.prefillId!.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _join());
     }
@@ -504,6 +480,7 @@ class _JoinViewState extends State<_JoinView> {
   }
 
   Future<void> _join() async {
+    final t = AppLocalizations.of(context);
     final id = _codeCtrl.text.trim();
     if (id.isEmpty) return;
 
@@ -520,53 +497,52 @@ class _JoinViewState extends State<_JoinView> {
       } else {
         setState(() {
           _joining = false;
-          _error = 'Nie znaleziono grupy. Sprawdź kod i spróbuj ponownie.';
+          _error = t?.error ?? 'Group not found. Check the code and try again.';
         });
       }
     } on FirebaseException catch (e) {
-      debugPrint('join error: \${e.code} — \${e.message}');
       if (!mounted) return;
       setState(() {
         _joining = false;
         _error = e.code == 'permission-denied'
-            ? 'Brak uprawnień. Zaktualizuj reguły Firestore.'
-            : 'Błąd: \${e.code}. Spróbuj ponownie.';
+            ? (t?.error ?? 'Permission denied. Update Firestore rules.')
+            : '${t?.error ?? "Error"}: ${e.code}';
       });
     } catch (e) {
-      debugPrint('join unexpected: \$e');
       if (!mounted) return;
       setState(() {
         _joining = false;
-        _error = 'Nieznany błąd. Spróbuj ponownie.';
+        _error = t?.error ?? 'Unknown error. Please try again.';
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _StepHeader(
-              title: 'Dołącz do grupy', onBack: widget.onBack),
+            title: t?.joinGroup ?? 'Join Group',
+            onBack: widget.onBack,
+          ),
           const SizedBox(height: 20),
           TextField(
             controller: _codeCtrl,
             autofocus: widget.prefillId == null,
             textAlign: TextAlign.center,
             style: const TextStyle(
-                letterSpacing: 4,
-                fontSize: 22,
-                fontWeight: FontWeight.bold),
+                letterSpacing: 4, fontSize: 22, fontWeight: FontWeight.bold),
             onChanged: (_) {
               if (_error != null) setState(() => _error = null);
             },
             onSubmitted: (_) => _join(),
             decoration: InputDecoration(
               hintText: 'KOD-123',
-              helperText: 'Wpisz unikalny kod grupy',
+              helperText: t?.groupCode ?? 'Enter the unique group code',
               errorText: _error,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16)),
@@ -580,10 +556,9 @@ class _JoinViewState extends State<_JoinView> {
             child: OutlinedButton.icon(
               onPressed: _joining ? null : widget.onScanRequest,
               icon: const Icon(Icons.qr_code_scanner_rounded),
-              label: const Text('Zeskanuj kod QR'),
+              label: Text(t?.scanQRCode ?? 'Scan QR code'),
               style: OutlinedButton.styleFrom(
-                padding:
-                const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16)),
               ),
@@ -591,7 +566,7 @@ class _JoinViewState extends State<_JoinView> {
           ),
           const SizedBox(height: 16),
           _ActionButton(
-            label: 'Dołącz teraz',
+            label: t?.joinGroup ?? 'Join Now',
             icon: Icons.send_rounded,
             loading: _joining,
             onPressed: _join,
@@ -603,7 +578,7 @@ class _JoinViewState extends State<_JoinView> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// QR scanner page — public so groupspage can also push it
+// QR scanner page
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class GroupQrScannerPage extends StatefulWidget {
@@ -638,12 +613,13 @@ class _GroupQrScannerPageState extends State<GroupQrScannerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Zeskanuj kod QR grupy'),
+        title: Text(t?.scanQRCode ?? 'Scan group QR code'),
         actions: [
           ValueListenableBuilder(
             valueListenable: _scanner,
@@ -652,7 +628,6 @@ class _GroupQrScannerPageState extends State<GroupQrScannerPage> {
               return IconButton(
                 icon: Icon(isOn ? Icons.flash_on : Icons.flash_off),
                 onPressed: _scanner.toggleTorch,
-                tooltip: 'Latarka',
               );
             },
           ),
@@ -674,10 +649,9 @@ class _GroupQrScannerPageState extends State<GroupQrScannerPage> {
                   color: Colors.black54,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Skieruj na kod QR grupy',
-                  style: TextStyle(
-                      color: Colors.white, fontSize: 14),
+                child: Text(
+                  t?.scanOrShare ?? 'Point at the group QR code',
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ),
             ),
@@ -699,8 +673,8 @@ class _QrScanOverlay extends StatelessWidget {
     return Stack(
       children: [
         ColorFiltered(
-          colorFilter: const ColorFilter.mode(
-              Colors.black54, BlendMode.srcOut),
+          colorFilter:
+          const ColorFilter.mode(Colors.black54, BlendMode.srcOut),
           child: Stack(
             children: [
               Container(
@@ -824,6 +798,7 @@ class _StepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Row(
       children: [
         IconButton.filledTonal(
@@ -832,13 +807,13 @@ class _StepHeader extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         Text(title,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold)),
+            style:
+            const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const Spacer(),
         IconButton(
           onPressed: GroupActionsOverlay.hide,
-          icon:
-          const Icon(Icons.close_rounded, color: Colors.grey),
+          icon: const Icon(Icons.close_rounded, color: Colors.grey),
+          tooltip: t?.cancel ?? 'Close',
         ),
       ],
     );

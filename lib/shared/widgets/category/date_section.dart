@@ -50,7 +50,7 @@ class DateSection extends StatelessWidget {
             ),
           ),
         ),
-        ...tasks.map((t) => TaskListTile(task: t)),
+        ...tasks.map((t) => TaskListTile(task: t, disabled: false)),
       ],
     );
   }

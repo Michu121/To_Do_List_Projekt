@@ -128,17 +128,13 @@
   "memberCount": "{count, plural, one{1 member} other{{count} members}}",
   "@memberCount": {
     "placeholders": {
-      "count": {
-        "type": "num"
-      }
+      "count": { "type": "num" }
     }
   },
   "taskCount": "{count, plural, =0{No tasks} one{1 task} other{{count} tasks}}",
   "@taskCount": {
     "placeholders": {
-      "count": {
-        "type": "num"
-      }
+      "count": { "type": "num" }
     }
   },
   "noGroupMembers": "No members yet",
@@ -188,7 +184,6 @@
   "@saturday": { "placeholders": { "count": { "type": "num" } } },
   "sunday": "{count, plural, one{Sunday} other{Su}}",
   "@sunday": { "placeholders": { "count": { "type": "num" } } },
-
   "january": "{count, plural, one{January} other{Jan}}",
   "@january": { "placeholders": { "count": { "type": "num" } } },
   "february": "{count, plural, one{February} other{Feb}}",
@@ -216,5 +211,24 @@
   "defaultCategory": "Default",
   "workCategory": "Work",
   "personalCategory": "Personal",
-  "allCategory": "All"
+  "allCategory": "All",
+  "saveChanges": "Save Changes",
+  "no": "No",
+  "yes": "Yes",
+  "manageGroup": "Manage Group",
+  "create": "Create",
+  "joinAction": "Join",
+  "newGroup": "New Group",
+  "groupColor": "Group color",
+  "preview": "Preview",
+  "newTask": "New Task",
+  "saveTask": "Save Task",
+  "taskColor": "Task color",
+  "descriptionOptional": "Description (optional)",
+  "taskTitleLabel": "Task title",
+  "startLabel": "Start",
+  "endLabel": "End",
+  "dateAndTime": "Date & Time",
+  "archived": "Archived"
+
 }

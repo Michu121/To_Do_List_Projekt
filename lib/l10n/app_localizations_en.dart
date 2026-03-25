@@ -732,4 +732,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get allCategory => 'All';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get manageGroup => 'Manage Group';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get joinAction => 'Join';
+
+  @override
+  String get newGroup => 'New Group';
+
+  @override
+  String get groupColor => 'Group color';
+
+  @override
+  String get preview => 'Preview';
+
+  @override
+  String get newTask => 'New Task';
+
+  @override
+  String get saveTask => 'Save Task';
+
+  @override
+  String get taskColor => 'Task color';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get taskTitleLabel => 'Task title';
+
+  @override
+  String get startLabel => 'Start';
+
+  @override
+  String get endLabel => 'End';
+
+  @override
+  String get dateAndTime => 'Date & Time';
+
+  @override
+  String get archived => 'Archived';
 }

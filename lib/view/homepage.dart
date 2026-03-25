@@ -12,14 +12,14 @@ import '../shared/widgets/category/date_section.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final allCategory = Category(
-        id: '__all__',
-        name: t?.allCategory ?? 'All', // Używamy klucza z Twojego pliku .arb
-        color: Colors.grey.withValues(alpha: 0.85)
+      id: '__all__',
+      name: t?.allCategory ?? 'All',
+      color: Colors.grey.withValues(alpha: 0.85),
     );
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
@@ -27,7 +27,7 @@ class HomePage extends StatelessWidget {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        return _TaskFeed(allCategory: allCategory,);
+        return _TaskFeed(allCategory: allCategory);
       },
     );
   }
@@ -42,20 +42,46 @@ class _TaskFeed extends StatefulWidget {
 }
 
 class _TaskFeedState extends State<_TaskFeed> {
-  late Category _selectedCategory = widget.allCategory;
+  late Category _selectedCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCategory = widget.allCategory;
+  }
+
+  @override
+  void didUpdateWidget(_TaskFeed oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // When locale changes, allCategory gets a new translated name.
+    // If the user has the "All" virtual category selected, update its name
+    // so the selection highlight still works correctly.
+    if (_selectedCategory.id == '__all__') {
+      _selectedCategory = widget.allCategory;
+    }
+
+    // Update the Default category display name in CategoryServices
+    // without triggering a full re-init (no Firestore re-subscription needed).
+    categoryServices.updateDefaultName(context);
+  }
 
   List<Category> _buildList() => [
     widget.allCategory,
     ...categoryServices.getCategories().values,
   ];
 
+  /// If the previously selected category no longer exists (e.g. it was deleted),
+  /// fall back to "All". Uses id comparison so locale renames don't cause issues.
   void _guard() {
     if (_selectedCategory.id == '__all__') return;
     final exists = categoryServices
         .getCategories()
         .values
-        .any((c) => c.name == _selectedCategory.name);
-    if (!exists) setState(() => _selectedCategory = widget.allCategory);
+        .any((c) => c.id == _selectedCategory.id);
+    if (!exists) {
+      setState(() => _selectedCategory = widget.allCategory);
+    }
   }
 
   @override
@@ -107,7 +133,8 @@ class _TaskFeedState extends State<_TaskFeed> {
                         onPressed: () => CategoryOverlay.show(context),
                         icon: const Icon(Icons.add, size: 18),
                         label: Text(t?.add ?? 'Add',
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                            style: const TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -135,11 +162,13 @@ class _TaskFeedState extends State<_TaskFeed> {
 
               final tasks = everyTaskService.getTasks();
 
+              // Filter by id (stable) so renaming / locale change still works
               final filtered = _selectedCategory.id == '__all__'
                   ? tasks
                   : tasks
                   .where((t) =>
-              t.category.name == _selectedCategory.name)
+              t.category.id == _selectedCategory.id ||
+                  t.category.name == _selectedCategory.name)
                   .toList();
 
               if (filtered.isEmpty) {

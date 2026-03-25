@@ -50,8 +50,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
 
-  var _selectedCategory =
-      categoryServices.getCategories().values.firstOrNull;
+  var _selectedCategory = categoryServices.getCategories().values.firstOrNull;
   var _selectedDifficulty = Difficulty.easy;
   ColorsToPick? _selectedColor;
   Group? _selectedGroup; // null = personal
@@ -97,15 +96,15 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
 
   void _save() {
     final t = AppLocalizations.of(context);
-    final title = _titleController.text.trim();
-    if (title.isEmpty) {
+    final titleText = _titleController.text.trim();
+    if (titleText.isEmpty) {
       setState(() => _titleError = t?.titleCannotBeEmpty ?? 'Title cannot be empty');
       return;
     }
     if (_selectedCategory == null) return;
 
     final task = Task(
-      title: title,
+      title: titleText,
       status: Status.todo,
       category: _selectedCategory!,
       description: _descController.text,
@@ -134,10 +133,12 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+
     if (FirebaseAuth.instance.currentUser == null) {
       return Padding(
         padding: const EdgeInsets.all(32),
-        child: Center(child: Text(t?.signInToUseGroups ?? 'Sign in to add tasks')),
+        child: Center(
+            child: Text(t?.signInToUseGroups ?? 'Sign in to add tasks')),
       );
     }
 
@@ -185,11 +186,13 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                       Icon(Icons.add_task_rounded,
                           color: onAccent, size: 20),
                       const SizedBox(width: 8),
-                      Text('New Task',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: onAccent)),
+                      Text(
+                        t?.newTask ?? 'New Task',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: onAccent),
+                      ),
                     ],
                   ),
                 ],
@@ -207,7 +210,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                       controller: _titleController,
                       autofocus: true,
                       decoration: _inputDeco(
-                        label: 'Task title',
+                        label: t?.taskTitleLabel ?? 'Task title',
                         icon: Icons.title,
                         accent: accent,
                         errorText: _titleError,
@@ -226,7 +229,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                       controller: _descController,
                       maxLines: 2,
                       decoration: _inputDeco(
-                        label: 'Description (optional)',
+                        label: t?.descriptionOptional ?? 'Description (optional)',
                         icon: Icons.notes,
                         accent: accent,
                       ),
@@ -234,7 +237,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     const SizedBox(height: 16),
 
                     // ── Date & Time ────────────────────────────
-                    _SectionLabel('Date & Time', accent),
+                    _SectionLabel(t?.dateAndTime ?? 'Date & Time', accent),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -255,7 +258,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                             icon: Icons.access_time,
                             label: _timeStart != null
                                 ? _fmtTime(_timeStart!)
-                                : 'Start',
+                                : (t?.startLabel ?? 'Start'),
                             accent: accent,
                             active: _timeStart != null,
                             onTap: () => _pickTime(isStart: true),
@@ -268,7 +271,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                             icon: Icons.timer_outlined,
                             label: _timeEnd != null
                                 ? _fmtTime(_timeEnd!)
-                                : 'End',
+                                : (t?.endLabel ?? 'End'),
                             accent: accent,
                             active: _timeEnd != null,
                             onTap: () => _pickTime(isStart: false),
@@ -279,7 +282,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     const SizedBox(height: 16),
 
                     // ── Difficulty ─────────────────────────────
-                    _SectionLabel('Difficulty', accent),
+                    _SectionLabel(t?.difficulty ?? 'Difficulty', accent),
                     const SizedBox(height: 8),
                     Row(
                       children: Difficulty.values.map((d) {
@@ -292,16 +295,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                               onTap: () =>
                                   setState(() => _selectedDifficulty = d),
                               child: AnimatedContainer(
-                                duration:
-                                const Duration(milliseconds: 200),
-                                padding:
-                                const EdgeInsets.symmetric(vertical: 10),
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 10),
                                 decoration: BoxDecoration(
                                   color: sel
                                       ? d.color.withValues(alpha: 0.15)
                                       : Colors.transparent,
-                                  borderRadius:
-                                  BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: sel
                                         ? d.color
@@ -313,13 +314,15 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                                   children: [
                                     Icon(d.icon, color: d.color, size: 22),
                                     const SizedBox(height: 2),
-                                    Text(d.label,
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            color: d.color,
-                                            fontWeight: sel
-                                                ? FontWeight.w700
-                                                : FontWeight.w500)),
+                                    Text(
+                                      _difficultyLabel(d, t),
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: d.color,
+                                          fontWeight: sel
+                                              ? FontWeight.w700
+                                              : FontWeight.w500),
+                                    ),
                                     Text('+${d.points}pts',
                                         style: TextStyle(
                                             fontSize: 9, color: d.color)),
@@ -334,7 +337,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     const SizedBox(height: 16),
 
                     // ── Category ───────────────────────────────
-                    _SectionLabel('Category', accent),
+                    _SectionLabel(t?.category ?? 'Category', accent),
                     const SizedBox(height: 8),
                     ListenableBuilder(
                       listenable: categoryServices,
@@ -346,13 +349,14 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                         return _ChipRow(
                           children: cats.map((cat) {
                             final sel =
-                                _selectedCategory?.name == cat.name;
+                                _selectedCategory?.id == cat.id ||
+                                    _selectedCategory?.name == cat.name;
                             return _InlineChip(
                               label: cat.name,
                               color: cat.color,
                               selected: sel,
-                              onTap: () => setState(
-                                      () => _selectedCategory = cat),
+                              onTap: () =>
+                                  setState(() => _selectedCategory = cat),
                             );
                           }).toList(),
                         );
@@ -361,7 +365,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     const SizedBox(height: 16),
 
                     // ── Group ──────────────────────────────────
-                    _SectionLabel('Group', accent),
+                    _SectionLabel(t?.group ?? 'Group', accent),
                     const SizedBox(height: 8),
                     ListenableBuilder(
                       listenable: groupTaskService,
@@ -369,7 +373,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                         return _ChipRow(
                           children: [
                             _InlineChip(
-                              label: 'Personal',
+                              label: t?.personalCategory ?? 'Personal',
                               color: Colors.grey.shade500,
                               selected: _selectedGroup == null,
                               icon: Icons.person_outline,
@@ -394,7 +398,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                     const SizedBox(height: 16),
 
                     // ── Color ──────────────────────────────────
-                    _SectionLabel('Task color', accent),
+                    _SectionLabel(t?.taskColor ?? 'Task color', accent),
                     const SizedBox(height: 8),
                     ColorPicker(
                       colorServices: _colorServices,
@@ -421,10 +425,11 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
                         ),
                         onPressed: _save,
                         icon: const Icon(Icons.check_rounded),
-                        label: const Text('Save Task',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600)),
+                        label: Text(
+                          t?.saveTask ?? 'Save Task',
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                   ],
@@ -435,6 +440,18 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         ),
       ),
     );
+  }
+
+  /// Returns the translated difficulty label.
+  String _difficultyLabel(Difficulty d, AppLocalizations? t) {
+    switch (d) {
+      case Difficulty.easy:
+        return t?.easy ?? d.label;
+      case Difficulty.medium:
+        return t?.medium ?? d.label;
+      case Difficulty.hard:
+        return t?.hard ?? d.label;
+    }
   }
 
   InputDecoration _inputDeco({
@@ -535,7 +552,9 @@ class _PillButton extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 11,
                     color: active ? accent : Colors.grey.shade500,
-                    fontWeight: active ? FontWeight.w600 : FontWeight.normal),
+                    fontWeight: active
+                        ? FontWeight.w600
+                        : FontWeight.normal),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

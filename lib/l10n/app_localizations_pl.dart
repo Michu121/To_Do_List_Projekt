@@ -737,4 +737,58 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get allCategory => 'Wszystkie';
+
+  @override
+  String get saveChanges => 'Zapisz zmiany';
+
+  @override
+  String get no => 'Nie';
+
+  @override
+  String get yes => 'Tak';
+
+  @override
+  String get manageGroup => 'Zarządzanie grupą';
+
+  @override
+  String get create => 'Utwórz';
+
+  @override
+  String get joinAction => 'Dołącz';
+
+  @override
+  String get newGroup => 'Nowa Grupa';
+
+  @override
+  String get groupColor => 'Kolor grupy';
+
+  @override
+  String get preview => 'Podgląd';
+
+  @override
+  String get newTask => 'Nowe Zadanie';
+
+  @override
+  String get saveTask => 'Zapisz Zadanie';
+
+  @override
+  String get taskColor => 'Kolor zadania';
+
+  @override
+  String get descriptionOptional => 'Opis (opcjonalny)';
+
+  @override
+  String get taskTitleLabel => 'Tytuł zadania';
+
+  @override
+  String get startLabel => 'Start';
+
+  @override
+  String get endLabel => 'Koniec';
+
+  @override
+  String get dateAndTime => 'Data i czas';
+
+  @override
+  String get archived => 'Zarichiwizowany';
 }

@@ -9,28 +9,30 @@ import 'fire_store_service.dart';
 class CategoryServices extends ChangeNotifier {
   Map<String, Category> _categories = {};
   StreamSubscription<QuerySnapshot>? _subscription;
-  bool _isSeedingTriggered = false; // Flaga w pamięci, by nie siać kilka razy w jednej sesji
+  bool _isSeedingTriggered = false;
 
   Map<String, Category> getCategories() => _categories;
+
+  /// Returns the default category object, regardless of its current locale name.
+  Category get defaultCategory {
+    return _categories.values.firstWhere(
+          (c) => c.id == 'default',
+      orElse: () => Category(id: 'default', name: 'Default', color: Colors.grey),
+    );
+  }
 
   void init(String uid, BuildContext context) {
     final defaultName = AppLocalizations.of(context)?.defaultCategory ?? 'Default';
 
-    final defaultCategory = Category(
-        id: 'default',
-        name: defaultName,
-        color: Colors.grey
+    final defaultCat = Category(
+      id: 'default',
+      name: defaultName,
+      color: Colors.grey,
     );
 
     _subscription?.cancel();
     _subscription = firestoreService.categoriesStream(uid).listen((snapshot) async {
-
-      // LOGIKA "RAZ NA ZAWSZE":
-      // Sprawdzamy, czy użytkownik ma w ogóle dokument "meta" lub czy kolekcja jest pusta
-      // ALBO (uproszczone): używamy SharedPreferences, by zapisać, że już raz dodaliśmy.
-
       if (snapshot.docs.isEmpty && !_isSeedingTriggered) {
-        // Sprawdzamy w Firestore, czy użytkownik już kiedykolwiek miał robiony seed
         final hasSeeded = await firestoreService.checkIfAlreadySeeded(uid);
         if (!hasSeeded) {
           _isSeedingTriggered = true;
@@ -46,11 +48,33 @@ class CategoryServices extends ChangeNotifier {
       };
 
       _categories = {
-        defaultName: defaultCategory,
+        defaultName: defaultCat,
         ...fromFirestore,
       };
       notifyListeners();
     });
+  }
+
+  /// Call this whenever the app locale changes to update the Default category
+  /// display name in the in-memory map. Category ids remain stable.
+  void updateDefaultName(BuildContext context) {
+    final newName = AppLocalizations.of(context)?.defaultCategory ?? 'Default';
+
+    // Find the existing default entry by its stable id
+    final oldKey = _categories.keys.firstWhere(
+          (k) => _categories[k]?.id == 'default',
+      orElse: () => newName,
+    );
+
+    if (oldKey == newName) return; // Nothing to do
+
+    _categories.remove(oldKey);
+    _categories[newName] = Category(
+      id: 'default',
+      name: newName,
+      color: Colors.grey,
+    );
+    notifyListeners();
   }
 
   Future<void> _seedInitialCategories(BuildContext context, String uid) async {
@@ -65,7 +89,6 @@ class CategoryServices extends ChangeNotifier {
       await firestoreService.setCategory(uid, cat.id, cat.toJson());
     }
 
-    // 2. KLUCZOWE: Zapisujemy w profilu użytkownika, że seed został wykonany
     await firestoreService.markAsSeeded(uid);
   }
 
@@ -123,26 +146,37 @@ class CategoryServices extends ChangeNotifier {
     }
   }
 
+  /// Safely deletes a category: all tasks with this category are moved to the
+  /// Default category in Firestore before the category document is deleted.
   Future<void> deleteCategory(String name) async {
     final uid = _uid;
     final cat = _categories[name];
 
+    // Never delete the protected default category
     if (uid == null || cat == null || cat.id == 'default') return;
 
     final backup = Map<String, Category>.from(_categories);
+
+    // Optimistic local update
     _categories.remove(name);
     notifyListeners();
 
     try {
+      // Move all Firestore tasks that use this category to Default
       await firestoreService.moveTasksToDefaultCategory(
         uid: uid,
         oldCategoryId: cat.id,
-        defaultCategoryId: 'default',
+        defaultCategoryJson: defaultCategory.toJson(),
       );
+
+      // Delete the category document itself
       await firestoreService.deleteCategory(uid, cat.id);
     } catch (e) {
+      // Rollback on error
       _categories = backup;
       notifyListeners();
+      debugPrint('deleteCategory error: $e');
+      rethrow;
     }
   }
 

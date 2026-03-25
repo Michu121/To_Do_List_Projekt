@@ -14,9 +14,7 @@ import '../../services/color_services.dart';
 import '../../services/group_task_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/task_services.dart';
-import '../pickers/category_picker.dart';
 import '../pickers/color_picker.dart';
-import '../pickers/group_picker.dart';
 import 'package:todo_list/app_settings.dart' show AppSettings;
 
 class TaskEditSheet extends StatefulWidget {
@@ -27,8 +25,6 @@ class TaskEditSheet extends StatefulWidget {
   });
 
   final Task task;
-
-  /// When editing from a group detail, hide the group picker.
   final bool showGroupPicker;
 
   static void show(
@@ -71,24 +67,26 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   @override
   void initState() {
     super.initState();
-    final t = widget.task;
+    final task = widget.task;
 
-    _titleController = TextEditingController(text: t.title);
-    _descController = TextEditingController(text: t.description);
+    _titleController = TextEditingController(text: task.title);
+    _descController = TextEditingController(text: task.description);
 
     _groups = [
       Group(name: '🚫 None', color: Colors.grey.shade300),
       ...groupTaskService.groups,
     ];
 
-    _selectedCategory = t.category;
-    _selectedDifficulty = t.difficulty;
-    _selectedDate = t.date;
-    _selectedStatus = t.status;
+    _selectedCategory = task.category;
+    _selectedDifficulty = task.difficulty;
+    _selectedDate = task.date;
+    _selectedStatus = task.status;
 
     // Pre-select the task's existing color in the picker
-    final matchedKey = _colorServices.getColors().entries
-        .where((e) => e.value.color.toARGB32() == t.color.toARGB32())
+    final matchedKey = _colorServices
+        .getColors()
+        .entries
+        .where((e) => e.value.color.toARGB32() == task.color.toARGB32())
         .map((e) => e.key)
         .firstOrNull;
     if (matchedKey != null) {
@@ -97,9 +95,9 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
     _selectedColor = _colorServices.getColors().values.firstOrNull;
 
     // Group
-    if (t.group != null) {
+    if (task.group != null) {
       try {
-        _selectedGroup = _groups.firstWhere((g) => g.id == t.group!.id);
+        _selectedGroup = _groups.firstWhere((g) => g.id == task.group!.id);
       } catch (_) {
         _selectedGroup = _groups.first;
       }
@@ -107,11 +105,11 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
       _selectedGroup = _groups.first;
     }
 
-    _timeStart = t.timeStart.hour == 0 && t.timeStart.minute == 0
+    _timeStart = task.timeStart.hour == 0 && task.timeStart.minute == 0
         ? null
-        : t.timeStart;
+        : task.timeStart;
     _timeEnd =
-    t.timeEnd.hour == 0 && t.timeEnd.minute == 0 ? null : t.timeEnd;
+    task.timeEnd.hour == 0 && task.timeEnd.minute == 0 ? null : task.timeEnd;
   }
 
   @override
@@ -153,11 +151,11 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
   bool get _isPersonalTask => _selectedGroup == _groups.first;
 
   void _handleSave() {
-    final title = _titleController.text.trim();
-    if (title.isEmpty) return;
+    final titleText = _titleController.text.trim();
+    if (titleText.isEmpty) return;
 
     final updated = widget.task.copyWith(
-      title: title,
+      title: titleText,
       description: _descController.text,
       category: _selectedCategory ?? widget.task.category,
       difficulty: _selectedDifficulty,
@@ -182,8 +180,7 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
 
     // Re-schedule notification
     notificationService.cancelNotification(updated.id);
-    if (AppSettings.instance.notificationsEnabled &&
-        _timeStart != null) {
+    if (AppSettings.instance.notificationsEnabled && _timeStart != null) {
       final taskDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -205,6 +202,18 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
 
   String _formatTime(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  /// Returns the translated difficulty label.
+  String _difficultyLabel(Difficulty d, AppLocalizations? t) {
+    switch (d) {
+      case Difficulty.easy:
+        return t?.easy ?? d.label;
+      case Difficulty.medium:
+        return t?.medium ?? d.label;
+      case Difficulty.hard:
+        return t?.hard ?? d.label;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -240,11 +249,13 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             Row(
               children: [
                 Expanded(
-                  child: Text(t?.editTask ?? 'Edit Task',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface)),
+                  child: Text(
+                    t?.editTask ?? 'Edit Task',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface),
+                  ),
                 ),
                 // Status chip
                 _StatusChip(
@@ -324,11 +335,13 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
             // ── Difficulty ──────────────────────────────────────────
             _DifficultyPicker(
               selected: _selectedDifficulty,
+              label: t?.difficulty ?? 'Difficulty',
               onChanged: (d) => setState(() => _selectedDifficulty = d),
+              difficultyLabel: (d) => _difficultyLabel(d, t),
             ),
             const SizedBox(height: 14),
 
-            // ── Category + Group ────────────────────────────────────
+            // ── Category ────────────────────────────────────────────
             _SectionLabel(t?.category ?? 'Category', accent),
             const SizedBox(height: 8),
             ListenableBuilder(
@@ -337,7 +350,9 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                 final cats = categoryServices.getCategories().values.toList();
                 return _ChipRow(
                   children: cats.map((cat) {
-                    final sel = _selectedCategory?.name == cat.name;
+                    // Compare by id (stable) so selection survives locale change
+                    final sel = _selectedCategory?.id == cat.id ||
+                        _selectedCategory?.name == cat.name;
                     return _InlineChip(
                       label: cat.name,
                       color: cat.color,
@@ -349,12 +364,9 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
               },
             ),
             const SizedBox(height: 16),
-            const SizedBox(height: 14),
 
             // ── Color ───────────────────────────────────────────────
-            Text('Color',
-                style: TextStyle(
-                    fontSize: 13, color: Colors.grey.shade600)),
+            _SectionLabel(t?.taskColor ?? 'Task color', accent),
             const SizedBox(height: 6),
             ColorPicker(
               colorServices: _colorServices,
@@ -380,8 +392,10 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                 ),
                 onPressed: _handleSave,
                 icon: const Icon(Icons.save_outlined),
-                label: const Text('Save Changes',
-                    style: TextStyle(fontSize: 16)),
+                label: Text(
+                  t?.saveChanges ?? 'Save Changes',
+                  style: const TextStyle(fontSize: 16),
+                ),
               ),
             ),
           ],
@@ -390,6 +404,9 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
     );
   }
 }
+
+// ── Section label ─────────────────────────────────────────────────────────────
+
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text, this.accent);
   final String text;
@@ -419,6 +436,8 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+// ── Chip row ──────────────────────────────────────────────────────────────────
+
 class _ChipRow extends StatelessWidget {
   const _ChipRow({required this.children});
   final List<Widget> children;
@@ -436,6 +455,8 @@ class _ChipRow extends StatelessWidget {
     );
   }
 }
+
+// ── Inline chip ───────────────────────────────────────────────────────────────
 
 class _InlineChip extends StatelessWidget {
   const _InlineChip({
@@ -499,6 +520,7 @@ class _InlineChip extends StatelessWidget {
     );
   }
 }
+
 // ── Status chip ───────────────────────────────────────────────────────────────
 
 class _StatusChip extends StatelessWidget {
@@ -512,8 +534,20 @@ class _StatusChip extends StatelessWidget {
     Status.done => Status.todo,
   };
 
+  String _label(AppLocalizations? t) {
+    switch (status) {
+      case Status.todo:
+        return t?.notask?.split(',').first ?? status.label;
+      case Status.inProgress:
+        return t?.loading ?? status.label;
+      case Status.done:
+        return t?.complete ?? status.label;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => onChanged(_next),
       child: Container(
@@ -522,7 +556,8 @@ class _StatusChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: status.color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: status.color.withValues(alpha: 0.5)),
+          border:
+          Border.all(color: status.color.withValues(alpha: 0.5)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -530,16 +565,14 @@ class _StatusChip extends StatelessWidget {
             Icon(status.icon, size: 16, color: status.color),
             const SizedBox(width: 4),
             Expanded(
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(status.label,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: status.color,
-                          fontWeight: FontWeight.w600)),
-                ],
+              child: Center(
+                child: Text(
+                  status.label,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: status.color,
+                      fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],
@@ -549,20 +582,27 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-// ── Reuse difficulty & picker button from add form ────────────────────────────
+// ── Difficulty picker ─────────────────────────────────────────────────────────
 
 class _DifficultyPicker extends StatelessWidget {
-  const _DifficultyPicker(
-      {required this.selected, required this.onChanged});
+  const _DifficultyPicker({
+    required this.selected,
+    required this.label,
+    required this.onChanged,
+    required this.difficultyLabel,
+  });
+
   final Difficulty selected;
+  final String label;
   final ValueChanged<Difficulty> onChanged;
+  final String Function(Difficulty) difficultyLabel;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Difficulty',
+        Text(label,
             style: TextStyle(
                 fontSize: 13,
                 color: Theme.of(context).colorScheme.onSurface)),
@@ -593,7 +633,7 @@ class _DifficultyPicker extends StatelessWidget {
                         children: [
                           Icon(diff.icon, color: diff.color, size: 20),
                           const SizedBox(height: 2),
-                          Text(diff.label,
+                          Text(difficultyLabel(diff),
                               style: TextStyle(
                                   fontSize: 10,
                                   color: diff.color,
@@ -613,6 +653,8 @@ class _DifficultyPicker extends StatelessWidget {
     );
   }
 }
+
+// ── Picker button ─────────────────────────────────────────────────────────────
 
 class _PickerButton extends StatelessWidget {
   const _PickerButton({
@@ -655,11 +697,9 @@ class _PickerButton extends StatelessWidget {
                 label,
                 style: TextStyle(
                     fontSize: 12,
-                    color:
-                    faded ? Colors.grey.shade500 : accent,
-                    fontWeight: faded
-                        ? FontWeight.normal
-                        : FontWeight.w600),
+                    color: faded ? Colors.grey.shade500 : accent,
+                    fontWeight:
+                    faded ? FontWeight.normal : FontWeight.w600),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

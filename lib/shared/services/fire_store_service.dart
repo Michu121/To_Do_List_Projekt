@@ -51,6 +51,7 @@ class FirestoreService {
     if (!doc.exists) return null;
     return UserModel.fromJson(doc.data()!);
   }
+
   Future<bool> checkIfAlreadySeeded(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return doc.data()?['hasSeededCategories'] ?? false;
@@ -121,21 +122,32 @@ class FirestoreService {
   Future<void> deleteTask(String uid, String id) =>
       _tasksRef(uid).doc(id).update({'isDeleted': true});
 
-  /// Przenosi wszystkie zadania z usuwanej kategorii do kategorii domyślnej
+  /// Moves all tasks that belong to [oldCategoryId] to the [defaultCategoryJson].
+  /// Uses 'category.id' nested field path for the query — this is the correct
+  /// field since Task.toJson() stores category as a nested object.
   Future<void> moveTasksToDefaultCategory({
     required String uid,
     required String oldCategoryId,
-    required String defaultCategoryId,
+    required Map<String, dynamic> defaultCategoryJson,
   }) async {
-    final batch = _db.batch();
+    // Query tasks where the nested category.id matches the deleted category
     final tasksSnapshot = await _tasksRef(uid)
-        .where('categoryId', isEqualTo: oldCategoryId)
+        .where('category.id', isEqualTo: oldCategoryId)
         .get();
 
-    for (var doc in tasksSnapshot.docs) {
-      batch.update(doc.reference, {'categoryId': defaultCategoryId});
+    if (tasksSnapshot.docs.isEmpty) return;
+
+    // Use batched writes — Firestore batches support up to 500 operations
+    const batchSize = 400;
+    final docs = tasksSnapshot.docs;
+    for (var i = 0; i < docs.length; i += batchSize) {
+      final batch = _db.batch();
+      final chunk = docs.skip(i).take(batchSize);
+      for (final doc in chunk) {
+        batch.update(doc.reference, {'category': defaultCategoryJson});
+      }
+      await batch.commit();
     }
-    await batch.commit();
   }
 
   // ── Categories ───────────────────────────────────────────────────────────────

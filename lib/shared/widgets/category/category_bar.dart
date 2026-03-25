@@ -3,9 +3,6 @@ import '../../models/category.dart';
 import '../../models/task.dart';
 import '../add_forms/add_category_form.dart';
 
-/// Built-in category names — long-press edit is disabled for these.
-const _kDefaultNames = {'All',"Wszystkie", 'Default',"Domyślna"};
-
 class CategoryBar extends StatelessWidget {
   const CategoryBar({
     super.key,
@@ -28,12 +25,12 @@ class CategoryBar extends StatelessWidget {
         children: categories
             .map((cat) => CategoryBarButton(
           cat: cat,
-          // Count by name so DB tasks (which may have different UUIDs)
-          // are included in the count correctly.
-          tasksInCategory: cat.name == 'All'|| cat.name == 'Wszystkie'
+          // For the virtual 'All' category use total count;
+          // for others filter by category id so renaming still works.
+          tasksInCategory: cat.id == '__all__'
               ? allTasks.length
               : allTasks
-              .where((t) => t.category.name == cat.name)
+              .where((t) => t.category.id == cat.id || t.category.name == cat.name)
               .length,
           selectedCategory: selectedCategory,
           onSelected: onSelected,
@@ -58,11 +55,15 @@ class CategoryBarButton extends StatelessWidget {
   final Category selectedCategory;
   final ValueChanged<Category> onSelected;
 
+  /// A category is "default/protected" if it has the reserved virtual id
+  /// (__all__) or the fixed default id (default).  We never use name strings
+  /// here so the comparison stays correct after a locale change.
+  bool get _isProtected => cat.id == '__all__' || cat.id == 'default';
+
   @override
   Widget build(BuildContext context) {
-    // Compare by name so the stable '__all__' sentinel still works
-    final isSelected = cat.name == selectedCategory.name;
-    final isDefault = _kDefaultNames.contains(cat.name);
+    // Compare by id so selection survives locale renames of the All category
+    final isSelected = cat.id == selectedCategory.id;
 
     final textColor = isSelected
         ? (cat.color.computeLuminance() > 0.45 ? Colors.black87 : Colors.white)
@@ -70,9 +71,8 @@ class CategoryBarButton extends StatelessWidget {
 
     return InkWell(
       onTap: () => onSelected(cat),
-      // Only non-default, non-All categories support long-press editing
-      onLongPress:
-      isDefault ? null : () => CategoryOverlay.show(context, cat: cat),
+      // Only user-created (non-protected) categories support long-press editing
+      onLongPress: _isProtected ? null : () => CategoryOverlay.show(context, cat: cat),
       borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -97,11 +97,11 @@ class CategoryBarButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-             isDefault ? Padding(
-               padding: const EdgeInsets.only(right:2.0),
-               child: const Icon(Icons.block, size: 16, color: Colors.white),
-             )
-                 :const SizedBox(),
+            if (_isProtected)
+              Padding(
+                padding: const EdgeInsets.only(right: 2.0),
+                child: Icon(Icons.block, size: 16, color: Colors.white),
+              ),
             Text(
               '${cat.name} ($tasksInCategory)',
               style: TextStyle(
@@ -110,7 +110,6 @@ class CategoryBarButton extends StatelessWidget {
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
-
           ],
         ),
       ),

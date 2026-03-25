@@ -113,7 +113,9 @@ class _EmptyState extends StatelessWidget {
                       .onSurface
                       .withValues(alpha: 0.45))),
           const SizedBox(height: 8),
-          Text(t?.createOrJoinGroup ?? 'Create one or join with a code / QR',
+          Text(
+              t?.createOrJoinGroup ??
+                  'Create one or join with a code / QR',
               style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context)
@@ -171,25 +173,23 @@ class _GroupCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.people,
-                            size: 13,
-                            color: Colors.grey.shade500),
+                            size: 13, color: Colors.grey.shade500),
                         const SizedBox(width: 3),
                         Text(
-                          t?.memberCount(memberCount)??'$memberCount ${t?.members ?? "members"}',
+                          t?.memberCount(memberCount) ??
+                              '$memberCount ${t?.members ?? "members"}',
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500),
+                              fontSize: 12, color: Colors.grey.shade500),
                         ),
                         const SizedBox(width: 10),
                         Icon(Icons.task_alt,
-                            size: 13,
-                            color: Colors.grey.shade500),
+                            size: 13, color: Colors.grey.shade500),
                         const SizedBox(width: 3),
                         Text(
-                          t?.taskCount(taskCount)??'$taskCount ${t?.tasks ?? "tasks"}',
+                          t?.taskCount(taskCount) ??
+                              '$taskCount ${t?.tasks ?? "tasks"}',
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500),
+                              fontSize: 12, color: Colors.grey.shade500),
                         ),
                       ],
                     ),
@@ -200,11 +200,14 @@ class _GroupCard extends StatelessWidget {
                 onTap: () => _showQr(context),
                 onLongPress: () {
                   Clipboard.setData(ClipboardData(text: group.id));
-                  InAppNotification.success(context, t?.groupIdCopied ?? 'Group ID copied');
+                  InAppNotification.success(
+                      context,
+                      t?.groupIdCopied ?? 'Group ID copied');
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: Icon(Icons.qr_code, color: group.color, size: 24),
+                  child:
+                  Icon(Icons.qr_code, color: group.color, size: 24),
                 ),
               ),
             ],
@@ -246,13 +249,14 @@ class _GroupQrSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2)),
           ),
           const SizedBox(height: 16),
-          Text(t?.inviteToGroup(group.name) ?? 'Invite to ${group.name}',
-              style:
-              const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+              t?.inviteToGroup(group.name) ?? 'Invite to ${group.name}',
+              style: const TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(t?.scanOrShare ?? 'Scan or share to join',
-              style: TextStyle(
-                  fontSize: 13, color: Colors.grey.shade500)),
+              style:
+              TextStyle(fontSize: 13, color: Colors.grey.shade500)),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(12),
@@ -270,8 +274,8 @@ class _GroupQrSheet extends StatelessWidget {
               data: group.id,
               version: QrVersions.auto,
               size: 220,
-              eyeStyle:
-              QrEyeStyle(eyeShape: QrEyeShape.square, color: group.color),
+              eyeStyle: QrEyeStyle(
+                  eyeShape: QrEyeShape.square, color: group.color),
               dataModuleStyle: const QrDataModuleStyle(
                   dataModuleShape: QrDataModuleShape.square,
                   color: Colors.black87),
@@ -303,7 +307,8 @@ class _GroupQrSheet extends StatelessWidget {
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: group.id));
                     Navigator.pop(context);
-                    InAppNotification.success(context, t?.groupIdCopied ?? 'Group ID copied');
+                    InAppNotification.success(context,
+                        t?.groupIdCopied ?? 'Group ID copied');
                   },
                   child: Icon(Icons.copy, size: 16, color: group.color),
                 ),
@@ -342,9 +347,10 @@ class GroupDetailPage extends StatelessWidget {
                     BorderRadius.vertical(top: Radius.circular(20))),
                 builder: (_) => _GroupQrSheet(group: group),
               ),
-              onLongPress: (){
+              onLongPress: () {
                 Clipboard.setData(ClipboardData(text: group.id));
-                InAppNotification.success(context, t?.groupIdCopied ?? 'Group ID copied');
+                InAppNotification.success(context,
+                    t?.groupIdCopied ?? 'Group ID copied');
               },
             ),
           ],
@@ -353,8 +359,12 @@ class GroupDetailPage extends StatelessWidget {
             unselectedLabelColor: Colors.white60,
             indicatorColor: Colors.white,
             tabs: [
-              Tab(text: t?.tasks ?? 'Tasks', icon: const Icon(Icons.checklist, size: 18)),
-              Tab(text: t?.members ?? 'Members', icon: const Icon(Icons.people, size: 18)),
+              Tab(
+                  text: t?.tasks ?? 'Tasks',
+                  icon: const Icon(Icons.checklist, size: 18)),
+              Tab(
+                  text: t?.members ?? 'Members',
+                  icon: const Icon(Icons.people, size: 18)),
             ],
           ),
         ),
@@ -449,6 +459,7 @@ class _GroupDetailTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final isDone = task.status == Status.done;
     return Dismissible(
       key: Key('detail-${task.id}'),
@@ -460,18 +471,19 @@ class _GroupDetailTaskCard extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       child: Card(
         margin: const EdgeInsets.only(bottom: 10),
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12)),
         child: Container(
           decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border:
-              Border(left: BorderSide(color: task.color, width: 4))),
+              border: Border(
+                  left: BorderSide(color: task.color, width: 4))),
           padding:
           const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
-              StatusCheckbox(status: task.status, onTap: onStatusTap),
+              StatusCheckbox(
+                  status: task.status, onTap: onStatusTap),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -629,7 +641,7 @@ class _MembersTabState extends State<_MembersTab>
       builder: (_) => AlertDialog(
         title: Text(t?.delete ?? 'Remove member'),
         content: Text(
-            'Remove ${m.name.isNotEmpty ? m.name : m.email} from the group?'),
+            '${t?.delete ?? "Remove"} ${m.name.isNotEmpty ? m.name : m.email}?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
@@ -640,8 +652,8 @@ class _MembersTabState extends State<_MembersTab>
               groupTaskService.removeMember(g.id, m.uid);
               _cache.remove(m.uid);
             },
-            child:
-            Text(t?.delete ?? 'Remove', style: TextStyle(color: Colors.red.shade400)),
+            child: Text(t?.delete ?? 'Remove',
+                style: TextStyle(color: Colors.red.shade400)),
           ),
         ],
       ),
@@ -665,8 +677,8 @@ class _MembersTabState extends State<_MembersTab>
               groupTaskService.leaveGroup(g.id);
               Navigator.of(context).pop();
             },
-            child:
-            Text(t?.leaveGroup ?? 'Leave', style: TextStyle(color: Colors.red.shade400)),
+            child: Text(t?.leaveGroup ?? 'Leave',
+                style: TextStyle(color: Colors.red.shade400)),
           ),
         ],
       ),
@@ -690,13 +702,13 @@ class _MembersTabState extends State<_MembersTab>
                 text: TextSpan(
                   style: DefaultTextStyle.of(ctx).style,
                   children: [
-                    const TextSpan(text: 'This will permanently delete '),
+                    TextSpan(
+                        text:
+                        '${t?.deleteGroupConfirm ?? "This will permanently delete"} '),
                     TextSpan(
                         text: g.name,
                         style: const TextStyle(fontWeight: FontWeight.bold)),
-                    const TextSpan(
-                        text:
-                        ' and all its tasks.\n\nType the group name to confirm:'),
+                    const TextSpan(text: '.'),
                   ],
                 ),
               ),
@@ -721,7 +733,8 @@ class _MembersTabState extends State<_MembersTab>
             TextButton(
               onPressed: () {
                 if (ctrl.text.trim() != g.name) {
-                  setSt(() => err = 'Name does not match');
+                  setSt(() =>
+                  err = t?.error ?? 'Name does not match');
                   return;
                 }
                 Navigator.pop(ctx);
@@ -748,7 +761,7 @@ class _MembersTabState extends State<_MembersTab>
       builder: (context, _) {
         final g = _liveGroup();
         if (g == null) {
-          return const Center(child: Text('Group not found'));
+          return Center(child: Text(t?.error ?? 'Group not found'));
         }
         final myUid = FirebaseAuth.instance.currentUser?.uid;
         final isOwner = g.createdBy == myUid;
@@ -764,7 +777,8 @@ class _MembersTabState extends State<_MembersTab>
             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             children: [
               Text(
-                t?.memberCount(_members.length)??'${_members.length} ${t?.members ?? "members"}',
+                t?.memberCount(_members.length) ??
+                    '${_members.length} ${t?.members ?? "members"}',
                 style: TextStyle(
                     fontSize: 13,
                     color: Colors.grey.shade500,
@@ -788,7 +802,7 @@ class _MembersTabState extends State<_MembersTab>
 
                 final subtitleParts = [
                   if (isCreator) 'Creator',
-                  if (isMe) 'You',
+                  if (isMe) t?.profile ?? 'You',
                 ];
 
                 return Card(
@@ -813,7 +827,8 @@ class _MembersTabState extends State<_MembersTab>
                     ),
                     title: Text(
                         m.name.isNotEmpty ? m.name : m.email,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600)),
                     subtitle: subtitleParts.isNotEmpty
                         ? Text(subtitleParts.join(' · '),
                         style: TextStyle(
@@ -829,7 +844,7 @@ class _MembersTabState extends State<_MembersTab>
                         ? IconButton(
                       icon: Icon(Icons.person_remove,
                           size: 18, color: Colors.red.shade400),
-                      tooltip: 'Remove member',
+                      tooltip: t?.delete ?? 'Remove member',
                       onPressed: () =>
                           _confirmRemove(context, g, m),
                     )
@@ -838,7 +853,8 @@ class _MembersTabState extends State<_MembersTab>
                       onPressed: () =>
                           _confirmLeave(context, g),
                       style: TextButton.styleFrom(
-                          foregroundColor: Colors.red.shade400),
+                          foregroundColor:
+                          Colors.red.shade400),
                       child: Text(t?.leaveGroup ?? 'Leave'),
                     )
                         : null,
@@ -853,7 +869,8 @@ class _MembersTabState extends State<_MembersTab>
                     onPressed: () => _confirmDelete(context, g),
                     icon: Icon(Icons.delete_forever,
                         color: Colors.red.shade600),
-                    label: Text(t?.deleteGroup ?? 'Delete group',
+                    label: Text(
+                        t?.deleteGroup ?? 'Delete group',
                         style: TextStyle(
                             color: Colors.red.shade600,
                             fontWeight: FontWeight.w600)),

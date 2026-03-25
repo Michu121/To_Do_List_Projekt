@@ -16,14 +16,14 @@ import 'theme_data.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await AppSettings.instance.load(); // load persisted settings before runApp
+  await AppSettings.instance.load();
   FirebaseFirestore.instance.settings = const Settings();
   await notificationService.init();
   runApp(const MyApp());
 }
 
-/// Root widget. Rebuilds whenever [AppSettings] changes so theme updates
-/// are applied instantly across the whole app.
+/// Root widget — rebuilds on [AppSettings] changes so theme/locale updates
+/// propagate instantly without restarting the app.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         final settings = AppSettings.instance;
         return MaterialApp(
-          locale: settings.locale, // DODAJ TĘ LINIĘ
+          locale: settings.locale,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           debugShowCheckedModeBanner: false,
@@ -49,9 +49,24 @@ class MyApp extends StatelessWidget {
 }
 
 /// Listens to Firebase auth state and routes to the correct page.
-/// Also initialises / clears per-user services on login / logout.
-class AuthGate extends StatelessWidget {
+/// Also initialises / clears per-user services on login / logout,
+/// and refreshes the localised Default category name whenever the
+/// widget rebuilds (e.g., after a locale change).
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Keep the in-memory Default category name in sync with the current locale.
+    // This is a no-op when the name hasn't changed, so it's safe to call often.
+    categoryServices.updateDefaultName(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +83,7 @@ class AuthGate extends StatelessWidget {
 
         if (user != null) {
           taskServices.init(user.uid);
-          categoryServices.init(user.uid,context);
+          categoryServices.init(user.uid, context);
           // groupTaskService is initialised inside MainPage (mainpage.dart)
           return const MainPage();
         }

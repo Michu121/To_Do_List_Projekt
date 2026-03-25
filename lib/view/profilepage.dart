@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:todo_list/shared/widgets/add_forms/add_group_form.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/models/group.dart';
 import '../shared/models/league.dart';
@@ -35,8 +36,10 @@ class _ProfilePageState extends State<ProfilePage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
         return DraggableScrollableSheet(
@@ -47,38 +50,46 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (_, scrollCtrl) => Column(
             children: [
               Container(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
                 child: Column(
                   children: [
                     Container(
-                      width: 40,
-                      height: 4,
+                      width: 48,
+                      height: 5,
                       decoration: BoxDecoration(
-                        color: theme.dividerColor,
-                        borderRadius: BorderRadius.circular(2),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(2.5),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
+                    const SizedBox(height: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.check_circle_outline,
-                            color: Colors.green),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${t?.completedTasks ?? "Completed Tasks"} (${completed.length})',
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle,
+                                color: theme.colorScheme.primary, size: 28),
+                            const SizedBox(width: 12),
+                            Text(
+                              '${t?.completedTasks ?? "Completed Tasks"} (${completed.length})',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        const Spacer(),
+                        const SizedBox(height: 4),
                         Text(
                           t?.incl_archived ?? 'incl. archived',
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade500),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Divider(color: theme.dividerColor),
+                    const SizedBox(height: 12),
+                    Divider(color: theme.colorScheme.outlineVariant),
                   ],
                 ),
               ),
@@ -89,45 +100,25 @@ class _ProfilePageState extends State<ProfilePage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.task_alt,
-                          size: 60,
-                          color: Colors.grey.shade300),
-                      const SizedBox(height: 12),
-                      Text(t?.empty ?? 'No completed tasks yet',
-                          style: TextStyle(
-                              color: Colors.grey.shade500)),
+                          size: 72,
+                          color: theme.colorScheme.surfaceContainerHighest),
+                      const SizedBox(height: 16),
+                      Text(
+                        t?.empty ?? 'No completed tasks yet',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 )
                     : ListView.builder(
                   controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: completed.length,
                   itemBuilder: (_, i) {
                     final task = completed[i];
-                    return Stack(
-                      children: [
-                        TaskListTile(task: task),
-                        if (task.isDeleted)
-                          Positioned(
-                            right: 22,
-                            top: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius:
-                                BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'archived',
-                                style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.grey.shade600),
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
+                    return TaskListTile(task: task, disabled: true);
                   },
                 ),
               ),
@@ -174,27 +165,26 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   _ProfileHeader(user: currentUser),
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _LeagueCard(league: league, points: points),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 32),
                         _SectionHeader(title: t?.stats ?? 'Stats'),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
                         _StatsGrid(
                           tasksCompleted: completed,
                           tasksCreated: created,
                           streakDays: streak,
                           groupsJoined: groupsJoined,
-                          onCompletedTap: () =>
-                              _showCompletedTasks(context),
+                          onCompletedTap: () => _showCompletedTasks(context),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 32),
                         _SectionHeader(title: t?.group ?? 'Groups'),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 16),
                         _GroupsRow(groups: groups),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -217,82 +207,81 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = theme.colorScheme.primary;
-    final onAccent = accent.computeLuminance() > 0.4
-        ? Colors.black87
-        : Colors.white;
+    final colorScheme = theme.colorScheme;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [accent, accent.withValues(alpha: 0.7)],
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
       ),
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+      padding: const EdgeInsets.fromLTRB(24, 48, 24, 32),
       child: Column(
         children: [
           Stack(
             alignment: Alignment.center,
             children: [
               Container(
-                width: 120,
-                height: 120,
+                width: 112,
+                height: 112,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
+                    colors: [
+                      colorScheme.primaryContainer,
+                      colorScheme.secondaryContainer,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      onAccent.withValues(alpha: 0.15),
-                      onAccent.withValues(alpha: 0.05),
-                    ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
                 ),
               ),
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: onAccent.withValues(alpha: 0.4),
-                    width: 3,
+                    color: colorScheme.surface,
+                    width: 4,
                   ),
                 ),
                 child: CircleAvatar(
-                  radius: 48,
-                  backgroundColor: onAccent.withValues(alpha: 0.2),
-                  backgroundImage: user.photo != null
-                      ? NetworkImage(user.photo!)
-                      : null,
+                  radius: 50,
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  backgroundImage:
+                  user.photo != null ? NetworkImage(user.photo!) : null,
                   child: user.photo == null
-                      ? Icon(Icons.person, size: 52, color: onAccent)
+                      ? Icon(Icons.person_rounded,
+                      size: 56,
+                      color: colorScheme.onSurfaceVariant)
                       : null,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           Text(
             user.name.isNotEmpty ? user.name : 'User',
-            style: TextStyle(
-                color: onAccent,
-                fontSize: 22,
-                fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             user.email,
-            style: TextStyle(
-                color: onAccent.withValues(alpha: 0.75), fontSize: 13),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -315,110 +304,138 @@ class _LeagueCard extends StatelessWidget {
     final toNext = league.pointsToNext(points);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: league.badgeColor.withValues(alpha: 0.15),
-              blurRadius: 20,
-              offset: const Offset(0, 4))
+            color: league.badgeColor.withValues(alpha: 0.1),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          )
         ],
         border: Border.all(
-            color: league.badgeColor.withValues(alpha: 0.25), width: 1.5),
+          color: league.badgeColor.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     colors: [
                       league.badgeColor,
-                      league.badgeColor.withValues(alpha: 0.6)
+                      league.badgeColor.withValues(alpha: 0.7)
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   boxShadow: [
                     BoxShadow(
-                        color: league.badgeColor.withValues(alpha: 0.35),
-                        blurRadius: 10)
+                      color: league.badgeColor.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    )
                   ],
                 ),
-                child:
-                Icon(league.icon, color: Colors.white, size: 28),
+                child: Icon(league.icon, color: Colors.white, size: 28),
               ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t?.currentLeague ?? 'Current League',
-                      style: TextStyle(
-                          color: Colors.grey.shade500, fontSize: 12)),
-                  Text(league.label,
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: league.badgeColor)),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t?.currentLeague ?? 'Current League',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      league.label,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: league.badgeColor,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(t?.points ?? 'Points',
-                      style: TextStyle(
-                          color: Colors.grey.shade500, fontSize: 12)),
-                  Text('$points ✦',
-                      style: TextStyle(
-                          color: league.badgeColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20)),
+                  Text(
+                    t?.points ?? 'Points',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$points ✦',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: league.badgeColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 24),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 10,
-              backgroundColor:
-              theme.colorScheme.surfaceContainerHighest,
+              minHeight: 8,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation(league.badgeColor),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${league.minPoints} pts',
-                  style: TextStyle(
-                      color: Colors.grey.shade500, fontSize: 11)),
+              Text(
+                '${league.minPoints} ${t?.points ?? "pts"}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
               if (toNext > 0)
-                Text('$toNext pts to next league',
-                    style: TextStyle(
-                        color:
-                        league.badgeColor.withValues(alpha: 0.85),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600))
+                Text(
+                  '$toNext ${t?.points ?? "pts"} to next league',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: league.badgeColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
               else
-                Text('Max league! 🏆',
-                    style: TextStyle(
-                        color: league.badgeColor, fontSize: 11)),
-              Text('${league.maxPoints} pts',
-                  style: TextStyle(
-                      color: Colors.grey.shade500, fontSize: 11)),
+                Text(
+                  'Max league! 🏆',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: league.badgeColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              Text(
+                '${league.maxPoints} ${t?.points ?? "pts"}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
           _PointsLegend(),
         ],
       ),
@@ -431,20 +448,20 @@ class _PointsLegend extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _Hint(Icons.add_task, t?.addTask ?? 'Create task', '+5'),
-          _Hint(Icons.check_circle, t?.complete ?? 'Complete', '+10~50'),
-          _Hint(Icons.group_add, t?.joinGroup ?? 'Join group', '+10'),
-          _Hint(Icons.create_new_folder, t?.createGroup ?? 'New group', '+15'),
+          _Hint(Icons.add_task_rounded, t?.addTask ?? 'Create task', '+5'),
+          _Hint(Icons.check_circle_rounded, t?.complete ?? 'Complete', '+10~50'),
+          _Hint(Icons.group_add_rounded, t?.joinGroup ?? 'Join group', '+10'),
+          _Hint(Icons.create_new_folder_rounded, t?.createGroup ?? 'New group', '+15'),
         ],
       ),
     );
@@ -462,15 +479,22 @@ class _Hint extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Icon(icon, size: 16, color: theme.colorScheme.primary),
-        const SizedBox(height: 2),
-        Text(pts,
-            style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary)),
-        Text(label,
-            style: TextStyle(fontSize: 9, color: Colors.grey.shade500)),
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        const SizedBox(height: 4),
+        Text(
+          pts,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontSize: 9,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -485,24 +509,33 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+
     return Row(
       children: [
         Container(
           width: 4,
-          height: 20,
+          height: 24,
           decoration: BoxDecoration(
-              color: accent, borderRadius: BorderRadius.circular(2)),
+            color: theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
-        const SizedBox(width: 8),
-        Text(title,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const Spacer(),
         if (trailing != null)
-          Text(trailing!,
-              style: TextStyle(
-                  color: Colors.grey.shade500, fontSize: 13)),
+          Text(
+            trailing!,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.primary,
+            ),
+          ),
       ],
     );
   }
@@ -528,6 +561,8 @@ class _StatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         Row(
@@ -536,38 +571,29 @@ class _StatsGrid extends StatelessWidget {
               child: _StatBox(
                 value: '$tasksCompleted',
                 label: t?.tasksCompleted ?? 'Completed',
-                icon: Icons.check_circle_outline,
+                icon: Icons.check_circle_outline_rounded,
                 iconColor: Colors.green,
                 onTap: onCompletedTap,
                 tapHint: t?.viewAll ?? 'View all',
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 5),
             Expanded(
               child: _StatBox(
                 value: '$tasksCreated',
                 label: t?.tasksCreated ?? 'Created',
-                icon: Icons.add_task,
-                iconColor: Colors.blueAccent,
+                icon: Icons.add_task_rounded,
+                iconColor: theme.colorScheme.primary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         _StatBox(
           value: '$streakDays',
           label: t?.dayStreak ?? 'Day streak',
-          icon: Icons.local_fire_department,
+          icon: Icons.local_fire_department_rounded,
           iconColor: Colors.deepOrange,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          t?.pointsHistory ?? 'Points history',
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey.shade500,
-            fontWeight: FontWeight.w500,
-          ),
         ),
       ],
     );
@@ -595,67 +621,76 @@ class _StatBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-        const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: onTap != null
-              ? Border.all(
-              color: iconColor.withValues(alpha: 0.3), width: 1.5)
-              : null,
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2))
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        shape: BoxShape.rectangle,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      height: 90,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: iconColor, size: 26),
               ),
-              child: Icon(icon, color: iconColor, size: 24),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(value,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 22)),
-                  Text(label,
-                      style: TextStyle(
-                          color: Colors.grey.shade500, fontSize: 12)),
-                  if (tapHint != null)
-                    Text(tapHint!,
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: iconColor,
-                            fontWeight: FontWeight.w600)),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (tapHint != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        tapHint!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: iconColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
-            if (onTap != null)
-              Icon(Icons.chevron_right_rounded,
-                  color: iconColor.withValues(alpha: 0.5), size: 18),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// ── Groups Grid ───────────────────────────────────────────────────────────────
+// ── Groups row ────────────────────────────────────────────────────────────────
 
 class _GroupsRow extends StatelessWidget {
   final List<Group> groups;
@@ -664,31 +699,47 @@ class _GroupsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
     if (groups.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            children: [
-              Icon(Icons.group_off, size: 48, color: Colors.grey.shade300),
-              const SizedBox(height: 8),
-              Text(t?.noGroups ?? 'No groups yet.',
-                  style: TextStyle(color: Colors.grey.shade500)),
-            ],
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 32),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.group_off_rounded,
+                size: 48, color: theme.colorScheme.surfaceContainerHighest),
+            const SizedBox(height: 12),
+            Text(
+              t?.noGroups ?? 'No groups yet.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => GroupActionsOverlay.show(context),
+              icon: const Icon(Icons.add),
+              label: Text(t?.addGroup ?? 'Add Group'),
+            ),
+          ],
         ),
       );
     }
-    return Column(
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            ...groups.map((g) => _GroupTile(group: g)),
-            const _AddGroupButton(),
-          ],
-        ),
+        ...groups.map((g) => _GroupTile(group: g)),
+        const _AddGroupButton(),
       ],
     );
   }
@@ -700,54 +751,58 @@ class _GroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => GroupDetailPage(group: group),
-          ),
-        );
-      },
-      child: Container(
-        width: 90,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: group.color.withValues(alpha: 0.1),
-          border: Border.all(
-            color: group.color.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(16),
+    final theme = Theme.of(context);
+
+    return Material(
+      color: group.color.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: group.color.withValues(alpha: 0.2),
+          width: 1,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: group.color,
-              child: Text(
-                group.name.isNotEmpty ? group.name[0].toUpperCase() : '?',
-                style: TextStyle(
-                  color: group.color.computeLuminance() > 0.4
-                      ? Colors.black87
-                      : Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => GroupDetailPage(group: group),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 100,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: group.color,
+                child: Text(
+                  group.name.isNotEmpty ? group.name[0].toUpperCase() : '?',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: group.color.computeLuminance() > 0.4
+                        ? Colors.black87
+                        : Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              group.name,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+              const SizedBox(height: 12),
+              Text(
+                group.name,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -760,50 +815,50 @@ class _AddGroupButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Add group feature coming soon')),
-        );
-      },
-      child: Container(
-        width: 90,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey.withValues(alpha: 0.1),
-          border: Border.all(
-            color: Colors.grey.withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(16),
+    final theme = Theme.of(context);
+
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant,
+          width: 1,
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey.withValues(alpha: 0.15),
+      ),
+      child: InkWell(
+        onTap: () => GroupActionsOverlay.show(context),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          width: 100,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                ),
+                child: Icon(
+                    Icons.add_rounded,
+                    size: 28,
+                    color: theme.colorScheme.onSurfaceVariant
+                ),
               ),
-              child: Icon(
-                Icons.add,
-                size: 24,
-                color: Colors.grey.shade600,
+              const SizedBox(height: 12),
+              Text(
+                t?.addGroup ?? 'Add Group',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t?.addGroup ?? 'Add Group',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
