@@ -630,7 +630,7 @@ class _StatBox extends StatelessWidget {
           ),
         ],
       ),
-      height: 90,
+      height: 98,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),

@@ -93,7 +93,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get groupsJoined => 'Dołączone grupy';
 
   @override
-  String get viewAll => 'Zobacz wszystkie';
+  String get viewAll => 'Zobacz';
 
   @override
   String get currentLeague => 'Obecna liga';
