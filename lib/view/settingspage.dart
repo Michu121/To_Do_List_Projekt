@@ -60,15 +60,18 @@ class _SettingsPageState extends State<SettingsPage> {
                     iconColor: Colors.teal,
                     title: t?.language ?? 'Language',
                     trailing: SizedBox(
-                        width: 140,
-                        child: _LanguageDropdown(s: _s)
+                      width: 140,
+                      child: _LanguageDropdown(s: _s),
                     ),
                   ),
                 ]),
                 const SizedBox(height: 22),
 
                 // ── Notifications ───────────────────────────────────
-                _Label(t?.notifications ?? 'Notifications', Icons.notifications_outlined),
+                _Label(
+                  t?.notifications ?? 'Notifications',
+                  Icons.notifications_outlined,
+                ),
                 const SizedBox(height: 8),
                 _Card(children: [
                   _Tile(
@@ -90,9 +93,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     trailing: Switch.adaptive(
                       value: _s.taskReminders,
                       activeThumbColor: theme.colorScheme.primary,
-                      onChanged: _s.notificationsEnabled
-                          ? _s.setTaskReminders
-                          : null,
+                      onChanged:
+                      _s.notificationsEnabled ? _s.setTaskReminders : null,
                     ),
                   ),
                   if (_s.taskReminders) ...[
@@ -101,9 +103,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       icon: Icons.schedule_outlined,
                       iconColor: theme.colorScheme.primary,
                       title: t?.remindMe ?? 'Remind me',
-                      trailing: _s.notificationsEnabled
-                          ? _TimingDrop(s: _s)
-                          : null,
+                      trailing:
+                      _s.notificationsEnabled ? _TimingDrop(s: _s) : null,
                     ),
                   ],
                 ]),
@@ -111,7 +112,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 22),
 
                 // ── Account ─────────────────────────────────────────
-                _Label(t?.account ?? 'Account', Icons.manage_accounts_outlined),
+                _Label(
+                  t?.account ?? 'Account',
+                  Icons.manage_accounts_outlined,
+                ),
                 const SizedBox(height: 8),
                 _Card(children: [
                   if (!_isGoogleUser) ...[
@@ -130,8 +134,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     title: t?.privacySecurity ?? 'Privacy and security',
                     showArrow: true,
                     onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const PrivacySecurityPage())),
+                      MaterialPageRoute(
+                        builder: (_) => const PrivacySecurityPage(),
+                      ),
+                    ),
                   ),
                   _Div(),
                   _Tile(
@@ -150,7 +156,6 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // ... (reszta metod _showChangePwd i _showLogout pozostaje bez zmian)
   Future<void> _showChangePwd(BuildContext context) async {
     final t = AppLocalizations.of(context);
     final formKey = GlobalKey<FormState>();
@@ -161,36 +166,49 @@ class _SettingsPageState extends State<SettingsPage> {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(t?.changePasswordTitle ?? 'Change password'),
         content: Form(
           key: formKey,
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _PwdField(ctrl: curCtrl, label: t?.currentPassword ?? 'Current password'),
-            const SizedBox(height: 10),
-            _PwdField(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _PwdField(
+                ctrl: curCtrl,
+                label: t?.currentPassword ?? 'Current password',
+              ),
+              const SizedBox(height: 10),
+              _PwdField(
                 ctrl: newCtrl,
                 label: t?.newPassword ?? 'New password',
-                validator: (v) =>
-                (v?.length ?? 0) < 8 ? (t?.minCharacters ?? 'Min 8 characters') : null),
-            const SizedBox(height: 10),
-            _PwdField(
+                validator: (v) => (v?.length ?? 0) < 8
+                    ? (t?.minCharacters ?? 'Min 8 characters')
+                    : null,
+              ),
+              const SizedBox(height: 10),
+              _PwdField(
                 ctrl: confCtrl,
                 label: t?.confirmPassword ?? 'Confirm password',
-                validator: (v) =>
-                v != newCtrl.text ? (t?.passwordsDoNotMatch ?? 'Passwords do not match') : null),
-          ]),
+                validator: (v) => v != newCtrl.text
+                    ? (t?.passwordsDoNotMatch ?? 'Passwords do not match')
+                    : null,
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(t?.cancel ?? 'Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t?.cancel ?? 'Cancel'),
+          ),
           FilledButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
                 Navigator.pop(ctx);
-                InAppNotification.success(context, t?.passwordChanged ?? 'Password changed');
+                InAppNotification.success(
+                  context,
+                  t?.passwordChanged ?? 'Password changed',
+                );
               }
             },
             child: Text(t?.save ?? 'Save'),
@@ -208,14 +226,16 @@ class _SettingsPageState extends State<SettingsPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(t?.logOutTitle ?? 'Log out'),
-        content: Text(t?.areYouSureLogOut ?? 'Are you sure you want to log out?'),
+        content: Text(
+          t?.areYouSureLogOut ?? 'Are you sure you want to log out?',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(t?.cancel ?? 'Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t?.cancel ?? 'Cancel'),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(ctx, true),
@@ -224,12 +244,16 @@ class _SettingsPageState extends State<SettingsPage> {
         ],
       ),
     );
+
     if (ok == true) {
       try {
         await authService.logout();
       } catch (e) {
-        if (!mounted) return;
-        InAppNotification.error(context, '${t?.failedToLogOut ?? "Failed to log out"}: $e');
+        if (!context.mounted) return;
+        InAppNotification.error(
+          context,
+          '${t?.failedToLogOut ?? "Failed to log out"}: $e',
+        );
       }
     }
   }
@@ -262,9 +286,10 @@ class PrivacySecurityPage extends StatelessWidget {
                   title: t?.biometricLock ?? 'Biometric lock',
                   subtitle: t?.fingerprintFaceId ?? 'Fingerprint / Face ID',
                   trailing: Switch.adaptive(
-                      value: s.biometricLock,
-                      activeThumbColor: theme.colorScheme.primary,
-                      onChanged: s.setBiometricLock),
+                    value: s.biometricLock,
+                    activeThumbColor: theme.colorScheme.primary,
+                    onChanged: s.setBiometricLock,
+                  ),
                 ),
                 _Div(),
                 _Tile(
@@ -272,19 +297,22 @@ class PrivacySecurityPage extends StatelessWidget {
                   iconColor: Colors.orange,
                   title: t?.lockWhenMinimised ?? 'Lock when minimised',
                   trailing: Switch.adaptive(
-                      value: s.lockWhenBackgrounded,
-                      activeThumbColor: theme.colorScheme.primary,
-                      onChanged: s.setLockWhenBackgrounded),
+                    value: s.lockWhenBackgrounded,
+                    activeThumbColor: theme.colorScheme.primary,
+                    onChanged: s.setLockWhenBackgrounded,
+                  ),
                 ),
                 _Div(),
                 _Tile(
                   icon: Icons.visibility_off_outlined,
                   iconColor: Colors.blueGrey,
-                  title: t?.hideNotificationContent ?? 'Hide notification content',
+                  title:
+                  t?.hideNotificationContent ?? 'Hide notification content',
                   trailing: Switch.adaptive(
-                      value: s.hideNotificationContent,
-                      activeThumbColor: theme.colorScheme.primary,
-                      onChanged: s.setHideNotificationContent),
+                    value: s.hideNotificationContent,
+                    activeThumbColor: theme.colorScheme.primary,
+                    onChanged: s.setHideNotificationContent,
+                  ),
                 ),
               ]),
             ],
@@ -307,12 +335,15 @@ class _Label extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: accent),
         const SizedBox(width: 6),
-        Text(text.toUpperCase(),
-            style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: accent)),
+        Text(
+          text.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: accent,
+          ),
+        ),
       ],
     );
   }
@@ -333,15 +364,19 @@ class _Card extends StatelessWidget {
         boxShadow: theme.brightness == Brightness.light
             ? [
           BoxShadow(
-              color: Colors.black.withAlpha(8),
-              blurRadius: 12,
-              offset: const Offset(0, 4))
+            color: Colors.black.withAlpha(8),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          )
         ]
             : [],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: children,
+        ),
       ),
     );
   }
@@ -351,10 +386,11 @@ class _Div extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Divider(
-        height: 1,
-        thickness: 1,
-        indent: 56,
-        color: Theme.of(context).dividerColor.withAlpha(80));
+      height: 1,
+      thickness: 1,
+      indent: 56,
+      color: Theme.of(context).dividerColor.withAlpha(80),
+    );
   }
 }
 
@@ -392,8 +428,9 @@ class _Tile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10)),
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Icon(icon, size: 20, color: iconColor),
             ),
             const SizedBox(width: 14),
@@ -401,22 +438,30 @@ class _Tile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: titleColor)),
+                  Text(
+                    title,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: titleColor,
+                    ),
+                  ),
                   if (subtitle != null)
-                    Text(subtitle!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.5))),
+                    Text(
+                      subtitle!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface
+                            .withValues(alpha: 0.5),
+                      ),
+                    ),
                 ],
               ),
             ),
-            if (trailing != null) trailing!, // POPRAWIONA SKŁADNIA
+            trailing ?? const SizedBox.shrink(),
             if (showArrow && trailing == null)
-              Icon(Icons.chevron_right_rounded,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+              ),
           ],
         ),
       ),
@@ -432,7 +477,6 @@ class _ThemePillSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Obliczamy wyrównanie (Alignment) dla suwaka na podstawie wybranego trybu
     Alignment indicatorAlignment;
     switch (s.themeMode) {
       case AppThemeMode.light:
@@ -448,21 +492,21 @@ class _ThemePillSelector extends StatelessWidget {
 
     return Container(
       height: 44,
-      width: 135, // Zwiększona lekko szerokość, by 3 ikony miały więcej miejsca
-      padding: const EdgeInsets.all(4), // Padding dla "toru", po którym porusza się suwak
+      width: 135,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color:
+        theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(22),
       ),
       child: Stack(
         children: [
-          // Warstwa spodnia: Animowany suwak (pill)
           AnimatedAlign(
             alignment: indicatorAlignment,
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             child: FractionallySizedBox(
-              widthFactor: 1 / 3, // Suwak zajmuje 1/3 szerokości
+              widthFactor: 1 / 3,
               child: Container(
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
@@ -478,12 +522,23 @@ class _ThemePillSelector extends StatelessWidget {
               ),
             ),
           ),
-          // Warstwa wierzchnia: Ikony
           Row(
             children: [
-              _buildThemeOption(context, AppThemeMode.light, Icons.light_mode_rounded),
-              _buildThemeOption(context, AppThemeMode.system, Icons.settings_brightness_rounded),
-              _buildThemeOption(context, AppThemeMode.dark, Icons.dark_mode_rounded),
+              _buildThemeOption(
+                context,
+                AppThemeMode.light,
+                Icons.light_mode_rounded,
+              ),
+              _buildThemeOption(
+                context,
+                AppThemeMode.system,
+                Icons.settings_brightness_rounded,
+              ),
+              _buildThemeOption(
+                context,
+                AppThemeMode.dark,
+                Icons.dark_mode_rounded,
+              ),
             ],
           ),
         ],
@@ -491,13 +546,17 @@ class _ThemePillSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeOption(BuildContext context, AppThemeMode mode, IconData icon) {
+  Widget _buildThemeOption(
+      BuildContext context,
+      AppThemeMode mode,
+      IconData icon,
+      ) {
     final isSelected = s.themeMode == mode;
     final theme = Theme.of(context);
 
     return Expanded(
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque, // Zapewnia responsywność na całej powierzchni Expanded
+        behavior: HitTestBehavior.opaque,
         onTap: () => s.setThemeMode(mode),
         child: Center(
           child: AnimatedScale(
@@ -524,16 +583,19 @@ class _LanguageDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final String currentLabel = s.locale.languageCode == 'pl' ? '🇵🇱 Polish' : '🇺🇸 English';
+    final String currentLabel =
+    s.locale.languageCode == 'pl' ? '🇵🇱 Polish' : '🇺🇸 English';
 
     return MenuAnchor(
-      alignmentOffset: const Offset(0,-45),
+      alignmentOffset: const Offset(0, -45),
       style: MenuStyle(
         padding: WidgetStateProperty.all(EdgeInsets.zero),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        backgroundColor: WidgetStateProperty.all(theme.colorScheme.surfaceContainerHighest),
+        backgroundColor: WidgetStateProperty.all(
+          theme.colorScheme.surfaceContainerHighest,
+        ),
       ),
       menuChildren: [
         _buildMenuItem(context, 'pl', '🇵🇱 Polish'),
@@ -543,12 +605,13 @@ class _LanguageDropdown extends StatelessWidget {
         return GestureDetector(
           onTap: () => controller.isOpen ? controller.close() : controller.open(),
           child: Container(
-
             width: 140,
             height: 45,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.4,
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -556,9 +619,16 @@ class _LanguageDropdown extends StatelessWidget {
               children: [
                 Text(
                   currentLabel,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                Icon(Icons.keyboard_arrow_down_rounded, color: s.accentColor, size: 20),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: s.accentColor,
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -572,12 +642,13 @@ class _LanguageDropdown extends StatelessWidget {
 
     return MenuItemButton(
       style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.all(isSelected?null:s.accentColor.withValues(alpha: 0.01)),
+        backgroundColor: WidgetStateProperty.all(
+          isSelected ? null : s.accentColor.withValues(alpha: 0.01),
+        ),
       ),
-      // MenuAnchor automatycznie dopasowuje szerokość przycisków do najszerszego elementu
       onPressed: () => s.setLocale(code),
       child: Container(
-        width: 115, // Szerokość dopasowana do wnętrza kontenera
+        width: 115,
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Text(
           label,
@@ -601,12 +672,17 @@ class _TimingDrop extends StatelessWidget {
       value: s.notificationMinutesBefore,
       underline: const SizedBox.shrink(),
       style: TextStyle(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface,
-          fontWeight: FontWeight.w600),
+        fontSize: 13,
+        color: Theme.of(context).colorScheme.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
       items: AppSettings.notificationTimingOptions
-          .map((m) => DropdownMenuItem(
-          value: m, child: Text(AppSettings.timingLabel(m))))
+          .map(
+            (m) => DropdownMenuItem(
+          value: m,
+          child: Text(AppSettings.timingLabel(m)),
+        ),
+      )
           .toList(),
       onChanged: (v) {
         if (v != null) s.setNotificationMinutesBefore(v);
@@ -634,15 +710,22 @@ class _AccentRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                    color: s.accentColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10)),
-                child: Icon(Icons.color_lens_outlined,
-                    size: 20, color: s.accentColor),
+                  color: s.accentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.color_lens_outlined,
+                  size: 20,
+                  color: s.accentColor,
+                ),
               ),
               const SizedBox(width: 14),
-              Text(t?.accentColor ?? 'Accent color',
-                  style: theme.textTheme.bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                t?.accentColor ?? 'Accent color',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -650,11 +733,13 @@ class _AccentRow extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: AppSettings.availableAccentColors
-                .map((c) => _AccentDot(
-              color: c,
-              selected: s.accentColor.toARGB32() == c.toARGB32(),
-              onTap: () => s.setAccentColor(c),
-            ))
+                .map(
+                  (c) => _AccentDot(
+                color: c,
+                selected: s.accentColor.toARGB32() == c.toARGB32(),
+                onTap: () => s.setAccentColor(c),
+              ),
+            )
                 .toList(),
           ),
         ],
@@ -664,8 +749,12 @@ class _AccentRow extends StatelessWidget {
 }
 
 class _AccentDot extends StatelessWidget {
-  const _AccentDot(
-      {required this.color, required this.selected, required this.onTap});
+  const _AccentDot({
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
   final Color color;
   final bool selected;
   final VoidCallback onTap;
@@ -690,9 +779,10 @@ class _AccentDot extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-                color: color.withAlpha(selected ? 120 : 50),
-                blurRadius: selected ? 10 : 4,
-                offset: const Offset(0, 2))
+              color: color.withAlpha(selected ? 120 : 50),
+              blurRadius: selected ? 10 : 4,
+              offset: const Offset(0, 2),
+            )
           ],
         ),
         child: selected
@@ -718,11 +808,12 @@ class _PwdField extends StatelessWidget {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: const Icon(Icons.lock_outline),
-        border:
-        OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       validator: validator ??
-              (v) => (v?.trim().isEmpty ?? true) ? (t?.fieldRequired ?? 'Required') : null,
+              (v) => (v?.trim().isEmpty ?? true)
+              ? (t?.fieldRequired ?? 'Required')
+              : null,
     );
   }
 }

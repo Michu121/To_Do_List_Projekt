@@ -6,7 +6,6 @@ import '../models/group.dart';
 import '../models/status.dart';
 import '../models/task.dart';
 import 'stats_service.dart';
-import 'notification_service.dart';
 
 class GroupTaskService extends ChangeNotifier {
   final _db = FirebaseFirestore.instance;

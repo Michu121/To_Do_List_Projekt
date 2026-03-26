@@ -10,7 +10,7 @@ class AppColor {
   static const Color defaultAccentColor = Color(0xFF5C6BC0);
 }
 
-class themeColors {
+class ThemeColors {
   static const Color red = Colors.redAccent;
   static const Color green = Colors.greenAccent;
   static const Color blue = Colors.blueAccent;
@@ -91,7 +91,7 @@ class AppTheme {
 
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: Colors.blue.shade900,
-      foregroundColor: Color(0xFF00136C),
+      foregroundColor: const Color(0xFF00136C),
       elevation: 6,
       highlightElevation: 10,
       shape: RoundedRectangleBorder(
@@ -114,7 +114,7 @@ class AppTheme {
           }
           return Colors.blue.shade900;
         }),
-        foregroundColor: WidgetStateProperty.all(Color(0xFF00136C)),
+        foregroundColor: WidgetStateProperty.all(const Color(0xFF00136C)),
       ),
     ),
   );

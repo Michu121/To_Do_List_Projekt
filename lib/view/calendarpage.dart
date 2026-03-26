@@ -52,9 +52,8 @@ class _CalendarPageState extends State<CalendarPage>
     final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final accent = theme.colorScheme.primary;
-    final onAccent = accent.computeLuminance() > 0.4
-        ? Colors.black87
-        : Colors.white;
+    final onAccent =
+    accent.computeLuminance() > 0.4 ? Colors.black87 : Colors.white;
 
     return Column(
       children: [
@@ -75,8 +74,14 @@ class _CalendarPageState extends State<CalendarPage>
             // Tłumaczenia menu głównego
             tabs: [
               const Tab(text: 'AGENDA', icon: Icon(Icons.list_alt, size: 16)), // Brak w ARB
-              Tab(text: t?.calendar.toUpperCase() ?? 'CALENDAR', icon: const Icon(Icons.calendar_month, size: 16)),
-              Tab(text: t?.group.toUpperCase() ?? 'GROUPS', icon: const Icon(Icons.group, size: 16)),
+              Tab(
+                text: t?.calendar.toUpperCase() ?? 'CALENDAR',
+                icon: const Icon(Icons.calendar_month, size: 16),
+              ),
+              Tab(
+                text: t?.group.toUpperCase() ?? 'GROUPS',
+                icon: const Icon(Icons.group, size: 16),
+              ),
             ],
           ),
         ),
@@ -103,7 +108,7 @@ class _AgendaTab extends StatelessWidget {
     final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: everyTaskService,
-      builder: (_, __) {
+      builder: (context, child) {
         final tasks = [...everyTaskService.getTasks()]
           ..sort((a, b) => a.date.compareTo(b.date));
 
@@ -163,7 +168,6 @@ class _CalendarTabState extends State<_CalendarTab> {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: everyTaskService,
       builder: (_, _) {
@@ -173,7 +177,8 @@ class _CalendarTabState extends State<_CalendarTab> {
 
         return Stack(
           children: [
-            Column( // Zamiast SingleChildScrollView (zgodnie z instrukcją)
+            Column(
+              // Zamiast SingleChildScrollView (zgodnie z instrukcją)
               children: [
                 // ── Sekcja Kalendarza (Stała wysokość lub AspectRatio) ──
                 _CompactMonthHeader(
@@ -209,7 +214,10 @@ class _CalendarTabState extends State<_CalendarTab> {
               right: 16,
               child: FloatingActionButton(
                 heroTag: 'cal_fab',
-                onPressed: () => AddTaskSheet.show(context, preselectedDate: _day),
+                onPressed: () => AddTaskSheet.show(
+                  context,
+                  preselectedDate: _day,
+                ),
                 child: const Icon(Icons.add),
               ),
             ),
@@ -311,7 +319,15 @@ class _WeekdayRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [t?.monday(0)??"Mo", t?.tuesday(0)??"Tu", t?.wednesday(0)??"We", t?.thursday(0)??"Th", t?.friday(0)??"Fr", t?.saturday(0)??"Sa", t?.sunday(0)??"Su"]
+        children: [
+          t?.monday(0) ?? "Mo",
+          t?.tuesday(0) ?? "Tu",
+          t?.wednesday(0) ?? "We",
+          t?.thursday(0) ?? "Th",
+          t?.friday(0) ?? "Fr",
+          t?.saturday(0) ?? "Sa",
+          t?.sunday(0) ?? "Su"
+        ]
             .map(
               (d) => SizedBox(
             width: 36,
@@ -434,9 +450,8 @@ class _DayCell extends StatelessWidget {
               '${date.day}',
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: isToday || selected
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight:
+                isToday || selected ? FontWeight.bold : FontWeight.normal,
                 color: fg,
               ),
             ),
@@ -541,12 +556,13 @@ class _GroupsTab extends StatelessWidget {
     final t = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: groupTaskService,
-      builder: (_, __) {
+      builder: (context, child) {
         final groups = groupTaskService.groups;
         if (groups.isEmpty) {
           return _EmptyHint(
             icon: Icons.group_off,
-            message: '${t?.noGroups ?? "No groups yet."}\n${t?.createOrJoinGroup ?? "Create or join one!"}',
+            message:
+            '${t?.noGroups ?? "No groups yet."}\n${t?.createOrJoinGroup ?? "Create or join one!"}',
           );
         }
 
@@ -648,9 +664,8 @@ class _GroupSectionState extends State<_GroupSection> {
         ),
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 220),
-          crossFadeState: _open
-              ? CrossFadeState.showFirst
-              : CrossFadeState.showSecond,
+          crossFadeState:
+          _open ? CrossFadeState.showFirst : CrossFadeState.showSecond,
           firstChild: tasks.isEmpty
               ? Padding(
             padding: const EdgeInsets.symmetric(

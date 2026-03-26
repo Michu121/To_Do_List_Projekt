@@ -22,7 +22,9 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   @override
-  void initState() {super.initState();}
+  void initState() {
+    super.initState();
+  }
 
   void _showCompletedTasks(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -142,8 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
         final fsStats = statsSnap.data;
 
         return ListenableBuilder(
-          listenable: Listenable.merge(
-              [userStatsService, groupTaskService]),
+          listenable: Listenable.merge([userStatsService, groupTaskService]),
           builder: (context, _) {
             final groups = groupTaskService.groups;
             final streak = userStatsService.streakDays;
@@ -500,8 +501,7 @@ class _Hint extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final String? trailing;
-  const _SectionHeader({required this.title, this.trailing});
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -525,13 +525,6 @@ class _SectionHeader extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        if (trailing != null)
-          Text(
-            trailing!,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.primary,
-            ),
-          ),
       ],
     );
   }
@@ -839,9 +832,9 @@ class _AddGroupButton extends StatelessWidget {
                   color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 ),
                 child: Icon(
-                    Icons.add_rounded,
-                    size: 28,
-                    color: theme.colorScheme.onSurfaceVariant
+                  Icons.add_rounded,
+                  size: 28,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 12),

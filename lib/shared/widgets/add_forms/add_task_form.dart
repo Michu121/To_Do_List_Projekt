@@ -576,8 +576,8 @@ class _ChipRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: children.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) => children[i],
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => children[i],
       ),
     );
   }

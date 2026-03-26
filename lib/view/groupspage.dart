@@ -459,7 +459,6 @@ class _GroupDetailTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     final isDone = task.status == Status.done;
     return Dismissible(
       key: Key('detail-${task.id}'),

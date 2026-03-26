@@ -11,13 +11,19 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
 
   Future<UserCredential> loginEmail(String email, String password) async {
-    return await _auth.signInWithEmailAndPassword(
-        email: email, password: password);
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    await firestoreService.afterLogin(credential.user!);
+    return credential;
   }
 
   Future<UserCredential> registerEmail(String email, String password) async {
     final credential = await _auth.createUserWithEmailAndPassword(
-        email: email, password: password);
+      email: email,
+      password: password,
+    );
     await firestoreService.afterLogin(credential.user!);
     return credential;
   }
