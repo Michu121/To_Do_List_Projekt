@@ -24,7 +24,11 @@ class CategoryOverlay {
       begin: const Offset(1, 0),
       end: Offset.zero,
     ).animate(
-        CurvedAnimation(parent: _animationController!, curve: Curves.easeInOut));
+      CurvedAnimation(
+        parent: _animationController!,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     _overlayEntry = OverlayEntry(
       builder: (context) => Stack(
@@ -106,7 +110,9 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
       _nameController.text = widget.cat!.name;
       final colorsMap = _colorServices.getColors();
       final matchedKey = colorsMap.keys.firstWhere(
-            (key) => colorsMap[key]!.color.value == widget.cat!.color.value,
+            (key) =>
+        colorsMap[key]!.color.toARGB32() ==
+            widget.cat!.color.toARGB32(),
         orElse: () => colorsMap.keys.first,
       );
       _colorServices.updateColor(matchedKey, true);
@@ -138,16 +144,20 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
         await categoryServices.deleteCategory(widget.cat!.name);
       } else if (add) {
         if (_isEditing) {
-          await categoryServices.updateCategory(Category(
-            id: widget.cat!.id,
-            name: name,
-            color: _selectedColor!.color,
-          ));
+          await categoryServices.updateCategory(
+            Category(
+              id: widget.cat!.id,
+              name: name,
+              color: _selectedColor!.color,
+            ),
+          );
         } else {
-          await categoryServices.addCategory(Category(
-            name: name,
-            color: _selectedColor!.color,
-          ));
+          await categoryServices.addCategory(
+            Category(
+              name: name,
+              color: _selectedColor!.color,
+            ),
+          );
         }
       }
     } catch (e) {
@@ -169,7 +179,7 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
     final formTitle = _isEditing
         ? (_isDefault
         ? (t?.category ?? 'Category')
-        : (t?.edit ?? 'Edit') + ' ' + (t?.category ?? 'Category').toLowerCase())
+        : '${t?.edit ?? 'Edit'} ${(t?.category ?? 'Category').toLowerCase()}')
         : (t?.addCategory ?? 'New Category');
 
     return Padding(
@@ -193,8 +203,9 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
               children: [
                 Text(
                   formTitle,
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -217,18 +228,19 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
                     onTap: (colorName) {
                       setState(() {
                         _colorServices.updateColor(colorName, true);
-                        _selectedColor =
-                        _colorServices.getColors()[colorName];
+                        _selectedColor = _colorServices.getColors()[colorName];
                       });
                     },
                   ),
                 const SizedBox(height: 30),
                 if (!_isDefault)
                   _buildActionButtons(
-                      theme, _selectedColor?.color ?? Colors.grey, t)
+                    theme,
+                    _selectedColor?.color ?? Colors.grey,
+                    t,
+                  )
                 else
                   _buildCloseButton(theme, t),
-
                 if (_isEditing && !_isDefault) ...[
                   const SizedBox(height: 10),
                   _buildDeleteButton(t),
@@ -242,7 +254,10 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
   }
 
   Widget _buildActionButtons(
-      ThemeData theme, Color previewColor, AppLocalizations? t) {
+      ThemeData theme,
+      Color previewColor,
+      AppLocalizations? t,
+      ) {
     return Row(
       children: [
         Expanded(
@@ -261,7 +276,9 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                  color: previewColor, fontWeight: FontWeight.bold),
+                color: previewColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
@@ -274,17 +291,23 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
               foregroundColor: Colors.white,
               minimumSize: const Size(0, 45),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: _saving
                 ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2))
-                : Text(_isEditing
-                ? (t?.save ?? 'Update')
-                : (t?.add ?? 'Add')),
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
+              ),
+            )
+                : Text(
+              _isEditing
+                  ? (t?.save ?? 'Update')
+                  : (t?.add ?? 'Add'),
+            ),
           ),
         ),
       ],
@@ -311,8 +334,9 @@ class _CategoryFormContentState extends State<_CategoryFormContent> {
         style: OutlinedButton.styleFrom(
           foregroundColor: Colors.red,
           side: const BorderSide(color: Colors.red),
-          shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: Text(t?.delete ?? 'Delete Category'),
       ),

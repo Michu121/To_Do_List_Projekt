@@ -17,12 +17,16 @@ class CategoryServices extends ChangeNotifier {
   Category get defaultCategory {
     return _categories.values.firstWhere(
           (c) => c.id == 'default',
-      orElse: () => Category(id: 'default', name: 'Default', color: Colors.grey),
+      orElse: () =>
+          Category(id: 'default', name: 'Default', color: Colors.grey),
     );
   }
 
   void init(String uid, BuildContext context) {
-    final defaultName = AppLocalizations.of(context)?.defaultCategory ?? 'Default';
+    final l10n = AppLocalizations.of(context);
+    final defaultName = l10n?.defaultCategory ?? 'Default';
+    final workName = l10n?.workCategory ?? 'Work';
+    final personalName = l10n?.personalCategory ?? 'Personal';
 
     final defaultCat = Category(
       id: 'default',
@@ -31,28 +35,29 @@ class CategoryServices extends ChangeNotifier {
     );
 
     _subscription?.cancel();
-    _subscription = firestoreService.categoriesStream(uid).listen((snapshot) async {
-      if (snapshot.docs.isEmpty && !_isSeedingTriggered) {
-        final hasSeeded = await firestoreService.checkIfAlreadySeeded(uid);
-        if (!hasSeeded) {
-          _isSeedingTriggered = true;
-          await _seedInitialCategories(context, uid);
-          return;
-        }
-      }
+    _subscription =
+        firestoreService.categoriesStream(uid).listen((snapshot) async {
+          if (snapshot.docs.isEmpty && !_isSeedingTriggered) {
+            final hasSeeded = await firestoreService.checkIfAlreadySeeded(uid);
+            if (!hasSeeded) {
+              _isSeedingTriggered = true;
+              await _seedInitialCategories(uid, workName, personalName);
+              return;
+            }
+          }
 
-      final fromFirestore = {
-        for (final doc in snapshot.docs)
-          (doc.data() as Map<String, dynamic>)['name'] as String:
-          Category.fromJson(doc.data() as Map<String, dynamic>),
-      };
+          final fromFirestore = {
+            for (final doc in snapshot.docs)
+              (doc.data() as Map<String, dynamic>)['name'] as String:
+              Category.fromJson(doc.data() as Map<String, dynamic>),
+          };
 
-      _categories = {
-        defaultName: defaultCat,
-        ...fromFirestore,
-      };
-      notifyListeners();
-    });
+          _categories = {
+            defaultName: defaultCat,
+            ...fromFirestore,
+          };
+          notifyListeners();
+        });
   }
 
   /// Call this whenever the app locale changes to update the Default category
@@ -77,12 +82,14 @@ class CategoryServices extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _seedInitialCategories(BuildContext context, String uid) async {
-    final t = AppLocalizations.of(context);
-
+  Future<void> _seedInitialCategories(
+      String uid,
+      String workName,
+      String personalName,
+      ) async {
     final starter = [
-      Category(id: 'work', name: t?.workCategory ?? 'Work', color: Colors.blue),
-      Category(id: 'personal', name: t?.personalCategory ?? 'Personal', color: Colors.green),
+      Category(id: 'work', name: workName, color: Colors.blue),
+      Category(id: 'personal', name: personalName, color: Colors.green),
     ];
 
     for (var cat in starter) {
@@ -97,7 +104,8 @@ class CategoryServices extends ChangeNotifier {
     _subscription = null;
     final defaultName = AppLocalizations.of(context)?.defaultCategory ?? 'Default';
     _categories = {
-      defaultName: Category(id: 'default', name: defaultName, color: Colors.grey)
+      defaultName:
+      Category(id: 'default', name: defaultName, color: Colors.grey)
     };
     notifyListeners();
   }

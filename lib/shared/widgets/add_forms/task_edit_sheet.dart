@@ -35,8 +35,7 @@ class TaskEditSheet extends StatefulWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape:
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       builder: (_) => TaskEditSheet(
         task: task,
@@ -223,11 +222,14 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-          20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        20,
+        16,
+        20,
+        MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        borderRadius:
-        const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -252,9 +254,10 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                   child: Text(
                     t?.editTask ?? 'Edit Task',
                     style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
                 // Status chip
@@ -274,7 +277,8 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                 labelText: t?.title ?? 'Title',
                 prefixIcon: const Icon(Icons.title),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onSubmitted: (_) => _handleSave(),
             ),
@@ -288,7 +292,8 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                 labelText: t?.description ?? 'Description',
                 prefixIcon: const Icon(Icons.notes),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -388,7 +393,8 @@ class _TaskEditSheetState extends State<TaskEditSheet> {
                 style: FilledButton.styleFrom(
                   backgroundColor: accent,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 onPressed: _handleSave,
                 icon: const Icon(Icons.save_outlined),
@@ -420,17 +426,22 @@ class _SectionLabel extends StatelessWidget {
           width: 3,
           height: 14,
           decoration: BoxDecoration(
-              color: accent, borderRadius: BorderRadius.circular(2)),
+            color: accent,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
         const SizedBox(width: 6),
-        Text(text,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.65))),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.65),
+          ),
+        ),
       ],
     );
   }
@@ -449,8 +460,8 @@ class _ChipRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: children.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) => children[i],
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, i) => children[i],
       ),
     );
   }
@@ -464,13 +475,12 @@ class _InlineChip extends StatelessWidget {
     required this.color,
     required this.selected,
     required this.onTap,
-    this.icon,
   });
+
   final String label;
   final Color color;
   final bool selected;
   final VoidCallback onTap;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -494,26 +504,23 @@ class _InlineChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 12, color: fg),
-              const SizedBox(width: 4),
-            ] else ...[
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: selected ? fg.withValues(alpha: 0.8) : color,
-                  shape: BoxShape.circle,
-                ),
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                color: selected ? fg.withValues(alpha: 0.8) : color,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 5),
-            ],
-            Text(label,
-                style: TextStyle(
-                    color: fg,
-                    fontSize: 13,
-                    fontWeight:
-                    selected ? FontWeight.w700 : FontWeight.w500)),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: fg,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
@@ -537,7 +544,7 @@ class _StatusChip extends StatelessWidget {
   String _label(AppLocalizations? t) {
     switch (status) {
       case Status.todo:
-        return t?.notask?.split(',').first ?? status.label;
+        return t?.notask.split(',').first ?? status.label;
       case Status.inProgress:
         return t?.loading ?? status.label;
       case Status.done:
@@ -556,8 +563,7 @@ class _StatusChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: status.color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
-          border:
-          Border.all(color: status.color.withValues(alpha: 0.5)),
+          border: Border.all(color: status.color.withValues(alpha: 0.5)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -567,11 +573,12 @@ class _StatusChip extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Text(
-                  status.label,
+                  _label(t),
                   style: TextStyle(
-                      fontSize: 12,
-                      color: status.color,
-                      fontWeight: FontWeight.w600),
+                    fontSize: 12,
+                    color: status.color,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
@@ -602,10 +609,13 @@ class _DifficultyPicker extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurface)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -633,14 +643,18 @@ class _DifficultyPicker extends StatelessWidget {
                         children: [
                           Icon(diff.icon, color: diff.color, size: 20),
                           const SizedBox(height: 2),
-                          Text(difficultyLabel(diff),
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: diff.color,
-                                  fontWeight: FontWeight.w600)),
-                          Text('+${diff.points}pts',
-                              style: TextStyle(
-                                  fontSize: 9, color: diff.color)),
+                          Text(
+                            difficultyLabel(diff),
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: diff.color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '+${diff.points}pts',
+                            style: TextStyle(fontSize: 9, color: diff.color),
+                          ),
                         ],
                       ),
                     ),
@@ -679,9 +693,7 @@ class _PickerButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           border: Border.all(
-            color: faded
-                ? theme.dividerColor
-                : accent.withValues(alpha: 0.5),
+            color: faded ? theme.dividerColor : accent.withValues(alpha: 0.5),
           ),
           borderRadius: BorderRadius.circular(10),
           color: faded ? Colors.transparent : accent.withValues(alpha: 0.06),
@@ -689,17 +701,20 @@ class _PickerButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 14, color: faded ? Colors.grey : accent),
+            Icon(
+              icon,
+              size: 14,
+              color: faded ? Colors.grey : accent,
+            ),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
                 label,
                 style: TextStyle(
-                    fontSize: 12,
-                    color: faded ? Colors.grey.shade500 : accent,
-                    fontWeight:
-                    faded ? FontWeight.normal : FontWeight.w600),
+                  fontSize: 12,
+                  color: faded ? Colors.grey.shade500 : accent,
+                  fontWeight: faded ? FontWeight.normal : FontWeight.w600,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
