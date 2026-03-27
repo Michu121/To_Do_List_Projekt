@@ -100,7 +100,7 @@ class CategoryBarButton extends StatelessWidget {
             if (_isProtected)
               Padding(
                 padding: const EdgeInsets.only(right: 2.0),
-                child: Icon(Icons.block, size: 16, color: Colors.white),
+                child: Icon(Icons.house, size: 16, color: Colors.white),
               ),
             Text(
               '${cat.name} ($tasksInCategory)',

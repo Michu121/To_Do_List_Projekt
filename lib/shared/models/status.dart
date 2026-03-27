@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:todo_list/l10n/app_localizations.dart';
 
 enum Status {
-
   todo(
     status: 0,
     color: Colors.grey,
@@ -30,7 +30,6 @@ enum Status {
     required this.icon,
   });
 
-  /// JSON → Status
   static Status fromInt(int value) {
     return Status.values.firstWhere(
           (e) => e.status == value,
@@ -38,23 +37,25 @@ enum Status {
     );
   }
 
-  /// Status → JSON
   int toInt() {
     return status;
   }
+}
 
-}extension StatusName on Status {
+extension StatusName on Status {
+  // CHANGE: Pass context into the method instead of trying to get it from nowhere
+  String label(BuildContext context) {
+    final t = AppLocalizations.of(context);
 
-  String get label {
     switch (this) {
       case Status.todo:
-        return "Do zrobienia";
+        return t?.todo ?? 'To do';
 
       case Status.inProgress:
-        return "W trakcie";
+        return t?.inProgress ?? 'In progress';
 
       case Status.done:
-        return "Zrobione";
+        return t?.done ?? 'Done';
     }
   }
 }

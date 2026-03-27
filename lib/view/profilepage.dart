@@ -154,7 +154,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 fsStats?.tasksCompleted ?? userStatsService.doneCount;
             final created = fsStats?.tasksCreated ?? 0;
             final groupsJoined = fsStats?.groupsJoined ?? groups.length;
-            final league = League.forPoints(points);
+            final league = League.forPoints(points, context);
 
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),

@@ -352,6 +352,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get difficulty => 'Difficulty';
 
   @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
   String get color => 'Color';
 
   @override
@@ -786,4 +792,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get archived => 'Archived';
+
+  @override
+  String get bronze => 'Bronze';
+
+  @override
+  String get silver => 'Silver';
+
+  @override
+  String get gold => 'Gold';
+
+  @override
+  String get platinum => 'Platinum';
+
+  @override
+  String get diamond => 'Diamond';
+
+  @override
+  String get inProgress => "In progress";
+
+  @override
+  String get todo => "To do";
+
+  @override
+  String get done => "Done";
 }

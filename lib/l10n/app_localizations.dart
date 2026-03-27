@@ -1306,6 +1306,19 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Archived'**
   String get archived;
+
+  String get bronze;
+  String get silver;
+  String get gold;
+  String get platinum;
+  String get diamond;
+
+  String get date;
+  String get time;
+
+  String get todo;
+  String get inProgress;
+  String get done;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

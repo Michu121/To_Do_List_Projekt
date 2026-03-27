@@ -541,14 +541,14 @@ class _StatusChip extends StatelessWidget {
     Status.done => Status.todo,
   };
 
-  String _label(AppLocalizations? t) {
+  String _label(AppLocalizations? t, BuildContext context) { // Add context here
     switch (status) {
       case Status.todo:
-        return t?.notask.split(',').first ?? status.label;
+        return t?.todo ?? status.label(context);
       case Status.inProgress:
-        return t?.loading ?? status.label;
+        return t?.inProgress ?? status.label(context);
       case Status.done:
-        return t?.complete ?? status.label;
+        return t?.done ?? status.label(context);
     }
   }
 
@@ -557,36 +557,28 @@ class _StatusChip extends StatelessWidget {
     final t = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () => onChanged(_next),
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: status.color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: status.color.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(status.icon, size: 16, color: status.color),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Center(
-                child: Text(
-                  _label(t),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: status.color,
-                    fontWeight: FontWeight.w600,
-                  ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(status.icon, size: 16, color: status.color),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Center(
+              child: Text(
+                _label(t, context), // Pass 'context' here
+                style: TextStyle(
+                  fontSize: 12,
+                  color: status.color,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
 }
 
 // ── Difficulty picker ─────────────────────────────────────────────────────────

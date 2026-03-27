@@ -112,6 +112,8 @@
   "high": "Wysoki",
   "category": "Kategoria",
   "difficulty": "Trudność",
+  "date": "Data",
+  "time": "Czas",
   "color": "Kolor",
   "deleteTaskConfirm": "Czy na pewno chcesz usunąć to zadanie?",
   "deleteCategoryConfirm": "Czy na pewno chcesz usunąć tę kategorię?",
@@ -229,5 +231,13 @@
   "startLabel": "Start",
   "endLabel": "Koniec",
   "dateAndTime": "Data i czas",
-  "archived": "Zarichiwizowany"
+  "archived": "Zarichiwizowany",
+  "bronze": "Brązowa",
+  "silver": "Srebrna",
+  "gold": "Złota",
+  "platinum": "Platynowa",
+  "diamond": "Diamentowa",
+  "todo": "Do zrobienia",
+  "inProgress": "W trakcie",
+  "done": "Zrobione"
 }

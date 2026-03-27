@@ -112,6 +112,8 @@
   "high": "High",
   "category": "Category",
   "difficulty": "Difficulty",
+  "date": "Date",
+  "time": "Time",
   "color": "Color",
   "deleteTaskConfirm": "Are you sure you want to delete this task?",
   "deleteCategoryConfirm": "Are you sure you want to delete this category?",
@@ -229,6 +231,13 @@
   "startLabel": "Start",
   "endLabel": "End",
   "dateAndTime": "Date & Time",
-  "archived": "Archived"
-
+  "archived": "Archived",
+  "bronze": "Bronze",
+  "silver": "Silver",
+  "gold": "Gold",
+  "platinum": "Platinum",
+  "diamond": "Diamond",
+  "todo": "To do",
+  "inProgress": "In progress",
+  "done": "Done"
 }

@@ -91,7 +91,7 @@ class TaskInfoSheet extends StatelessWidget {
                           children: [
                             Icon(task.status.icon, size: 14, color: Colors.white),
                             const SizedBox(width: 4),
-                            Text(task.status.label,
+                            Text(task.status.label(context),
                                 style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.white,
@@ -220,7 +220,7 @@ class TaskInfoSheet extends StatelessWidget {
                     // ── Date ───────────────────────────────────
                     _InfoSection(
                       icon: Icons.calendar_today_outlined,
-                      label: 'Date',
+                      label: t?.date ?? 'Date',
                       accent: accent,
                       child: Text(
                         _formatDate(task.date),
@@ -233,7 +233,7 @@ class TaskInfoSheet extends StatelessWidget {
                     if (hasStartTime || hasEndTime) ...[
                       _InfoSection(
                         icon: Icons.schedule,
-                        label: 'Time',
+                        label: t?.time ?? 'Time',
                         accent: accent,
                         child: Row(
                           children: [

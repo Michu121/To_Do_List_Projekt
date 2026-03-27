@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/status.dart';
 import '../models/task.dart';
-import '../models/league.dart';
 import 'task_services.dart';
 
 /// Computes local/offline stats from the task list.
@@ -22,9 +21,6 @@ class UserStatsService extends ChangeNotifier {
   int get doneCount => _doneCount;
   int get inProgressCount => _inProgressCount;
   int get streakDays => _streakDays;
-
-  /// League based on local points — used as fallback only.
-  League get league => League.forPoints(_totalPoints);
 
   void _recompute() {
     final tasks = taskServices.getTasks();
