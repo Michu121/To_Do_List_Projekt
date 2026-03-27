@@ -239,5 +239,7 @@
   "diamond": "Diamentowa",
   "todo": "Do zrobienia",
   "inProgress": "W trakcie",
-  "done": "Zrobione"
+  "done": "Zrobione",
+  "toNextLeague": "do następnej ligi",
+  "maxLeague": "Maksymalna liga!"
 }

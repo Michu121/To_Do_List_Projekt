@@ -426,7 +426,7 @@ class _CreateViewState extends State<_CreateView> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
           _ActionButton(
             label: t?.createGroup ?? 'Create Group',
             icon: Icons.check_circle_outline_rounded,

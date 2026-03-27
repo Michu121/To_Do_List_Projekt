@@ -104,6 +104,12 @@ class _TaskListTileState extends State<TaskListTile> {
     final isDone = widget.task.status == Status.done;
     final theme = Theme.of(context);
     final t = AppLocalizations.of(context);
+
+    // Dynamic translation for the default category label
+    final categoryLabel = widget.task.category.id == 'default'
+        ? (t?.defaultCategory ?? widget.task.category.name)
+        : widget.task.category.name;
+
     return GestureDetector(
       onTap: _onTap,
       onLongPress: widget.disabled ? null : _onLongPress,
@@ -179,7 +185,7 @@ class _TaskListTileState extends State<TaskListTile> {
                           children: [
                             Flexible(
                               child: TaskChip(
-                                label: widget.task.category.name,
+                                label: categoryLabel,
                                 color: widget.task.category.color,
                               ),
                             ),

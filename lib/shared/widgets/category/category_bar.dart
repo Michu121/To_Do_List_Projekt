@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../models/category.dart';
 import '../../models/task.dart';
 import '../add_forms/add_category_form.dart';
@@ -62,12 +63,18 @@ class CategoryBarButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     // Compare by id so selection survives locale renames of the All category
     final isSelected = cat.id == selectedCategory.id;
 
     final textColor = isSelected
         ? (cat.color.computeLuminance() > 0.45 ? Colors.black87 : Colors.white)
         : Colors.white;
+
+    // Localize name if it is the default category
+    final displayName = cat.id == 'default' 
+        ? (t?.defaultCategory ?? cat.name) 
+        : cat.name;
 
     return InkWell(
       onTap: () => onSelected(cat),
@@ -99,11 +106,15 @@ class CategoryBarButton extends StatelessWidget {
           children: [
             if (_isProtected)
               Padding(
-                padding: const EdgeInsets.only(right: 2.0),
-                child: Icon(Icons.house, size: 16, color: Colors.white),
+                padding: const EdgeInsets.only(right: 4.0),
+                child: Icon(
+                  cat.id == '__all__' ? Icons.all_inclusive : Icons.house, 
+                  size: 16, 
+                  color: textColor.withValues(alpha: 0.9)
+                ),
               ),
             Text(
-              '${cat.name} ($tasksInCategory)',
+              '$displayName ($tasksInCategory)',
               style: TextStyle(
                 color: textColor,
                 fontSize: 13,

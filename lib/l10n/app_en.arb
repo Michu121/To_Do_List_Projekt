@@ -239,5 +239,7 @@
   "diamond": "Diamond",
   "todo": "To do",
   "inProgress": "In progress",
-  "done": "Done"
+  "done": "Done",
+  "toNextLeague": "to next league",
+  "maxLeague": "Max league!"
 }

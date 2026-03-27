@@ -410,7 +410,7 @@ class _LeagueCard extends StatelessWidget {
               ),
               if (toNext > 0)
                 Text(
-                  '$toNext ${t?.points ?? "pts"} to next league',
+                  '$toNext ${t?.points ?? "pts"} ${t?.toNextLeague ?? "to next league"}',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: league.badgeColor,
                     fontWeight: FontWeight.bold,
@@ -418,7 +418,7 @@ class _LeagueCard extends StatelessWidget {
                 )
               else
                 Text(
-                  'Max league! 🏆',
+                  t?.maxLeague ?? 'Max league!',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: league.badgeColor,
                     fontWeight: FontWeight.bold,

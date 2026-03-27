@@ -816,4 +816,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get done => "Done";
+
+  @override
+  String get maxLeague => "Max league!";
+
+  @override
+  String get toNextLeague => "to next league";
 }

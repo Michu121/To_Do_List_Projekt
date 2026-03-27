@@ -35,6 +35,10 @@ class TaskInfoSheet extends StatelessWidget {
     final hasStartTime = task.timeStart.hour != 0 || task.timeStart.minute != 0;
     final hasEndTime = task.timeEnd.hour != 0 || task.timeEnd.minute != 0;
 
+    final categoryName = task.category.id == 'default'
+        ? (t?.defaultCategory ?? task.category.name)
+        : task.category.name;
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -166,7 +170,7 @@ class TaskInfoSheet extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              task.category.name,
+                              categoryName,
                               style: TextStyle(
                                   color: task.category.color,
                                   fontSize: 13,

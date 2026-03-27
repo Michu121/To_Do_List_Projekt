@@ -1319,6 +1319,9 @@ abstract class AppLocalizations {
   String get todo;
   String get inProgress;
   String get done;
+
+  String get toNextLeague;
+  String get maxLeague;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
